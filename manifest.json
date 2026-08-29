@@ -2,7 +2,7 @@
   "name": "Portafoglio Oro",
   "short_name": "Oro",
   "description": "Gestione investimenti in oro e argento in tempo reale",
-  "start_url": "/app.html",
+  "start_url": "/oro-portfolio/PortafoglioOro.html",
   "display": "standalone",
   "background_color": "#0a0e27",
   "theme_color": "#d4af37",
@@ -35,7 +35,7 @@
       "name": "Nuovo Acquisto",
       "short_name": "Acquista",
       "description": "Registra un nuovo acquisto di oro o argento",
-      "url": "/app.html?section=acquisto",
+      "url": "/oro-portfolio/PortafoglioOro.html?section=acquisto",
       "icons": [
         {
           "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='45' fill='%23d4af37'/><text x='48' y='58' font-size='40' text-anchor='middle' fill='%230a0e27' font-family='Arial'>+</text></svg>",
@@ -47,10 +47,10 @@
       "name": "Storico",
       "short_name": "Storico",
       "description": "Visualizza storico transazioni",
-      "url": "/app.html?section=storico",
+      "url": "/oro-portfolio/PortafoglioOro.html?section=storico",
       "icons": [
         {
-          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='45' fill='%23d4af37'/><text x='48' y='58' font-size='40' text-anchor='middle' fill='%230a0e27' font-family='Arial'>📊</text></svg>",
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='45' fill='%23d4af37'/><text x='48' y='58' font-size='40' text-anchor='middle' fill='%230a0e27' font-family='Arial'>?</text></svg>",
           "sizes": "96x96"
         }
       ]
