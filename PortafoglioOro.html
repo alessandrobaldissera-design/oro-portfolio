@@ -441,6 +441,37 @@
       font-weight: 700;
       cursor: pointer;
     }
+    .sync-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0 0 1rem;
+      padding: 0.6rem 0.9rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(212,175,55,0.25);
+      border-radius: 10px;
+      font-size: 0.85rem;
+    }
+    .sync-status { display: flex; align-items: center; gap: 0.5rem; color: #cfd3e0; }
+    .sync-dot { width: 10px; height: 10px; border-radius: 50%; background: #888; flex: none; }
+    .sync-dot.live { background: #2ecc71; box-shadow: 0 0 6px #2ecc71; }
+    .sync-dot.stale { background: #888; }
+    .sync-dot.busy { background: #d4af37; box-shadow: 0 0 6px #d4af37; animation: syncpulse 1s infinite; }
+    @keyframes syncpulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+    .rate-info { color: #9aa0b4; }
+    .refresh-btn {
+      margin-left: auto;
+      background: rgba(212, 175, 55, 0.15);
+      color: #d4af37;
+      border: 1px solid #d4af37;
+      border-radius: 8px;
+      padding: 0.4rem 0.9rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    .refresh-btn:disabled { opacity: 0.5; cursor: default; }
   </style>
 </head>
 <body>
@@ -462,6 +493,15 @@
         </div>
       </div>
     </header>
+
+    <div class="sync-bar">
+      <div class="sync-status" id="syncStatus">
+        <span class="sync-dot stale" id="syncDot"></span>
+        <span id="syncText">In attesa di aggiornamento&hellip;</span>
+      </div>
+      <span class="rate-info" id="rateInfo"></span>
+      <button class="refresh-btn" id="refreshBtn">Aggiorna ora</button>
+    </div>
 
     <div class="content">
       <div class="summary">
@@ -637,16 +677,22 @@
       positions: [],
       currentCurrency: 'CHF',
       currentPrices: { gold: 115.0, silver: 1.72 },
-      exchangeRates: { CHF: 1, EUR: 0.94, USD: 0.88 },
+      exchangeRates: { CHF: 1, EUR: 0.93, USD: 0.80 },
       priceHistory: [], // Array di {date, gold, silver}
-      selectedPeriod: 30
+      selectedPeriod: 30,
+      lastUpdate: null,
+      lastUpdateOk: false,
+      syncBusy: false
     };
 
     // Fetch real prices e aggiorna storico
     async function fetchPrices() {
+      state.syncBusy = true;
+      updateStatusIndicator();
+      let fxOk = false, metalOk = false;
+      let usdToChf = state.exchangeRates.USD || 0.80;
       try {
-        // 1) Tassi di cambio live (base USD)
-        let usdToChf = state.exchangeRates.USD || 0.88;
+        // 1) Tassi di cambio live (base USD) - fonte primaria: frankfurter.dev
         try {
           const fxRes = await fetch('https://api.frankfurter.dev/v1/latest?base=USD&symbols=CHF,EUR');
           const fx = await fxRes.json();
@@ -655,49 +701,126 @@
             state.exchangeRates.CHF = 1;
             state.exchangeRates.USD = usdToChf;                                              // CHF per 1 USD
             state.exchangeRates.EUR = fx.rates.EUR ? (usdToChf / fx.rates.EUR) : state.exchangeRates.EUR; // CHF per 1 EUR
+            fxOk = true;
           }
         } catch (fxErr) {
-          console.log('FX fallback:', fxErr);
+          console.log('FX primaria fallita:', fxErr);
+        }
+        // Fonte di riserva: open.er-api.com
+        if (!fxOk) {
+          try {
+            const fx2Res = await fetch('https://open.er-api.com/v6/latest/USD');
+            const fx2 = await fx2Res.json();
+            if (fx2 && fx2.rates && fx2.rates.CHF) {
+              usdToChf = fx2.rates.CHF;
+              state.exchangeRates.CHF = 1;
+              state.exchangeRates.USD = usdToChf;
+              state.exchangeRates.EUR = fx2.rates.EUR ? (usdToChf / fx2.rates.EUR) : state.exchangeRates.EUR;
+              fxOk = true;
+            }
+          } catch (fx2Err) {
+            console.log('FX riserva fallita:', fx2Err);
+          }
         }
 
         // 2) Prezzi metalli reali in USD per oncia troy
-        const [goldRes, silverRes] = await Promise.all([
-          fetch('https://api.gold-api.com/price/XAU'),
-          fetch('https://api.gold-api.com/price/XAG')
-        ]);
-        const goldData = await goldRes.json();
-        const silverData = await silverRes.json();
+        try {
+          const [goldRes, silverRes] = await Promise.all([
+            fetch('https://api.gold-api.com/price/XAU'),
+            fetch('https://api.gold-api.com/price/XAG')
+          ]);
+          const goldData = await goldRes.json();
+          const silverData = await silverRes.json();
 
-        let updated = false;
-        let goldUsd = null, silverUsd = null;
-
-        if (goldData && goldData.price) {
-          goldUsd = goldData.price;
-          state.currentPrices.gold = (goldData.price * usdToChf) / OZ_TO_G;   // CHF/g
-          updated = true;
-        }
-        if (silverData && silverData.price) {
-          silverUsd = silverData.price;
-          state.currentPrices.silver = (silverData.price * usdToChf) / OZ_TO_G; // CHF/g
-          updated = true;
-        }
-
-        if (updated) {
-          // Aggiorna o aggiungi il punto storico di oggi (in USD/oncia troy)
-          const today = new Date().toISOString().split('T')[0];
-          const existing = state.priceHistory.find(h => h.date === today);
-          if (existing) {
-            if (goldUsd != null) existing.goldUsd = goldUsd;
-            if (silverUsd != null) existing.silverUsd = silverUsd;
-          } else {
-            state.priceHistory.push({ date: today, goldUsd: goldUsd, silverUsd: silverUsd });
+          let goldUsd = null, silverUsd = null;
+          if (goldData && goldData.price) {
+            goldUsd = goldData.price;
+            state.currentPrices.gold = (goldData.price * usdToChf) / OZ_TO_G;   // CHF/g
+            metalOk = true;
           }
-          savePriceHistory();
+          if (silverData && silverData.price) {
+            silverUsd = silverData.price;
+            state.currentPrices.silver = (silverData.price * usdToChf) / OZ_TO_G; // CHF/g
+            metalOk = true;
+          }
+
+          if (metalOk) {
+            // Aggiorna o aggiungi il punto storico di oggi (in USD/oncia troy)
+            const today = new Date().toISOString().split('T')[0];
+            const existing = state.priceHistory.find(h => h.date === today);
+            if (existing) {
+              if (goldUsd != null) existing.goldUsd = goldUsd;
+              if (silverUsd != null) existing.silverUsd = silverUsd;
+            } else {
+              state.priceHistory.push({ date: today, goldUsd: goldUsd, silverUsd: silverUsd });
+            }
+            savePriceHistory();
+          }
+        } catch (metErr) {
+          console.log('Metalli falliti:', metErr);
         }
       } catch (e) {
         console.log('API fallback:', e);
       }
+      state.syncBusy = false;
+      if (metalOk || fxOk) {
+        state.lastUpdate = Date.now();
+        state.lastUpdateOk = (fxOk && metalOk);
+        saveMeta();
+      }
       updateUI();
+    }
+
+    // Salva/carica metadati (cambi, prezzi, ultimo aggiornamento)
+    function saveMeta() {
+      try {
+        localStorage.setItem('goldMeta', JSON.stringify({
+          exchangeRates: state.exchangeRates,
+          currentPrices: state.currentPrices,
+          lastUpdate: state.lastUpdate,
+          lastUpdateOk: state.lastUpdateOk
+        }));
+      } catch (e) { console.log('saveMeta err', e); }
+    }
+    function loadMeta() {
+      const saved = localStorage.getItem('goldMeta');
+      if (!saved) return;
+      try {
+        const m = JSON.parse(saved);
+        if (m.exchangeRates) state.exchangeRates = Object.assign(state.exchangeRates, m.exchangeRates);
+        if (m.currentPrices) state.currentPrices = Object.assign(state.currentPrices, m.currentPrices);
+        if (m.lastUpdate) state.lastUpdate = m.lastUpdate;
+        if (typeof m.lastUpdateOk !== 'undefined') state.lastUpdateOk = m.lastUpdateOk;
+      } catch (e) { console.log('loadMeta err', e); }
+    }
+
+    // Indicatore stato sincronizzazione + cambio in uso
+    function updateStatusIndicator() {
+      const dot = document.getElementById('syncDot');
+      const txt = document.getElementById('syncText');
+      const rateEl = document.getElementById('rateInfo');
+      const btn = document.getElementById('refreshBtn');
+      if (btn) btn.disabled = !!state.syncBusy;
+      if (dot && txt) {
+        if (state.syncBusy) {
+          dot.className = 'sync-dot busy';
+          txt.textContent = 'Aggiornamento in corso\u2026';
+        } else if (state.lastUpdate) {
+          const d = new Date(state.lastUpdate);
+          const p = function (x) { return String(x).padStart(2, '0'); };
+          const stamp = p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + String(d.getFullYear()).slice(-2) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+          dot.className = 'sync-dot ' + (state.lastUpdateOk ? 'live' : 'stale');
+          txt.textContent = (state.lastUpdateOk ? 'Dati live \u00b7 ' : 'Dati salvati \u00b7 ') + stamp;
+        } else {
+          dot.className = 'sync-dot stale';
+          txt.textContent = 'In attesa di aggiornamento\u2026';
+        }
+      }
+      if (rateEl) {
+        const usd = state.exchangeRates.USD || 0;
+        const eur = state.exchangeRates.EUR || 0;
+        rateEl.textContent = '1 USD = ' + usd.toFixed(4) + ' CHF \u00b7 1 EUR = ' + eur.toFixed(4) + ' CHF';
+      }
     }
 
     // Load storico prezzi da localStorage
@@ -823,6 +946,7 @@
       updateSummary();
       updateChart();
       updateLivePrices();
+      updateStatusIndicator();
     }
 
     function updatePositionsTable() {
@@ -1368,8 +1492,13 @@
 
     // Initialize
     loadData();
+    loadMeta();
     loadPriceHistory();
     onMetalChange();
+    (function () {
+      const rb = document.getElementById('refreshBtn');
+      if (rb) rb.addEventListener('click', function () { fetchPrices(); });
+    })();
     fetchPrices();
     setInterval(fetchPrices, 60 * 1000); // Aggiorna ogni 60 secondi
     updateUI();
