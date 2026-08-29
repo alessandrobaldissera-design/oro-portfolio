@@ -50,7 +50,7 @@
       "url": "/app.html?section=storico",
       "icons": [
         {
-          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='45' fill='%23d4af37'/><text x='48' y='58' font-size='40' text-anchor='middle' fill='%230a0e27' font-family='Arial'>?</text></svg>",
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='45' fill='%23d4af37'/><text x='48' y='58' font-size='40' text-anchor='middle' fill='%230a0e27' font-family='Arial'>📊</text></svg>",
           "sizes": "96x96"
         }
       ]
