@@ -859,10 +859,19 @@
       }
     }
 
+    function formatDate(d) {
+      if (!d) return '';
+      const parts = String(d).split('-');
+      if (parts.length === 3) return parts[2] + '/' + parts[1] + '/' + parts[0].slice(-2);
+      return d;
+    }
+
     function updateHistoryTable() {
       const tbody = document.getElementById('historyTable');
       tbody.innerHTML = '';
-      state.positions.forEach((pos, i) => {
+      const rows = state.positions.map((pos, i) => ({ pos: pos, idx: i }));
+      rows.sort((a, b) => new Date(a.pos.date || 0) - new Date(b.pos.date || 0));
+      rows.forEach(({ pos, idx: i }) => {
         const currency = pos.priceCurrency || 'CHF';
         const w = pos.quantity || 0;
         const cChf = costChf(pos);
@@ -879,7 +888,7 @@
         });
         photoHtml += `<button class="add-photo-btn" onclick="triggerAddPhotos(${i})" title="Aggiungi foto">+</button></div>`;
         tbody.innerHTML += `<tr>
-          <td>${pos.date || ''}</td>
+          <td>${formatDate(pos.date)}</td>
           <td>${metalLabel}</td>
           <td>${descSafe}</td>
           <td>${titolo}</td>
@@ -1148,14 +1157,15 @@
 
     function exportCSV() {
       let csv = 'Data,Metallo,Descrizione,Titolo,Peso(g),Prezzo Totale,Valuta,Costo/g CHF,Valore Attuale CHF\n';
-      state.positions.forEach(pos => {
+      const sortedCsv = state.positions.slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+      sortedCsv.forEach(pos => {
         const costInChf = costChf(pos);
         const w = pos.quantity || 0;
         const costPerG = w > 0 ? (costInChf / w) : 0;
         const valChf = currentValueChf(pos);
         const titolo = pos.metal === 'gold' ? (pos.purity || 24) + 'k' : (pos.metal === 'silver' ? String(pos.purity || 999) : '');
         const desc = (pos.description || '').replace(/,/g, ' ');
-        csv += `${pos.date},${pos.metal},${desc},${titolo},${w},${pos.price},${pos.priceCurrency},${costPerG.toFixed(2)},${valChf.toFixed(2)}\n`;
+        csv += `${formatDate(pos.date)},${pos.metal},${desc},${titolo},${w},${pos.price},${pos.priceCurrency},${costPerG.toFixed(2)},${valChf.toFixed(2)}\n`;
       });
       const link = document.createElement('a');
       link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
