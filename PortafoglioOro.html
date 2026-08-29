@@ -323,6 +323,124 @@
       padding: 2rem;
       color: #888;
     }
+
+    /* Grafici con prezzo live in evidenza */
+    .chart-card {
+      background: linear-gradient(135deg, #1a1f3a 0%, #0f1220 100%);
+      border: 1px solid #d4af37;
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .chart-live-header {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 0.4rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .chart-metal-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #c9a961;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .chart-live-price {
+      font-size: 1.9rem;
+      font-weight: 800;
+      color: #d4af37;
+      line-height: 1;
+    }
+    .chart-live-sub { font-size: 0.85rem; color: #888; }
+    .chart-live-change {
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+    }
+    .chart-canvas-wrap { height: 260px; position: relative; }
+
+    /* Foto articoli */
+    .photo-preview { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    .photo-thumb {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #d4af37;
+      background: #1a1f3a;
+      flex: 0 0 auto;
+    }
+    .photo-thumb img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; display: block; }
+    .photo-thumb .photo-del {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: rgba(248,113,113,0.9);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 12px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+      font-weight: 700;
+    }
+    .photo-cell { display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap; }
+    .add-photo-btn {
+      background: rgba(212, 175, 55, 0.15);
+      color: #d4af37;
+      border: 1px solid #d4af37;
+      border-radius: 8px;
+      width: 40px;
+      height: 40px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .photo-input-label {
+      display: inline-block;
+      background: rgba(212, 175, 55, 0.15);
+      color: #d4af37;
+      border: 1px dashed #d4af37;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      font-weight: 600;
+      text-align: center;
+      width: 100%;
+    }
+    .photo-input-label input { display: none; }
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    #lightbox.open { display: flex; }
+    #lightbox img { max-width: 100%; max-height: 100%; border-radius: 12px; border: 2px solid #d4af37; }
+    #lightbox .lightbox-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: #d4af37;
+      color: #0a0e27;
+      border: none;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -366,20 +484,36 @@
       <div>
         <h3 style="color: #d4af37; margin-bottom: 0.75rem;">Periodo Grafico</h3>
         <div class="period-selector" id="periodSelector">
-          <button class="period-btn active" data-period="7">7 giorni</button>
-          <button class="period-btn" data-period="30">30 giorni</button>
+          <button class="period-btn" data-period="7">7 giorni</button>
+          <button class="period-btn active" data-period="30">30 giorni</button>
           <button class="period-btn" data-period="90">90 giorni</button>
           <button class="period-btn" data-period="365">1 anno</button>
           <button class="period-btn" data-period="all">Tutto</button>
         </div>
       </div>
 
-      <div class="chart-container">
-        <canvas id="goldChart"></canvas>
+      <div class="chart-card">
+        <div class="chart-live-header">
+          <span class="chart-metal-name">Oro</span>
+          <span class="chart-live-price" id="goldLivePrice">&ndash;</span>
+          <span class="chart-live-change" id="goldLiveChange"></span>
+          <span class="chart-live-sub" id="goldLiveSub"></span>
+        </div>
+        <div class="chart-canvas-wrap">
+          <canvas id="goldChart"></canvas>
+        </div>
       </div>
 
-      <div class="chart-container">
-        <canvas id="silverChart"></canvas>
+      <div class="chart-card">
+        <div class="chart-live-header">
+          <span class="chart-metal-name">Argento</span>
+          <span class="chart-live-price" id="silverLivePrice">&ndash;</span>
+          <span class="chart-live-change" id="silverLiveChange"></span>
+          <span class="chart-live-sub" id="silverLiveSub"></span>
+        </div>
+        <div class="chart-canvas-wrap">
+          <canvas id="silverChart"></canvas>
+        </div>
       </div>
 
       <div class="tabs">
@@ -416,25 +550,46 @@
         <form onsubmit="addPosition(event)">
           <div class="form-group">
             <label>Metallo</label>
-            <select id="metal" required>
-              <option value="gold">Oro (g)</option>
-              <option value="silver">Argento (g)</option>
+            <select id="metal" required onchange="onMetalChange()">
+              <option value="gold">Oro</option>
+              <option value="silver">Argento</option>
+              <option value="other">Altro</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Quantità (grammi)</label>
+            <label>Descrizione <span id="descHint" style="color:#888;font-weight:400;">(facoltativa)</span></label>
+            <input type="text" id="description" placeholder="Es. Krugerrand 1oz, Lingotto PAMP 50g...">
+          </div>
+          <div class="form-group" id="purityGroup">
+            <label id="purityLabel">Caratura</label>
+            <select id="purity"></select>
+          </div>
+          <div class="form-group">
+            <label>Peso totale (grammi)</label>
             <input type="number" id="quantity" step="0.01" required>
           </div>
           <div class="form-group">
-            <label>Prezzo Unitario</label>
+            <label>Prezzo Totale Pagato</label>
             <div style="display: flex; gap: 0.5rem;">
               <input type="number" id="price" step="0.01" required style="flex: 1;">
-              <input type="text" id="priceCurrency" placeholder="CHF" style="width: 80px;" value="CHF">
+              <select id="priceCurrency" style="width: 90px; padding: 0.5rem; border-radius: 6px;">
+                <option value="CHF">CHF</option>
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+              </select>
             </div>
           </div>
           <div class="form-group">
             <label>Data Acquisto</label>
             <input type="date" id="date" required>
+          </div>
+          <div class="form-group">
+            <label>Foto articolo (fotocamera o galleria)</label>
+            <label class="photo-input-label">
+              &#128247; Aggiungi foto
+              <input type="file" id="photos" accept="image/*" multiple onchange="handlePhotoSelect(this)">
+            </label>
+            <div class="photo-preview" id="photoPreview"></div>
           </div>
           <button class="btn" type="submit">Aggiungi Posizione</button>
         </form>
@@ -446,10 +601,13 @@
             <tr>
               <th>Data</th>
               <th>Metallo</th>
-              <th>Quantità</th>
-              <th>Prezzo</th>
+              <th>Descrizione</th>
+              <th>Titolo</th>
+              <th>Peso</th>
+              <th>Prezzo Tot.</th>
               <th>Valuta</th>
-              <th>Totale (CHF)</th>
+              <th>Costo/g (CHF)</th>
+              <th>Foto</th>
               <th>Azione</th>
             </tr>
           </thead>
@@ -459,10 +617,20 @@
     </div>
   </div>
 
+  <div id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+    <img id="lightboxImg" src="" alt="Foto articolo" onclick="event.stopPropagation()">
+  </div>
+
   <script>
     // Google OAuth Configuration
     const GOOGLE_CLIENT_ID = '747638907098-bpk0m9j5jc5v7kqk8lmnop9q8r9s0t1u.apps.googleusercontent.com';
     let googleAccessToken = null;
+
+    // Storico reale prezzi metalli (USD/oncia troy) - ultimi 3 mesi (mercato COMEX)
+    const SEED_HISTORY = [{"date":"2026-05-29","goldUsd":4560.5,"silverUsd":75.62},{"date":"2026-06-01","goldUsd":4475.2,"silverUsd":75.01},{"date":"2026-06-02","goldUsd":4489.1,"silverUsd":75.31},{"date":"2026-06-03","goldUsd":4436.7,"silverUsd":73.48},{"date":"2026-06-04","goldUsd":4475.8,"silverUsd":73.78},{"date":"2026-06-05","goldUsd":4337.1,"silverUsd":68.94},{"date":"2026-06-08","goldUsd":4335.9,"silverUsd":68.43},{"date":"2026-06-09","goldUsd":4260,"silverUsd":65.09},{"date":"2026-06-10","goldUsd":4108.2,"silverUsd":64.6},{"date":"2026-06-11","goldUsd":4090.3,"silverUsd":63.88},{"date":"2026-06-12","goldUsd":4215,"silverUsd":67.86},{"date":"2026-06-15","goldUsd":4328,"silverUsd":70.07},{"date":"2026-06-16","goldUsd":4330.9,"silverUsd":69.9},{"date":"2026-06-17","goldUsd":4358.9,"silverUsd":70.7},{"date":"2026-06-18","goldUsd":4224.1,"silverUsd":66.25},{"date":"2026-06-22","goldUsd":4181.9,"silverUsd":65.53},{"date":"2026-06-23","goldUsd":4129.9,"silverUsd":62.02},{"date":"2026-06-24","goldUsd":3990.3,"silverUsd":58.05},{"date":"2026-06-25","goldUsd":4030.5,"silverUsd":58.35},{"date":"2026-06-26","goldUsd":4078.7,"silverUsd":59.22},{"date":"2026-06-29","goldUsd":4022.3,"silverUsd":58.17},{"date":"2026-06-30","goldUsd":4022.9,"silverUsd":59.48},{"date":"2026-07-01","goldUsd":4068.3,"silverUsd":60.08},{"date":"2026-07-02","goldUsd":4112.7,"silverUsd":60.64},{"date":"2026-07-06","goldUsd":4155.1,"silverUsd":61.92},{"date":"2026-07-07","goldUsd":4145.3,"silverUsd":60.93},{"date":"2026-07-08","goldUsd":4070.9,"silverUsd":58.16},{"date":"2026-07-09","goldUsd":4130.6,"silverUsd":60.38},{"date":"2026-07-10","goldUsd":4104.1,"silverUsd":59.81},{"date":"2026-07-13","goldUsd":3997,"silverUsd":57.63},{"date":"2026-07-14","goldUsd":4061.1,"silverUsd":58.77},{"date":"2026-07-15","goldUsd":4044,"silverUsd":57.11},{"date":"2026-07-16","goldUsd":3985.6,"silverUsd":55.9},{"date":"2026-07-17","goldUsd":4012.7,"silverUsd":56.04},{"date":"2026-07-20","goldUsd":4010.3,"silverUsd":56.8},{"date":"2026-07-21","goldUsd":4071.1,"silverUsd":58.83},{"date":"2026-07-22","goldUsd":4146.9,"silverUsd":60.02},{"date":"2026-07-23","goldUsd":4046.6,"silverUsd":57.8},{"date":"2026-07-24","goldUsd":4067.6,"silverUsd":58.66},{"date":"2026-07-27","goldUsd":4074.5,"silverUsd":58.47},{"date":"2026-07-28","goldUsd":4036.3,"silverUsd":57.3},{"date":"2026-07-29","goldUsd":4034.7,"silverUsd":57.86},{"date":"2026-07-30","goldUsd":4100.1,"silverUsd":58.81},{"date":"2026-07-31","goldUsd":4049.1,"silverUsd":57.59},{"date":"2026-08-03","goldUsd":4033.7,"silverUsd":57.67},{"date":"2026-08-04","goldUsd":4095.4,"silverUsd":60.06},{"date":"2026-08-05","goldUsd":4245.8,"silverUsd":62.1},{"date":"2026-08-06","goldUsd":4242,"silverUsd":61.44},{"date":"2026-08-07","goldUsd":4340.7,"silverUsd":63.33},{"date":"2026-08-10","goldUsd":4361.8,"silverUsd":65.11},{"date":"2026-08-11","goldUsd":4383,"silverUsd":64.77},{"date":"2026-08-12","goldUsd":4408.9,"silverUsd":65.56},{"date":"2026-08-13","goldUsd":4363.6,"silverUsd":64.87},{"date":"2026-08-14","goldUsd":4380.4,"silverUsd":64.99},{"date":"2026-08-17","goldUsd":4417.8,"silverUsd":66.12},{"date":"2026-08-18","goldUsd":4366,"silverUsd":63.94},{"date":"2026-08-19","goldUsd":4489.4,"silverUsd":65.73},{"date":"2026-08-20","goldUsd":4516.3,"silverUsd":68.03},{"date":"2026-08-21","goldUsd":4624.1,"silverUsd":69.47},{"date":"2026-08-24","goldUsd":4640.8,"silverUsd":68.54},{"date":"2026-08-25","goldUsd":4638.1,"silverUsd":68.64},{"date":"2026-08-26","goldUsd":4598.2,"silverUsd":67.99},{"date":"2026-08-27","goldUsd":4609.7,"silverUsd":69.43}];
+
+    const OZ_TO_G = 31.1035;
 
     // App State
     const state = {
@@ -471,7 +639,7 @@
       currentPrices: { gold: 115.0, silver: 1.72 },
       exchangeRates: { CHF: 1, EUR: 0.94, USD: 0.88 },
       priceHistory: [], // Array di {date, gold, silver}
-      selectedPeriod: 7
+      selectedPeriod: 30
     };
 
     // Fetch real prices e aggiorna storico
@@ -500,27 +668,29 @@
         const goldData = await goldRes.json();
         const silverData = await silverRes.json();
 
-        const OZ_TO_G = 31.1035;
         let updated = false;
+        let goldUsd = null, silverUsd = null;
 
         if (goldData && goldData.price) {
+          goldUsd = goldData.price;
           state.currentPrices.gold = (goldData.price * usdToChf) / OZ_TO_G;   // CHF/g
           updated = true;
         }
         if (silverData && silverData.price) {
+          silverUsd = silverData.price;
           state.currentPrices.silver = (silverData.price * usdToChf) / OZ_TO_G; // CHF/g
           updated = true;
         }
 
         if (updated) {
-          // Aggiorna o aggiungi il punto storico di oggi
+          // Aggiorna o aggiungi il punto storico di oggi (in USD/oncia troy)
           const today = new Date().toISOString().split('T')[0];
           const existing = state.priceHistory.find(h => h.date === today);
           if (existing) {
-            existing.gold = state.currentPrices.gold;
-            existing.silver = state.currentPrices.silver;
+            if (goldUsd != null) existing.goldUsd = goldUsd;
+            if (silverUsd != null) existing.silverUsd = silverUsd;
           } else {
-            state.priceHistory.push({ date: today, gold: state.currentPrices.gold, silver: state.currentPrices.silver });
+            state.priceHistory.push({ date: today, goldUsd: goldUsd, silverUsd: silverUsd });
           }
           savePriceHistory();
         }
@@ -536,6 +706,11 @@
       if (saved) {
         state.priceHistory = JSON.parse(saved);
       }
+      // Precarica lo storico reale se manca o e' troppo scarno
+      if (!state.priceHistory || state.priceHistory.length < 2) {
+        state.priceHistory = SEED_HISTORY.slice();
+        savePriceHistory();
+      }
     }
 
     // Salva storico prezzi
@@ -547,29 +722,98 @@
     function loadData() {
       const saved = localStorage.getItem('goldPortfolio');
       if (saved) {
-        state.positions = JSON.parse(saved);
+        state.positions = migratePositions(JSON.parse(saved));
       }
+    }
+
+    // Migra i record vecchi: prima "price" era il prezzo AL GRAMMO, ora e' il TOTALE
+    function migratePositions(arr) {
+      return (arr || []).map(function (p) {
+        if (!('purity' in p) && !('description' in p)) {
+          const totalPrice = (p.quantity || 0) * (p.price || 0);
+          const purity = p.metal === 'silver' ? 999 : (p.metal === 'gold' ? 24 : null);
+          return Object.assign({}, p, { price: totalPrice, purity: purity, description: '' });
+        }
+        return p;
+      });
     }
 
     // Save data to localStorage
     function saveData() {
-      localStorage.setItem('goldPortfolio', JSON.stringify(state.positions));
+      try {
+        localStorage.setItem('goldPortfolio', JSON.stringify(state.positions));
+      } catch (err) {
+        console.log('save err', err);
+        alert('Spazio di archiviazione pieno: alcune foto potrebbero non essere state salvate. Rimuovi qualche foto o usa immagini piu piccole.');
+      }
     }
 
     // Add position
-    function addPosition(e) {
+    async function addPosition(e) {
       e.preventDefault();
       const metal = document.getElementById('metal').value;
-      const quantity = parseFloat(document.getElementById('quantity').value);
+      const description = (document.getElementById('description').value || '').trim();
+      const quantity = parseFloat(document.getElementById('quantity').value) || 0;
       const price = parseFloat(document.getElementById('price').value);
-      const priceCurrency = document.getElementById('priceCurrency').value || 'CHF';
+      const priceCurrency = (document.getElementById('priceCurrency').value || 'CHF').toUpperCase();
+      const purity = metal === 'other' ? null : parseFloat(document.getElementById('purity').value);
       const date = document.getElementById('date').value;
+      const photos = pendingPhotos.slice();
 
-      state.positions.push({ metal, quantity, price, priceCurrency, date });
+      state.positions.push({ metal, description, quantity, purity, price, priceCurrency, date, photos });
       saveData();
+      pendingPhotos = [];
+      document.getElementById('photoPreview').innerHTML = '';
       document.getElementById('new').querySelector('form').reset();
       document.getElementById('priceCurrency').value = 'CHF';
+      onMetalChange();
       updateUI();
+    }
+
+    // Frazione di purezza: oro = caratura/24, argento = titolo/1000, altro = null
+    function purityFraction(p) {
+      if (p.metal === 'gold') return (p.purity || 24) / 24;
+      if (p.metal === 'silver') return (p.purity || 999) / 1000;
+      return null;
+    }
+    // Costo d'acquisto convertito in CHF (price = prezzo TOTALE pagato)
+    function costChf(p) {
+      const cur = (p.priceCurrency || 'CHF').toUpperCase();
+      return (p.price || 0) * (state.exchangeRates[cur] || 1);
+    }
+    // Valore attuale in CHF (per Altro = costo, nessuna quotazione live)
+    function currentValueChf(p) {
+      const f = purityFraction(p);
+      if (f === null) return costChf(p);
+      const spot = p.metal === 'gold' ? state.currentPrices.gold : state.currentPrices.silver;
+      return (p.quantity || 0) * f * spot;
+    }
+    // Popola caratura/titolo in base al metallo e gestisce "Altro"
+    function onMetalChange() {
+      const metal = document.getElementById('metal').value;
+      const pg = document.getElementById('purityGroup');
+      const psel = document.getElementById('purity');
+      const plabel = document.getElementById('purityLabel');
+      const qInput = document.getElementById('quantity');
+      const descHint = document.getElementById('descHint');
+      if (metal === 'other') {
+        pg.style.display = 'none';
+        qInput.required = false;
+        if (descHint) descHint.textContent = '(descrivi cosa hai preso)';
+        return;
+      }
+      pg.style.display = '';
+      qInput.required = true;
+      if (descHint) descHint.textContent = '(facoltativa)';
+      let opts = '';
+      if (metal === 'gold') {
+        plabel.textContent = 'Caratura';
+        [24, 22, 21, 18, 14, 10, 9].forEach(function (k) { opts += '<option value="' + k + '">' + k + 'k</option>'; });
+      } else {
+        plabel.textContent = 'Titolo (millesimi)';
+        [['999', '999 (fino)'], ['925', '925 (sterling)'], ['900', '900'], ['835', '835'], ['800', '800']].forEach(function (o) { opts += '<option value="' + o[0] + '">' + o[1] + '</option>'; });
+      }
+      psel.innerHTML = opts;
     }
 
     // Update UI
@@ -578,56 +822,39 @@
       updateHistoryTable();
       updateSummary();
       updateChart();
+      updateLivePrices();
     }
 
     function updatePositionsTable() {
       const tbody = document.getElementById('positionsTableBody');
       tbody.innerHTML = '';
 
-      const goldPositions = state.positions.filter(p => p.metal === 'gold');
-      const silverPositions = state.positions.filter(p => p.metal === 'silver');
-
-      const goldQuantity = goldPositions.reduce((sum, p) => sum + p.quantity, 0);
-      const silverQuantity = silverPositions.reduce((sum, p) => sum + p.quantity, 0);
-
-      const goldCostBasis = goldPositions.reduce((sum, p) => sum + (p.quantity * p.price * (state.exchangeRates[p.priceCurrency] || 1)), 0);
-      const silverCostBasis = silverPositions.reduce((sum, p) => sum + (p.quantity * p.price * (state.exchangeRates[p.priceCurrency] || 1)), 0);
-
-      const goldCurrent = state.currentPrices.gold * state.exchangeRates[state.currentCurrency];
-      const silverCurrent = state.currentPrices.silver * state.exchangeRates[state.currentCurrency];
-
-      const goldValue = goldQuantity * goldCurrent;
-      const silverValue = silverQuantity * silverCurrent;
-
-      if (goldQuantity > 0) {
-        const costAvg = goldCostBasis / goldQuantity;
-        const gain = goldValue - goldCostBasis;
-        const gainPct = ((gain / goldCostBasis) * 100).toFixed(2);
+      const rate = state.exchangeRates[state.currentCurrency] || 1;
+      const groups = [['gold', 'Oro'], ['silver', 'Argento'], ['other', 'Altro']];
+      let any = false;
+      groups.forEach(function (g) {
+        const m = g[0], label = g[1];
+        const ps = state.positions.filter(p => p.metal === m);
+        if (ps.length === 0) return;
+        any = true;
+        const weight = ps.reduce((s, p) => s + (p.quantity || 0), 0);
+        const cost = ps.reduce((s, p) => s + costChf(p), 0) / rate;
+        const val = ps.reduce((s, p) => s + currentValueChf(p), 0) / rate;
+        const gain = val - cost;
+        const gainPct = cost > 0 ? ((gain / cost) * 100).toFixed(2) : '0.00';
+        const costAvg = weight > 0 ? (cost / weight) : 0;
+        const priceNow = weight > 0 ? (val / weight) : 0;
+        const cur = state.currentCurrency;
         tbody.innerHTML += `<tr>
-          <td>Oro</td>
-          <td>${goldQuantity.toFixed(2)}g</td>
-          <td>${goldCurrent.toFixed(2)} ${state.currentCurrency}/g</td>
-          <td>${goldValue.toFixed(2)} ${state.currentCurrency}</td>
-          <td>${costAvg.toFixed(2)} CHF/g</td>
-          <td class="${gain >= 0 ? 'gain' : 'loss'}">${gain.toFixed(2)} (${gainPct}%)</td>
+          <td>${label}</td>
+          <td>${weight > 0 ? weight.toFixed(2) + 'g' : '&ndash;'}</td>
+          <td>${m === 'other' ? 'n/d' : priceNow.toFixed(2) + ' ' + cur + '/g'}</td>
+          <td>${val.toFixed(2)} ${cur}</td>
+          <td>${m === 'other' ? '&ndash;' : costAvg.toFixed(2) + ' ' + cur + '/g'}</td>
+          <td class="${gain >= 0 ? 'gain' : 'loss'}">${m === 'other' ? '&ndash;' : gain.toFixed(2) + ' (' + gainPct + '%)'}</td>
         </tr>`;
-      }
-
-      if (silverQuantity > 0) {
-        const costAvg = silverCostBasis / silverQuantity;
-        const gain = silverValue - silverCostBasis;
-        const gainPct = ((gain / silverCostBasis) * 100).toFixed(2);
-        tbody.innerHTML += `<tr>
-          <td>Argento</td>
-          <td>${silverQuantity.toFixed(2)}g</td>
-          <td>${silverCurrent.toFixed(2)} ${state.currentCurrency}/g</td>
-          <td>${silverValue.toFixed(2)} ${state.currentCurrency}</td>
-          <td>${costAvg.toFixed(2)} CHF/g</td>
-          <td class="${gain >= 0 ? 'gain' : 'loss'}">${gain.toFixed(2)} (${gainPct}%)</td>
-        </tr>`;
-      }
-
-      if (goldQuantity === 0 && silverQuantity === 0) {
+      });
+      if (!any) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#888;">Nessuna posizione. Aggiungi un nuovo acquisto dal tab "Nuovo Acquisto".</td></tr>';
       }
     }
@@ -637,36 +864,44 @@
       tbody.innerHTML = '';
       state.positions.forEach((pos, i) => {
         const currency = pos.priceCurrency || 'CHF';
-        const costInChf = pos.quantity * pos.price * (state.exchangeRates[currency] || 1);
+        const w = pos.quantity || 0;
+        const cChf = costChf(pos);
+        const costPerG = w > 0 ? (cChf / w) : 0;
+        const metalLabel = pos.metal === 'gold' ? 'Oro' : (pos.metal === 'silver' ? 'Argento' : 'Altro');
+        let titolo = '&ndash;';
+        if (pos.metal === 'gold') titolo = (pos.purity || 24) + 'k';
+        else if (pos.metal === 'silver') titolo = String(pos.purity || 999);
+        const descSafe = pos.description ? pos.description.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '&ndash;';
+        const photos = pos.photos || [];
+        let photoHtml = '<div class="photo-cell">';
+        photos.forEach((src, pi) => {
+          photoHtml += `<span class="photo-thumb"><img src="${src}" onclick="openLightbox(${i},${pi})"><button class="photo-del" onclick="removePhoto(${i},${pi})" title="Rimuovi foto">&times;</button></span>`;
+        });
+        photoHtml += `<button class="add-photo-btn" onclick="triggerAddPhotos(${i})" title="Aggiungi foto">+</button></div>`;
         tbody.innerHTML += `<tr>
-          <td>${pos.date}</td>
-          <td>${pos.metal === 'gold' ? 'Oro' : 'Argento'}</td>
-          <td>${pos.quantity.toFixed(2)}g</td>
-          <td>${pos.price.toFixed(2)}</td>
+          <td>${pos.date || ''}</td>
+          <td>${metalLabel}</td>
+          <td>${descSafe}</td>
+          <td>${titolo}</td>
+          <td>${w > 0 ? w.toFixed(2) + 'g' : '&ndash;'}</td>
+          <td>${(pos.price || 0).toFixed(2)}</td>
           <td>${currency}</td>
-          <td>${costInChf.toFixed(2)}</td>
+          <td>${w > 0 ? costPerG.toFixed(2) : '&ndash;'}</td>
+          <td>${photoHtml}</td>
           <td><button onclick="deletePosition(${i})" style="background:#f87171;color:white;border:none;padding:0.5rem;border-radius:4px;cursor:pointer;font-weight:600;">Elimina</button></td>
         </tr>`;
       });
     }
 
     function updateSummary() {
-      // Calcola costo totale in CHF
-      const totalCostInChf = state.positions.reduce((sum, p) => {
-        return sum + (p.quantity * p.price * (state.exchangeRates[p.priceCurrency] || 1));
-      }, 0);
-
-      // Calcola valore attuale
-      const goldQuantity = state.positions.filter(p => p.metal === 'gold').reduce((sum, p) => sum + p.quantity, 0);
-      const silverQuantity = state.positions.filter(p => p.metal === 'silver').reduce((sum, p) => sum + p.quantity, 0);
-
-      const goldValueInChf = goldQuantity * state.currentPrices.gold;
-      const silverValueInChf = silverQuantity * state.currentPrices.silver;
-      const totalValueInChf = goldValueInChf + silverValueInChf;
+      // Costo totale e valore attuale in CHF (con purezza per oro/argento; Altro a costo)
+      const totalCostInChf = state.positions.reduce((sum, p) => sum + costChf(p), 0);
+      const totalValueInChf = state.positions.reduce((sum, p) => sum + currentValueChf(p), 0);
 
       // Converti nella valuta selezionata
-      const totalValue = totalValueInChf * state.exchangeRates[state.currentCurrency];
-      const totalCost = totalCostInChf * state.exchangeRates[state.currentCurrency];
+      const rate = state.exchangeRates[state.currentCurrency] || 1;
+      const totalValue = totalValueInChf / rate;
+      const totalCost = totalCostInChf / rate;
 
       // Calcola gain/loss
       const gainLoss = totalValue - totalCost;
@@ -683,21 +918,28 @@
     let goldChartInstance = null;
     let silverChartInstance = null;
 
+    // Converte un punto storico in CHF/g (gestisce formato USD/oncia e legacy CHF/g)
+    function pointToChfPerG(h) {
+      const usdToChf = state.exchangeRates.USD || 0.80;
+      return {
+        gold: (h.goldUsd != null) ? (h.goldUsd * usdToChf / OZ_TO_G) : (h.gold != null ? h.gold : null),
+        silver: (h.silverUsd != null) ? (h.silverUsd * usdToChf / OZ_TO_G) : (h.silver != null ? h.silver : null)
+      };
+    }
+
     function getChartData() {
       const period = state.selectedPeriod;
       const now = new Date();
       const cutoffDate = new Date(now.getTime() - period * 24 * 60 * 60 * 1000);
 
-      let filteredHistory = state.priceHistory;
+      let filteredHistory = state.priceHistory.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
       if (period !== 'all') {
-        filteredHistory = state.priceHistory.filter(h => new Date(h.date) >= cutoffDate);
+        filteredHistory = filteredHistory.filter(h => new Date(h.date) >= cutoffDate);
       }
 
-      // Se non ci sono dati, crea dati di fallback
+      // Fallback: se il periodo scelto non ha punti, mostra gli ultimi disponibili
       if (filteredHistory.length === 0) {
-        filteredHistory = [
-          { date: new Date().toISOString().split('T')[0], gold: state.currentPrices.gold, silver: state.currentPrices.silver }
-        ];
+        filteredHistory = state.priceHistory.slice().sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-2);
       }
 
       const labels = filteredHistory.map(h => {
@@ -705,7 +947,8 @@
         return d.toLocaleDateString('it-IT', { month: 'short', day: 'numeric' });
       });
 
-      return { labels, data: filteredHistory };
+      const converted = filteredHistory.map(pointToChfPerG);
+      return { labels, data: converted };
     }
 
     function updateChart() {
@@ -774,6 +1017,129 @@
       }
     }
 
+    // ===== Foto articoli =====
+    let pendingPhotos = [];
+
+    function compressImage(file, maxDim, quality) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const img = new Image();
+          img.onload = () => {
+            let w = img.width, h = img.height;
+            if (w >= h && w > maxDim) { h = Math.round(h * maxDim / w); w = maxDim; }
+            else if (h > w && h > maxDim) { w = Math.round(w * maxDim / h); h = maxDim; }
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          };
+          img.onerror = reject;
+          img.src = ev.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function filesToCompressed(fileList) {
+      const out = [];
+      for (const f of Array.from(fileList)) {
+        if (!f.type || !f.type.startsWith('image/')) continue;
+        try { out.push(await compressImage(f, 1024, 0.7)); } catch (err) { console.log('img err', err); }
+      }
+      return out;
+    }
+
+    async function handlePhotoSelect(input) {
+      const imgs = await filesToCompressed(input.files);
+      pendingPhotos = pendingPhotos.concat(imgs);
+      renderPhotoPreview();
+      input.value = '';
+    }
+
+    function renderPhotoPreview() {
+      const c = document.getElementById('photoPreview');
+      c.innerHTML = '';
+      pendingPhotos.forEach((src, idx) => {
+        c.innerHTML += `<span class="photo-thumb"><img src="${src}" onclick="openLightboxSrc(this.src)"><button type="button" class="photo-del" onclick="removePendingPhoto(${idx})">&times;</button></span>`;
+      });
+    }
+
+    function removePendingPhoto(idx) {
+      pendingPhotos.splice(idx, 1);
+      renderPhotoPreview();
+    }
+
+    function triggerAddPhotos(index) {
+      const inp = document.createElement('input');
+      inp.type = 'file';
+      inp.accept = 'image/*';
+      inp.multiple = true;
+      inp.onchange = async () => {
+        const imgs = await filesToCompressed(inp.files);
+        if (!state.positions[index].photos) state.positions[index].photos = [];
+        state.positions[index].photos = state.positions[index].photos.concat(imgs);
+        saveData();
+        updateUI();
+      };
+      inp.click();
+    }
+
+    function removePhoto(index, photoIdx) {
+      if (!state.positions[index] || !state.positions[index].photos) return;
+      state.positions[index].photos.splice(photoIdx, 1);
+      saveData();
+      updateUI();
+    }
+
+    function openLightbox(index, photoIdx) {
+      const p = state.positions[index] && state.positions[index].photos;
+      if (p && p[photoIdx]) openLightboxSrc(p[photoIdx]);
+    }
+
+    function openLightboxSrc(src) {
+      document.getElementById('lightboxImg').src = src;
+      document.getElementById('lightbox').classList.add('open');
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+      document.getElementById('lightboxImg').src = '';
+    }
+
+    // ===== Prezzo live in evidenza sui grafici =====
+    function updateLivePrices() {
+      const rate = state.exchangeRates[state.currentCurrency] || 1;
+      const cur = state.currentCurrency;
+      const goldG = state.currentPrices.gold / rate;
+      const silverG = state.currentPrices.silver / rate;
+
+      const hist = state.priceHistory.slice()
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .map(pointToChfPerG);
+      function changePct(key) {
+        const pts = hist.filter(h => h[key] != null);
+        if (pts.length < 2) return null;
+        const last = pts[pts.length - 1][key];
+        const prev = pts[pts.length - 2][key];
+        if (prev == null || last == null || prev === 0) return null;
+        return ((last - prev) / prev) * 100;
+      }
+      function setBadge(priceId, changeId, subId, perG, pct) {
+        document.getElementById(priceId).textContent = perG.toFixed(2) + ' ' + cur + '/g';
+        document.getElementById(subId).textContent = '\u00b7 ' + (perG * OZ_TO_G).toFixed(0) + ' ' + cur + '/oncia';
+        const el = document.getElementById(changeId);
+        if (pct == null) { el.textContent = ''; el.style.background = 'transparent'; return; }
+        const up = pct >= 0;
+        el.textContent = (up ? '\u25b2 +' : '\u25bc ') + pct.toFixed(2) + '% oggi';
+        el.style.color = up ? '#4ade80' : '#f87171';
+        el.style.background = up ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
+      }
+      setBadge('goldLivePrice', 'goldLiveChange', 'goldLiveSub', goldG, changePct('gold'));
+      setBadge('silverLivePrice', 'silverLiveChange', 'silverLiveSub', silverG, changePct('silver'));
+    }
+
     function deletePosition(index) {
       state.positions.splice(index, 1);
       saveData();
@@ -781,10 +1147,15 @@
     }
 
     function exportCSV() {
-      let csv = 'Data,Metallo,Quantità,Prezzo,Valuta,Totale CHF\n';
+      let csv = 'Data,Metallo,Descrizione,Titolo,Peso(g),Prezzo Totale,Valuta,Costo/g CHF,Valore Attuale CHF\n';
       state.positions.forEach(pos => {
-        const costInChf = pos.quantity * pos.price * (state.exchangeRates[pos.priceCurrency] || 1);
-        csv += `${pos.date},${pos.metal},${pos.quantity},${pos.price},${pos.priceCurrency},${costInChf}\n`;
+        const costInChf = costChf(pos);
+        const w = pos.quantity || 0;
+        const costPerG = w > 0 ? (costInChf / w) : 0;
+        const valChf = currentValueChf(pos);
+        const titolo = pos.metal === 'gold' ? (pos.purity || 24) + 'k' : (pos.metal === 'silver' ? String(pos.purity || 999) : '');
+        const desc = (pos.description || '').replace(/,/g, ' ');
+        csv += `${pos.date},${pos.metal},${desc},${titolo},${w},${pos.price},${pos.priceCurrency},${costPerG.toFixed(2)},${valChf.toFixed(2)}\n`;
       });
       const link = document.createElement('a');
       link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
@@ -961,7 +1332,7 @@
           { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
         );
         const data = await downloadResponse.json();
-        state.positions = data.positions || [];
+        state.positions = migratePositions(data.positions || []);
         state.priceHistory = data.priceHistory || [];
         saveData();
         savePriceHistory();
@@ -988,6 +1359,7 @@
     // Initialize
     loadData();
     loadPriceHistory();
+    onMetalChange();
     fetchPrices();
     setInterval(fetchPrices, 60 * 1000); // Aggiorna ogni 60 secondi
     updateUI();
