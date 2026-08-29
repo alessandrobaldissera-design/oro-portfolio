@@ -468,8 +468,8 @@
     const state = {
       positions: [],
       currentCurrency: 'CHF',
-      currentPrices: { gold: 68.5, silver: 0.91 },
-      exchangeRates: { CHF: 1, EUR: 0.92, USD: 1.08 },
+      currentPrices: { gold: 115.0, silver: 1.72 },
+      exchangeRates: { CHF: 1, EUR: 0.94, USD: 0.88 },
       priceHistory: [], // Array di {date, gold, silver}
       selectedPeriod: 7
     };
@@ -477,28 +477,52 @@
     // Fetch real prices e aggiorna storico
     async function fetchPrices() {
       try {
-        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=gold,silver&vs_currencies=chf');
-        const data = await response.json();
-        const today = new Date().toISOString().split('T')[0];
+        // 1) Tassi di cambio live (base USD)
+        let usdToChf = state.exchangeRates.USD || 0.88;
+        try {
+          const fxRes = await fetch('https://api.frankfurter.dev/v1/latest?base=USD&symbols=CHF,EUR');
+          const fx = await fxRes.json();
+          if (fx && fx.rates && fx.rates.CHF) {
+            usdToChf = fx.rates.CHF;
+            state.exchangeRates.CHF = 1;
+            state.exchangeRates.USD = usdToChf;                                              // CHF per 1 USD
+            state.exchangeRates.EUR = fx.rates.EUR ? (usdToChf / fx.rates.EUR) : state.exchangeRates.EUR; // CHF per 1 EUR
+          }
+        } catch (fxErr) {
+          console.log('FX fallback:', fxErr);
+        }
+
+        // 2) Prezzi metalli reali in USD per oncia troy
+        const [goldRes, silverRes] = await Promise.all([
+          fetch('https://api.gold-api.com/price/XAU'),
+          fetch('https://api.gold-api.com/price/XAG')
+        ]);
+        const goldData = await goldRes.json();
+        const silverData = await silverRes.json();
+
+        const OZ_TO_G = 31.1035;
         let updated = false;
 
-        if (data && data.gold && data.gold.chf) {
-          const goldPrice = data.gold.chf / 31.1035;
-          state.currentPrices.gold = goldPrice;
+        if (goldData && goldData.price) {
+          state.currentPrices.gold = (goldData.price * usdToChf) / OZ_TO_G;   // CHF/g
           updated = true;
         }
-        if (data && data.silver && data.silver.chf) {
-          const silverPrice = data.silver.chf / 31.1035;
-          state.currentPrices.silver = silverPrice;
+        if (silverData && silverData.price) {
+          state.currentPrices.silver = (silverData.price * usdToChf) / OZ_TO_G; // CHF/g
           updated = true;
         }
 
         if (updated) {
-          // Aggiungi al storico se non già presente
-          if (!state.priceHistory.find(h => h.date === today)) {
+          // Aggiorna o aggiungi il punto storico di oggi
+          const today = new Date().toISOString().split('T')[0];
+          const existing = state.priceHistory.find(h => h.date === today);
+          if (existing) {
+            existing.gold = state.currentPrices.gold;
+            existing.silver = state.currentPrices.silver;
+          } else {
             state.priceHistory.push({ date: today, gold: state.currentPrices.gold, silver: state.currentPrices.silver });
-            savePriceHistory();
           }
+          savePriceHistory();
         }
       } catch (e) {
         console.log('API fallback:', e);
@@ -604,7 +628,7 @@
       }
 
       if (goldQuantity === 0 && silverQuantity === 0) {
-        document.getElementById('positionsContainer').innerHTML = '<div class="empty-state">Nessuna posizione. Aggiungi un nuovo acquisto dal tab "Nuovo Acquisto".</div>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#888;">Nessuna posizione. Aggiungi un nuovo acquisto dal tab "Nuovo Acquisto".</td></tr>';
       }
     }
 
