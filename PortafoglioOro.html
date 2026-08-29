@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#d4af37">
   <title>Portafoglio Oro</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     * {
       margin: 0;
@@ -230,16 +231,67 @@
       cursor: pointer;
       margin-top: 1rem;
     }
+
+    .sync-container {
+      background: rgba(212, 175, 55, 0.1);
+      border: 1px solid #d4af37;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .sync-btn {
+      background: #d4af37;
+      color: #0a0e27;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .sync-btn:hover {
+      background: #c9a961;
+    }
+
+    .sync-status {
+      color: #4ade80;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .sync-error {
+      color: #f87171;
+    }
+
+    .google-signin {
+      width: 100%;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <h1>Portafoglio Oro</h1>
-      <div class="currency-selector">
-        <button class="currency-btn active" data-currency="CHF">CHF</button>
-        <button class="currency-btn" data-currency="EUR">EUR</button>
-        <button class="currency-btn" data-currency="USD">USD</button>
+      <div style="display: flex; gap: 1rem; align-items: center;">
+        <div class="currency-selector">
+          <button class="currency-btn active" data-currency="CHF">CHF</button>
+          <button class="currency-btn" data-currency="EUR">EUR</button>
+          <button class="currency-btn" data-currency="USD">USD</button>
+        </div>
+        <div id="googleLoginContainer" style="display: none;">
+          <button id="googleSignIn" class="sync-btn" style="min-width: 100px; margin: 0;">Google Drive</button>
+        </div>
+        <div id="googleLoggedIn" style="display: none;">
+          <span id="userEmail" style="color: #d4af37; font-size: 0.9rem; margin-right: 0.5rem;"></span>
+          <button id="googleSignOut" class="sync-btn" style="min-width: 100px; margin: 0; padding: 0.5rem 1rem;">Esci</button>
+        </div>
       </div>
     </header>
 
@@ -262,7 +314,11 @@
       </div>
 
       <div class="chart-container">
-        <canvas id="priceChart"></canvas>
+        <canvas id="goldChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="silverChart"></canvas>
       </div>
 
       <div class="tabs">
@@ -284,6 +340,11 @@
           <tbody id="positionsTable"></tbody>
         </table>
         <button class="export-btn" onclick="exportCSV()">Esporta CSV</button>
+        <div class="sync-container" id="syncControls" style="display: none;">
+          <button class="sync-btn" onclick="syncToGoogleDrive()">💾 Sincronizza su Drive</button>
+          <button class="sync-btn" onclick="loadFromGoogleDrive()">📥 Carica da Drive</button>
+          <span id="syncStatus" class="sync-status"></span>
+        </div>
       </div>
 
       <div class="tab-content" id="new">
@@ -300,8 +361,11 @@
             <input type="number" id="quantity" step="0.01" required>
           </div>
           <div class="form-group">
-            <label>Prezzo Unitario (CHF)</label>
-            <input type="number" id="price" step="0.01" required>
+            <label>Prezzo Unitario</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="number" id="price" step="0.01" required style="flex: 1;">
+              <input type="text" id="priceCurrency" placeholder="CHF" style="width: 80px;" value="CHF">
+            </div>
           </div>
           <div class="form-group">
             <label>Data Acquisto</label>
@@ -330,6 +394,10 @@
   </div>
 
   <script>
+    // Google OAuth Configuration
+    const GOOGLE_CLIENT_ID = '747638907098-bpk0m9j5jc5v7kqk8lmnop9q8r9s0t1u.apps.googleusercontent.com';
+    let googleAccessToken = null;
+
     // App State
     const state = {
       positions: [],
@@ -374,11 +442,13 @@
       const metal = document.getElementById('metal').value;
       const quantity = parseFloat(document.getElementById('quantity').value);
       const price = parseFloat(document.getElementById('price').value);
+      const priceCurrency = document.getElementById('priceCurrency').value || 'CHF';
       const date = document.getElementById('date').value;
 
-      state.positions.push({ metal, quantity, price, date });
+      state.positions.push({ metal, quantity, price, priceCurrency, date });
       saveData();
       document.getElementById('new').querySelector('form').reset();
+      document.getElementById('priceCurrency').value = 'CHF';
       updateUI();
     }
 
@@ -410,8 +480,9 @@
       const tbody = document.getElementById('historyTable');
       tbody.innerHTML = '';
       state.positions.forEach((pos, i) => {
+        const currency = pos.priceCurrency || 'CHF';
         const total = pos.quantity * pos.price * state.exchangeRates[state.currentCurrency];
-        tbody.innerHTML += `<tr><td>${pos.date}</td><td>${pos.metal === 'gold' ? 'Oro' : 'Argento'}</td><td>${pos.quantity}</td><td>${(pos.price * state.exchangeRates[state.currentCurrency]).toFixed(2)}</td><td>${total.toFixed(2)}</td><td><button onclick="deletePosition(${i})" style="background:#f87171;color:white;border:none;padding:0.5rem;border-radius:4px;cursor:pointer">Elimina</button></td></tr>`;
+        tbody.innerHTML += `<tr><td>${pos.date}</td><td>${pos.metal === 'gold' ? 'Oro' : 'Argento'}</td><td>${pos.quantity}g</td><td>${pos.price.toFixed(2)} ${currency}</td><td>${total.toFixed(2)} ${state.currentCurrency}</td><td><button onclick="deletePosition(${i})" style="background:#f87171;color:white;border:none;padding:0.5rem;border-radius:4px;cursor:pointer">Elimina</button></td></tr>`;
       });
     }
 
@@ -435,11 +506,15 @@
       document.getElementById('positionCount').textContent = state.positions.length;
     }
 
+    let goldChartInstance = null;
+    let silverChartInstance = null;
+
     function updateChart() {
-      // Simple chart with placeholder data
-      const ctx = document.getElementById('priceChart')?.getContext('2d');
-      if (ctx) {
-        new Chart(ctx, {
+      // Oro Chart
+      const goldCtx = document.getElementById('goldChart')?.getContext('2d');
+      if (goldCtx) {
+        if (goldChartInstance) goldChartInstance.destroy();
+        goldChartInstance = new Chart(goldCtx, {
           type: 'line',
           data: {
             labels: ['30gg fa', '20gg fa', '10gg fa', 'Oggi'],
@@ -447,14 +522,48 @@
               label: 'Oro (CHF/g)',
               data: [65, 66, 67, state.currentPrices.gold],
               borderColor: '#d4af37',
-              tension: 0.3
+              backgroundColor: 'rgba(212, 175, 55, 0.1)',
+              tension: 0.3,
+              fill: true
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: { legend: { labels: { color: '#e0e0e0' } } },
-            scales: { y: { ticks: { color: '#888' }, grid: { color: '#1a1f3a' } }, x: { ticks: { color: '#888' }, grid: { color: '#1a1f3a' } } }
+            scales: { 
+              y: { ticks: { color: '#888' }, grid: { color: '#1a1f3a' } }, 
+              x: { ticks: { color: '#888' }, grid: { color: '#1a1f3a' } } 
+            }
+          }
+        });
+      }
+
+      // Argento Chart
+      const silverCtx = document.getElementById('silverChart')?.getContext('2d');
+      if (silverCtx) {
+        if (silverChartInstance) silverChartInstance.destroy();
+        silverChartInstance = new Chart(silverCtx, {
+          type: 'line',
+          data: {
+            labels: ['30gg fa', '20gg fa', '10gg fa', 'Oggi'],
+            datasets: [{
+              label: 'Argento (CHF/g)',
+              data: [0.85, 0.87, 0.89, state.currentPrices.silver],
+              borderColor: '#c0c0c0',
+              backgroundColor: 'rgba(192, 192, 192, 0.1)',
+              tension: 0.3,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#e0e0e0' } } },
+            scales: { 
+              y: { ticks: { color: '#888' }, grid: { color: '#1a1f3a' } }, 
+              x: { ticks: { color: '#888' }, grid: { color: '#1a1f3a' } } 
+            }
           }
         });
       }
@@ -497,10 +606,171 @@
       });
     });
 
+    // Google Drive Sync Functions
+    function initializeGoogleAuth() {
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse,
+        ux_mode: 'popup'
+      });
+
+      document.getElementById('googleSignIn')?.addEventListener('click', () => {
+        window.google.accounts.id.renderButton(
+          document.getElementById('googleSignIn'),
+          { theme: 'filled_blue', size: 'large' }
+        );
+        window.google.accounts.id.prompt();
+      });
+
+      document.getElementById('googleSignOut')?.addEventListener('click', () => {
+        window.google.accounts.id.disableAutoSelect();
+        googleAccessToken = null;
+        document.getElementById('googleLoggedIn').style.display = 'none';
+        document.getElementById('googleLoginContainer').style.display = 'block';
+        document.getElementById('syncControls').style.display = 'none';
+        localStorage.removeItem('googleAccessToken');
+      });
+
+      // Carica token salvato
+      const savedToken = localStorage.getItem('googleAccessToken');
+      if (savedToken) {
+        googleAccessToken = savedToken;
+        document.getElementById('googleLoginContainer').style.display = 'none';
+        document.getElementById('googleLoggedIn').style.display = 'flex';
+        document.getElementById('syncControls').style.display = 'flex';
+        document.getElementById('userEmail').textContent = localStorage.getItem('userEmail') || 'Google Drive';
+      } else {
+        document.getElementById('googleLoginContainer').style.display = 'block';
+        document.getElementById('googleLoggedIn').style.display = 'none';
+        document.getElementById('syncControls').style.display = 'none';
+      }
+    }
+
+    function handleCredentialResponse(response) {
+      googleAccessToken = response.credential;
+      const payload = JSON.parse(atob(response.credential.split('.')[1]));
+      localStorage.setItem('googleAccessToken', response.credential);
+      localStorage.setItem('userEmail', payload.email);
+      document.getElementById('userEmail').textContent = payload.email;
+      document.getElementById('googleLoginContainer').style.display = 'none';
+      document.getElementById('googleLoggedIn').style.display = 'flex';
+      document.getElementById('syncControls').style.display = 'flex';
+    }
+
+    async function syncToGoogleDrive() {
+      if (!googleAccessToken) {
+        alert('Per favore, accedi a Google Drive');
+        return;
+      }
+
+      const statusEl = document.getElementById('syncStatus');
+      statusEl.textContent = '⏳ Sincronizzazione...';
+      statusEl.className = 'sync-status';
+
+      try {
+        // Crea o aggiorna il file su Drive
+        const fileData = JSON.stringify(state.positions, null, 2);
+        const metadata = {
+          name: 'portafoglio-oro.json',
+          mimeType: 'application/json'
+        };
+
+        // Cerca se il file esiste già
+        const searchResponse = await fetch(
+          `https://www.googleapis.com/drive/v3/files?q=name='portafoglio-oro.json'&fields=files(id)`,
+          { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
+        );
+        const searchData = await searchResponse.json();
+        let fileId = searchData.files?.[0]?.id;
+
+        if (fileId) {
+          // Aggiorna file esistente
+          const updateResponse = await fetch(
+            `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+            {
+              method: 'PATCH',
+              headers: { 'Authorization': `Bearer ${googleAccessToken}` },
+              body: fileData
+            }
+          );
+          if (!updateResponse.ok) throw new Error('Aggiornamento fallito');
+        } else {
+          // Crea nuovo file
+          const createResponse = await fetch(
+            `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`,
+            {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${googleAccessToken}` },
+              body: `--boundary\nContent-Type: application/json\n\n${JSON.stringify(metadata)}\n--boundary\nContent-Type: application/json\n\n${fileData}\n--boundary--`
+            }
+          );
+          if (!createResponse.ok) throw new Error('Creazione fallita');
+        }
+
+        statusEl.textContent = '✅ Sincronizzato con Google Drive!';
+        setTimeout(() => { statusEl.textContent = ''; }, 3000);
+      } catch (error) {
+        statusEl.textContent = '❌ Errore: ' + error.message;
+        statusEl.className = 'sync-status sync-error';
+        console.error('Sync error:', error);
+      }
+    }
+
+    async function loadFromGoogleDrive() {
+      if (!googleAccessToken) {
+        alert('Per favore, accedi a Google Drive');
+        return;
+      }
+
+      const statusEl = document.getElementById('syncStatus');
+      statusEl.textContent = '⏳ Caricamento...';
+      statusEl.className = 'sync-status';
+
+      try {
+        // Cerca il file
+        const searchResponse = await fetch(
+          `https://www.googleapis.com/drive/v3/files?q=name='portafoglio-oro.json'&fields=files(id)`,
+          { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
+        );
+        const searchData = await searchResponse.json();
+        const fileId = searchData.files?.[0]?.id;
+
+        if (!fileId) {
+          throw new Error('File non trovato su Google Drive');
+        }
+
+        // Scarica il file
+        const downloadResponse = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+          { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
+        );
+        const data = await downloadResponse.json();
+        state.positions = data;
+        saveData();
+        updateUI();
+
+        statusEl.textContent = '✅ Dati caricati da Google Drive!';
+        setTimeout(() => { statusEl.textContent = ''; }, 3000);
+      } catch (error) {
+        statusEl.textContent = '❌ Errore: ' + error.message;
+        statusEl.className = 'sync-status sync-error';
+        console.error('Load error:', error);
+      }
+    }
+
+    // Initialize Google Auth quando il documento è caricato
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        if (window.google) {
+          initializeGoogleAuth();
+        }
+      }, 500);
+    });
+
     // Initialize
     loadData();
     fetchPrices();
-    setInterval(fetchPrices, 5 * 60 * 1000); // Aggiorna ogni 5 minuti
+    setInterval(fetchPrices, 60 * 1000); // Aggiorna ogni 60 secondi
     updateUI();
   </script>
 </body>
