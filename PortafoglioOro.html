@@ -239,6 +239,7 @@
     }
 
     .form-group input,
+    .form-group textarea,
     .form-group select {
       width: 100%;
       padding: 0.75rem;
@@ -250,7 +251,9 @@
       font-family: inherit;
     }
 
+    .form-group textarea { resize:vertical; min-height:72px; }
     .form-group input:focus,
+    .form-group textarea:focus,
     .form-group select:focus {
       outline: none;
       border-color: #c9a961;
@@ -449,7 +452,7 @@
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.9);
-      z-index: 1000;
+      z-index: 2000;
       align-items: center;
       justify-content: center;
       padding: 1rem;
@@ -503,16 +506,12 @@
     .refresh-btn:disabled { opacity: 0.5; cursor: default; }
       .history-hint { color:#8a90a8; font-size:0.85rem; margin:0 0 0.75rem; }
     #historyTable tr { cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
-    #historyTable tr.pressing td {
-      background-image: linear-gradient(to right, rgba(212,175,55,0.35), rgba(212,175,55,0.35));
-      background-repeat: no-repeat;
-      background-size: 0% 100%;
-      animation: pressFill 3s linear forwards;
-    }
-    @keyframes pressFill { to { background-size: 100% 100%; } }
+    #pressClock { position:fixed; width:40px; height:40px; border-radius:50%; z-index:1500; pointer-events:none; display:none; box-shadow:0 2px 10px rgba(0,0,0,0.45); background:conic-gradient(#d4af37 0deg, rgba(212,175,55,0.18) 0deg); }
+    #pressClock::after { content:''; position:absolute; inset:5px; border-radius:50%; background:#0f1220; }
+    #pressClock.on { display:block; }
     #detailModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:flex-start; justify-content:center; overflow-y:auto; padding:2rem 1rem; }
     #detailModal.open { display:flex; }
-    .detail-card { background:linear-gradient(135deg,#1a1f3a 0%,#0f1220 100%); color:#e0e0e0; border:1px solid rgba(212,175,55,0.3); border-radius:14px; padding:1.5rem; width:100%; max-width:460px; position:relative; box-shadow:0 10px 40px rgba(0,0,0,0.5); }
+    .detail-card { background:linear-gradient(135deg,#1a1f3a 0%,#0f1220 100%); color:#e0e0e0; border:1px solid rgba(212,175,55,0.3); border-radius:14px; padding:1.5rem; width:100%; max-width:640px; position:relative; box-shadow:0 10px 40px rgba(0,0,0,0.5); }
     .detail-close { position:absolute; top:0.6rem; right:0.9rem; background:none; border:none; font-size:1.7rem; line-height:1; cursor:pointer; color:#8a90a8; }
     .detail-title { margin:0 0 1.5rem; font-size:1.2rem; color:#d4af37; }
     .detail-actions { display:flex; flex-wrap:wrap; gap:0.6rem; margin-top:1rem; }
@@ -714,6 +713,7 @@
     </div>
   </div>
 
+  <div id="pressClock"></div>
   <div id="lightbox" onclick="closeLightbox()">
     <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
     <img id="lightboxImg" src="" alt="Foto articolo" onclick="event.stopPropagation()">
@@ -734,6 +734,10 @@
       <div class="form-group">
         <label>Descrizione</label>
         <input type="text" id="editDescription">
+      </div>
+      <div class="form-group">
+        <label>Note</label>
+        <textarea id="editNotes" rows="3" placeholder="Es. tiratura, provenienza, certificato, numero di serie..."></textarea>
       </div>
       <div class="form-group" id="editPurityGroup">
         <label id="editPurityLabel">Caratura</label>
@@ -776,7 +780,7 @@
     let googleAccessToken = null;
 
     // Storico reale prezzi metalli (USD/oncia troy) - ultimi 3 mesi (mercato COMEX)
-    const SEED_HISTORY = [{"date":"2026-05-29","goldUsd":4560.5,"silverUsd":75.62},{"date":"2026-06-01","goldUsd":4475.2,"silverUsd":75.01},{"date":"2026-06-02","goldUsd":4489.1,"silverUsd":75.31},{"date":"2026-06-03","goldUsd":4436.7,"silverUsd":73.48},{"date":"2026-06-04","goldUsd":4475.8,"silverUsd":73.78},{"date":"2026-06-05","goldUsd":4337.1,"silverUsd":68.94},{"date":"2026-06-08","goldUsd":4335.9,"silverUsd":68.43},{"date":"2026-06-09","goldUsd":4260,"silverUsd":65.09},{"date":"2026-06-10","goldUsd":4108.2,"silverUsd":64.6},{"date":"2026-06-11","goldUsd":4090.3,"silverUsd":63.88},{"date":"2026-06-12","goldUsd":4215,"silverUsd":67.86},{"date":"2026-06-15","goldUsd":4328,"silverUsd":70.07},{"date":"2026-06-16","goldUsd":4330.9,"silverUsd":69.9},{"date":"2026-06-17","goldUsd":4358.9,"silverUsd":70.7},{"date":"2026-06-18","goldUsd":4224.1,"silverUsd":66.25},{"date":"2026-06-22","goldUsd":4181.9,"silverUsd":65.53},{"date":"2026-06-23","goldUsd":4129.9,"silverUsd":62.02},{"date":"2026-06-24","goldUsd":3990.3,"silverUsd":58.05},{"date":"2026-06-25","goldUsd":4030.5,"silverUsd":58.35},{"date":"2026-06-26","goldUsd":4078.7,"silverUsd":59.22},{"date":"2026-06-29","goldUsd":4022.3,"silverUsd":58.17},{"date":"2026-06-30","goldUsd":4022.9,"silverUsd":59.48},{"date":"2026-07-01","goldUsd":4068.3,"silverUsd":60.08},{"date":"2026-07-02","goldUsd":4112.7,"silverUsd":60.64},{"date":"2026-07-06","goldUsd":4155.1,"silverUsd":61.92},{"date":"2026-07-07","goldUsd":4145.3,"silverUsd":60.93},{"date":"2026-07-08","goldUsd":4070.9,"silverUsd":58.16},{"date":"2026-07-09","goldUsd":4130.6,"silverUsd":60.38},{"date":"2026-07-10","goldUsd":4104.1,"silverUsd":59.81},{"date":"2026-07-13","goldUsd":3997,"silverUsd":57.63},{"date":"2026-07-14","goldUsd":4061.1,"silverUsd":58.77},{"date":"2026-07-15","goldUsd":4044,"silverUsd":57.11},{"date":"2026-07-16","goldUsd":3985.6,"silverUsd":55.9},{"date":"2026-07-17","goldUsd":4012.7,"silverUsd":56.04},{"date":"2026-07-20","goldUsd":4010.3,"silverUsd":56.8},{"date":"2026-07-21","goldUsd":4071.1,"silverUsd":58.83},{"date":"2026-07-22","goldUsd":4146.9,"silverUsd":60.02},{"date":"2026-07-23","goldUsd":4046.6,"silverUsd":57.8},{"date":"2026-07-24","goldUsd":4067.6,"silverUsd":58.66},{"date":"2026-07-27","goldUsd":4074.5,"silverUsd":58.47},{"date":"2026-07-28","goldUsd":4036.3,"silverUsd":57.3},{"date":"2026-07-29","goldUsd":4034.7,"silverUsd":57.86},{"date":"2026-07-30","goldUsd":4100.1,"silverUsd":58.81},{"date":"2026-07-31","goldUsd":4049.1,"silverUsd":57.59},{"date":"2026-08-03","goldUsd":4033.7,"silverUsd":57.67},{"date":"2026-08-04","goldUsd":4095.4,"silverUsd":60.06},{"date":"2026-08-05","goldUsd":4245.8,"silverUsd":62.1},{"date":"2026-08-06","goldUsd":4242,"silverUsd":61.44},{"date":"2026-08-07","goldUsd":4340.7,"silverUsd":63.33},{"date":"2026-08-10","goldUsd":4361.8,"silverUsd":65.11},{"date":"2026-08-11","goldUsd":4383,"silverUsd":64.77},{"date":"2026-08-12","goldUsd":4408.9,"silverUsd":65.56},{"date":"2026-08-13","goldUsd":4363.6,"silverUsd":64.87},{"date":"2026-08-14","goldUsd":4380.4,"silverUsd":64.99},{"date":"2026-08-17","goldUsd":4417.8,"silverUsd":66.12},{"date":"2026-08-18","goldUsd":4366,"silverUsd":63.94},{"date":"2026-08-19","goldUsd":4489.4,"silverUsd":65.73},{"date":"2026-08-20","goldUsd":4516.3,"silverUsd":68.03},{"date":"2026-08-21","goldUsd":4624.1,"silverUsd":69.47},{"date":"2026-08-24","goldUsd":4640.8,"silverUsd":68.54},{"date":"2026-08-25","goldUsd":4638.1,"silverUsd":68.64},{"date":"2026-08-26","goldUsd":4598.2,"silverUsd":67.99},{"date":"2026-08-27","goldUsd":4609.7,"silverUsd":69.43}];
+    const SEED_HISTORY = [{"date":"2025-08-28","goldUsd":3560.3,"silverUsd":67.24},{"date":"2025-08-29","goldUsd":3582.9,"silverUsd":66.8},{"date":"2025-09-01","goldUsd":3591.2,"silverUsd":66.63},{"date":"2025-09-02","goldUsd":3586.9,"silverUsd":67.11},{"date":"2025-09-03","goldUsd":3588.2,"silverUsd":67.21},{"date":"2025-09-04","goldUsd":3585.4,"silverUsd":67.16},{"date":"2025-09-05","goldUsd":3601,"silverUsd":66.69},{"date":"2025-09-08","goldUsd":3579.3,"silverUsd":66.14},{"date":"2025-09-09","goldUsd":3610.7,"silverUsd":66.17},{"date":"2025-09-10","goldUsd":3610.6,"silverUsd":66.19},{"date":"2025-09-11","goldUsd":3618.5,"silverUsd":66.45},{"date":"2025-09-12","goldUsd":3645,"silverUsd":66.68},{"date":"2025-09-15","goldUsd":3667.9,"silverUsd":66.99},{"date":"2025-09-16","goldUsd":3671.7,"silverUsd":67.07},{"date":"2025-09-17","goldUsd":3681.9,"silverUsd":67.2},{"date":"2025-09-18","goldUsd":3693.9,"silverUsd":66.66},{"date":"2025-09-19","goldUsd":3708.9,"silverUsd":66.44},{"date":"2025-09-22","goldUsd":3716.5,"silverUsd":66.91},{"date":"2025-09-23","goldUsd":3700.6,"silverUsd":67.08},{"date":"2025-09-24","goldUsd":3716.3,"silverUsd":66.59},{"date":"2025-09-25","goldUsd":3700.2,"silverUsd":66.43},{"date":"2025-09-26","goldUsd":3717.8,"silverUsd":66.12},{"date":"2025-09-29","goldUsd":3700.2,"silverUsd":66.4},{"date":"2025-09-30","goldUsd":3720.3,"silverUsd":66},{"date":"2025-10-01","goldUsd":3723.7,"silverUsd":65.84},{"date":"2025-10-02","goldUsd":3753.3,"silverUsd":65.75},{"date":"2025-10-03","goldUsd":3741.7,"silverUsd":66.11},{"date":"2025-10-06","goldUsd":3757.9,"silverUsd":65.63},{"date":"2025-10-07","goldUsd":3755.8,"silverUsd":65.19},{"date":"2025-10-08","goldUsd":3750.3,"silverUsd":65.87},{"date":"2025-10-09","goldUsd":3762.5,"silverUsd":65.74},{"date":"2025-10-10","goldUsd":3784.7,"silverUsd":66.4},{"date":"2025-10-13","goldUsd":3791.5,"silverUsd":66.66},{"date":"2025-10-14","goldUsd":3772.1,"silverUsd":66.39},{"date":"2025-10-15","goldUsd":3767.1,"silverUsd":66.37},{"date":"2025-10-16","goldUsd":3770.2,"silverUsd":65.74},{"date":"2025-10-17","goldUsd":3758.1,"silverUsd":65.81},{"date":"2025-10-20","goldUsd":3774.4,"silverUsd":66.26},{"date":"2025-10-21","goldUsd":3751.9,"silverUsd":66.14},{"date":"2025-10-22","goldUsd":3741,"silverUsd":66.3},{"date":"2025-10-23","goldUsd":3723.4,"silverUsd":66.27},{"date":"2025-10-24","goldUsd":3753,"silverUsd":66.48},{"date":"2025-10-27","goldUsd":3735,"silverUsd":66.81},{"date":"2025-10-28","goldUsd":3768.2,"silverUsd":67.32},{"date":"2025-10-29","goldUsd":3753.2,"silverUsd":67.88},{"date":"2025-10-30","goldUsd":3752.4,"silverUsd":67.75},{"date":"2025-10-31","goldUsd":3735.1,"silverUsd":68.13},{"date":"2025-11-03","goldUsd":3707.7,"silverUsd":67.97},{"date":"2025-11-04","goldUsd":3728.7,"silverUsd":67.34},{"date":"2025-11-05","goldUsd":3741.3,"silverUsd":67.43},{"date":"2025-11-06","goldUsd":3731.6,"silverUsd":67.66},{"date":"2025-11-07","goldUsd":3707.5,"silverUsd":67.33},{"date":"2025-11-10","goldUsd":3718.8,"silverUsd":67.43},{"date":"2025-11-11","goldUsd":3711.6,"silverUsd":67.75},{"date":"2025-11-12","goldUsd":3686.3,"silverUsd":68.35},{"date":"2025-11-13","goldUsd":3669.8,"silverUsd":68.82},{"date":"2025-11-14","goldUsd":3680.9,"silverUsd":69.06},{"date":"2025-11-17","goldUsd":3689.6,"silverUsd":68.92},{"date":"2025-11-18","goldUsd":3707.5,"silverUsd":69.41},{"date":"2025-11-19","goldUsd":3720.1,"silverUsd":69.79},{"date":"2025-11-20","goldUsd":3711.7,"silverUsd":69.92},{"date":"2025-11-21","goldUsd":3706.6,"silverUsd":70.19},{"date":"2025-11-24","goldUsd":3722.6,"silverUsd":70.83},{"date":"2025-11-25","goldUsd":3703.7,"silverUsd":71.28},{"date":"2025-11-26","goldUsd":3693.4,"silverUsd":70.73},{"date":"2025-11-27","goldUsd":3713.5,"silverUsd":70.14},{"date":"2025-11-28","goldUsd":3737.2,"silverUsd":70.64},{"date":"2025-12-01","goldUsd":3717.9,"silverUsd":70.56},{"date":"2025-12-02","goldUsd":3730.2,"silverUsd":70.66},{"date":"2025-12-03","goldUsd":3760.4,"silverUsd":71.03},{"date":"2025-12-04","goldUsd":3773.3,"silverUsd":70.39},{"date":"2025-12-05","goldUsd":3770,"silverUsd":70.11},{"date":"2025-12-08","goldUsd":3769.9,"silverUsd":69.93},{"date":"2025-12-09","goldUsd":3775.3,"silverUsd":70.17},{"date":"2025-12-10","goldUsd":3776.5,"silverUsd":69.9},{"date":"2025-12-11","goldUsd":3761.6,"silverUsd":70.31},{"date":"2025-12-12","goldUsd":3786,"silverUsd":70.85},{"date":"2025-12-15","goldUsd":3815.5,"silverUsd":71.06},{"date":"2025-12-16","goldUsd":3799,"silverUsd":71.54},{"date":"2025-12-17","goldUsd":3823.5,"silverUsd":71.15},{"date":"2025-12-18","goldUsd":3848.2,"silverUsd":71.7},{"date":"2025-12-19","goldUsd":3877.9,"silverUsd":71.26},{"date":"2025-12-22","goldUsd":3882.1,"silverUsd":71.95},{"date":"2025-12-23","goldUsd":3881.6,"silverUsd":72.58},{"date":"2025-12-24","goldUsd":3874.8,"silverUsd":72.99},{"date":"2025-12-25","goldUsd":3899.1,"silverUsd":72.62},{"date":"2025-12-26","goldUsd":3927.5,"silverUsd":72.28},{"date":"2025-12-29","goldUsd":3939.7,"silverUsd":72.57},{"date":"2025-12-30","goldUsd":3947.4,"silverUsd":72.82},{"date":"2025-12-31","goldUsd":3969.1,"silverUsd":72.64},{"date":"2026-01-01","goldUsd":3979.4,"silverUsd":72.85},{"date":"2026-01-02","goldUsd":3980.6,"silverUsd":73.29},{"date":"2026-01-05","goldUsd":4008.2,"silverUsd":73.45},{"date":"2026-01-06","goldUsd":3986.4,"silverUsd":74.07},{"date":"2026-01-07","goldUsd":3968.4,"silverUsd":73.84},{"date":"2026-01-08","goldUsd":3972.6,"silverUsd":74.24},{"date":"2026-01-09","goldUsd":3998.3,"silverUsd":74.28},{"date":"2026-01-12","goldUsd":3984.5,"silverUsd":74.59},{"date":"2026-01-13","goldUsd":3979,"silverUsd":74.38},{"date":"2026-01-14","goldUsd":3977.8,"silverUsd":75.05},{"date":"2026-01-15","goldUsd":3954.5,"silverUsd":74.81},{"date":"2026-01-16","goldUsd":3951.5,"silverUsd":74.95},{"date":"2026-01-19","goldUsd":3932.2,"silverUsd":75.45},{"date":"2026-01-20","goldUsd":3954.9,"silverUsd":76.02},{"date":"2026-01-21","goldUsd":3946.9,"silverUsd":75.72},{"date":"2026-01-22","goldUsd":3959.8,"silverUsd":75.89},{"date":"2026-01-23","goldUsd":3955.8,"silverUsd":76.44},{"date":"2026-01-26","goldUsd":3934,"silverUsd":76.82},{"date":"2026-01-27","goldUsd":3936.5,"silverUsd":76.37},{"date":"2026-01-28","goldUsd":3925.8,"silverUsd":75.76},{"date":"2026-01-29","goldUsd":3929.3,"silverUsd":75.55},{"date":"2026-01-30","goldUsd":3905.2,"silverUsd":74.99},{"date":"2026-02-02","goldUsd":3906,"silverUsd":75.64},{"date":"2026-02-03","goldUsd":3884,"silverUsd":75.92},{"date":"2026-02-04","goldUsd":3908.2,"silverUsd":76.24},{"date":"2026-02-05","goldUsd":3937.9,"silverUsd":76.27},{"date":"2026-02-06","goldUsd":3954.1,"silverUsd":75.85},{"date":"2026-02-09","goldUsd":3971.1,"silverUsd":76.13},{"date":"2026-02-10","goldUsd":3962.2,"silverUsd":75.77},{"date":"2026-02-11","goldUsd":3939.8,"silverUsd":75.53},{"date":"2026-02-12","goldUsd":3969.8,"silverUsd":75.23},{"date":"2026-02-13","goldUsd":3967.3,"silverUsd":74.59},{"date":"2026-02-16","goldUsd":3955.4,"silverUsd":74.81},{"date":"2026-02-17","goldUsd":3987,"silverUsd":75.17},{"date":"2026-02-18","goldUsd":4018.6,"silverUsd":75.25},{"date":"2026-02-19","goldUsd":4020.7,"silverUsd":75.87},{"date":"2026-02-20","goldUsd":4038.5,"silverUsd":76.07},{"date":"2026-02-23","goldUsd":4057.6,"silverUsd":75.93},{"date":"2026-02-24","goldUsd":4076.1,"silverUsd":76.51},{"date":"2026-02-25","goldUsd":4096.4,"silverUsd":76.01},{"date":"2026-02-26","goldUsd":4118.5,"silverUsd":76.57},{"date":"2026-02-27","goldUsd":4147.6,"silverUsd":76.8},{"date":"2026-03-02","goldUsd":4159,"silverUsd":76.17},{"date":"2026-03-03","goldUsd":4153.1,"silverUsd":75.76},{"date":"2026-03-04","goldUsd":4156.9,"silverUsd":76.42},{"date":"2026-03-05","goldUsd":4140.9,"silverUsd":76.7},{"date":"2026-03-06","goldUsd":4161.9,"silverUsd":76.66},{"date":"2026-03-09","goldUsd":4189.8,"silverUsd":76.75},{"date":"2026-03-10","goldUsd":4182,"silverUsd":77.15},{"date":"2026-03-11","goldUsd":4210.6,"silverUsd":76.65},{"date":"2026-03-12","goldUsd":4214.8,"silverUsd":77.2},{"date":"2026-03-13","goldUsd":4206.7,"silverUsd":77.22},{"date":"2026-03-16","goldUsd":4207.1,"silverUsd":76.67},{"date":"2026-03-17","goldUsd":4222.1,"silverUsd":77.06},{"date":"2026-03-18","goldUsd":4233.2,"silverUsd":77.33},{"date":"2026-03-19","goldUsd":4220.5,"silverUsd":77.34},{"date":"2026-03-20","goldUsd":4195.2,"silverUsd":77.85},{"date":"2026-03-23","goldUsd":4214.6,"silverUsd":78.32},{"date":"2026-03-24","goldUsd":4195.4,"silverUsd":77.83},{"date":"2026-03-25","goldUsd":4191.7,"silverUsd":77.62},{"date":"2026-03-26","goldUsd":4174.7,"silverUsd":77.54},{"date":"2026-03-27","goldUsd":4190.3,"silverUsd":77.35},{"date":"2026-03-30","goldUsd":4204.9,"silverUsd":77.9},{"date":"2026-03-31","goldUsd":4194.2,"silverUsd":77.29},{"date":"2026-04-01","goldUsd":4221.4,"silverUsd":76.77},{"date":"2026-04-02","goldUsd":4211.9,"silverUsd":76.53},{"date":"2026-04-03","goldUsd":4234.3,"silverUsd":76.96},{"date":"2026-04-06","goldUsd":4209.3,"silverUsd":76.34},{"date":"2026-04-07","goldUsd":4213.6,"silverUsd":76.56},{"date":"2026-04-08","goldUsd":4201.6,"silverUsd":76.35},{"date":"2026-04-09","goldUsd":4188.6,"silverUsd":77.03},{"date":"2026-04-10","goldUsd":4203.3,"silverUsd":76.74},{"date":"2026-04-13","goldUsd":4216.5,"silverUsd":76.46},{"date":"2026-04-14","goldUsd":4208.3,"silverUsd":76.81},{"date":"2026-04-15","goldUsd":4183.6,"silverUsd":76.73},{"date":"2026-04-16","goldUsd":4167,"silverUsd":77.15},{"date":"2026-04-17","goldUsd":4169,"silverUsd":77.11},{"date":"2026-04-20","goldUsd":4196.3,"silverUsd":77.2},{"date":"2026-04-21","goldUsd":4217,"silverUsd":77.56},{"date":"2026-04-22","goldUsd":4231.5,"silverUsd":77.72},{"date":"2026-04-23","goldUsd":4257.4,"silverUsd":77.88},{"date":"2026-04-24","goldUsd":4262,"silverUsd":78.48},{"date":"2026-04-27","goldUsd":4291.3,"silverUsd":78.76},{"date":"2026-04-28","goldUsd":4295.7,"silverUsd":78.21},{"date":"2026-04-29","goldUsd":4318.6,"silverUsd":78.1},{"date":"2026-04-30","goldUsd":4341.9,"silverUsd":77.53},{"date":"2026-05-01","goldUsd":4355.7,"silverUsd":77.22},{"date":"2026-05-04","goldUsd":4375.7,"silverUsd":77.01},{"date":"2026-05-05","goldUsd":4391.4,"silverUsd":77.02},{"date":"2026-05-06","goldUsd":4420.8,"silverUsd":76.95},{"date":"2026-05-07","goldUsd":4425.6,"silverUsd":77.3},{"date":"2026-05-08","goldUsd":4422.4,"silverUsd":76.82},{"date":"2026-05-11","goldUsd":4438.7,"silverUsd":76.46},{"date":"2026-05-12","goldUsd":4433.8,"silverUsd":76.11},{"date":"2026-05-13","goldUsd":4465.9,"silverUsd":76},{"date":"2026-05-14","goldUsd":4458.7,"silverUsd":75.69},{"date":"2026-05-15","goldUsd":4484.1,"silverUsd":75.87},{"date":"2026-05-18","goldUsd":4485,"silverUsd":76.53},{"date":"2026-05-19","goldUsd":4499.3,"silverUsd":76.23},{"date":"2026-05-20","goldUsd":4519,"silverUsd":75.6},{"date":"2026-05-21","goldUsd":4533.7,"silverUsd":75.82},{"date":"2026-05-22","goldUsd":4541.3,"silverUsd":75.59},{"date":"2026-05-25","goldUsd":4528.6,"silverUsd":75.73},{"date":"2026-05-26","goldUsd":4540.5,"silverUsd":76.15},{"date":"2026-05-27","goldUsd":4527.5,"silverUsd":75.52},{"date":"2026-05-28","goldUsd":4555,"silverUsd":75.4},{"date":"2026-05-29","goldUsd":4560.5,"silverUsd":75.62},{"date":"2026-06-01","goldUsd":4475.2,"silverUsd":75.01},{"date":"2026-06-02","goldUsd":4489.1,"silverUsd":75.31},{"date":"2026-06-03","goldUsd":4436.7,"silverUsd":73.48},{"date":"2026-06-04","goldUsd":4475.8,"silverUsd":73.78},{"date":"2026-06-05","goldUsd":4337.1,"silverUsd":68.94},{"date":"2026-06-08","goldUsd":4335.9,"silverUsd":68.43},{"date":"2026-06-09","goldUsd":4260,"silverUsd":65.09},{"date":"2026-06-10","goldUsd":4108.2,"silverUsd":64.6},{"date":"2026-06-11","goldUsd":4090.3,"silverUsd":63.88},{"date":"2026-06-12","goldUsd":4215,"silverUsd":67.86},{"date":"2026-06-15","goldUsd":4328,"silverUsd":70.07},{"date":"2026-06-16","goldUsd":4330.9,"silverUsd":69.9},{"date":"2026-06-17","goldUsd":4358.9,"silverUsd":70.7},{"date":"2026-06-18","goldUsd":4224.1,"silverUsd":66.25},{"date":"2026-06-22","goldUsd":4181.9,"silverUsd":65.53},{"date":"2026-06-23","goldUsd":4129.9,"silverUsd":62.02},{"date":"2026-06-24","goldUsd":3990.3,"silverUsd":58.05},{"date":"2026-06-25","goldUsd":4030.5,"silverUsd":58.35},{"date":"2026-06-26","goldUsd":4078.7,"silverUsd":59.22},{"date":"2026-06-29","goldUsd":4022.3,"silverUsd":58.17},{"date":"2026-06-30","goldUsd":4022.9,"silverUsd":59.48},{"date":"2026-07-01","goldUsd":4068.3,"silverUsd":60.08},{"date":"2026-07-02","goldUsd":4112.7,"silverUsd":60.64},{"date":"2026-07-06","goldUsd":4155.1,"silverUsd":61.92},{"date":"2026-07-07","goldUsd":4145.3,"silverUsd":60.93},{"date":"2026-07-08","goldUsd":4070.9,"silverUsd":58.16},{"date":"2026-07-09","goldUsd":4130.6,"silverUsd":60.38},{"date":"2026-07-10","goldUsd":4104.1,"silverUsd":59.81},{"date":"2026-07-13","goldUsd":3997,"silverUsd":57.63},{"date":"2026-07-14","goldUsd":4061.1,"silverUsd":58.77},{"date":"2026-07-15","goldUsd":4044,"silverUsd":57.11},{"date":"2026-07-16","goldUsd":3985.6,"silverUsd":55.9},{"date":"2026-07-17","goldUsd":4012.7,"silverUsd":56.04},{"date":"2026-07-20","goldUsd":4010.3,"silverUsd":56.8},{"date":"2026-07-21","goldUsd":4071.1,"silverUsd":58.83},{"date":"2026-07-22","goldUsd":4146.9,"silverUsd":60.02},{"date":"2026-07-23","goldUsd":4046.6,"silverUsd":57.8},{"date":"2026-07-24","goldUsd":4067.6,"silverUsd":58.66},{"date":"2026-07-27","goldUsd":4074.5,"silverUsd":58.47},{"date":"2026-07-28","goldUsd":4036.3,"silverUsd":57.3},{"date":"2026-07-29","goldUsd":4034.7,"silverUsd":57.86},{"date":"2026-07-30","goldUsd":4100.1,"silverUsd":58.81},{"date":"2026-07-31","goldUsd":4049.1,"silverUsd":57.59},{"date":"2026-08-03","goldUsd":4033.7,"silverUsd":57.67},{"date":"2026-08-04","goldUsd":4095.4,"silverUsd":60.06},{"date":"2026-08-05","goldUsd":4245.8,"silverUsd":62.1},{"date":"2026-08-06","goldUsd":4242,"silverUsd":61.44},{"date":"2026-08-07","goldUsd":4340.7,"silverUsd":63.33},{"date":"2026-08-10","goldUsd":4361.8,"silverUsd":65.11},{"date":"2026-08-11","goldUsd":4383,"silverUsd":64.77},{"date":"2026-08-12","goldUsd":4408.9,"silverUsd":65.56},{"date":"2026-08-13","goldUsd":4363.6,"silverUsd":64.87},{"date":"2026-08-14","goldUsd":4380.4,"silverUsd":64.99},{"date":"2026-08-17","goldUsd":4417.8,"silverUsd":66.12},{"date":"2026-08-18","goldUsd":4366,"silverUsd":63.94},{"date":"2026-08-19","goldUsd":4489.4,"silverUsd":65.73},{"date":"2026-08-20","goldUsd":4516.3,"silverUsd":68.03},{"date":"2026-08-21","goldUsd":4624.1,"silverUsd":69.47},{"date":"2026-08-24","goldUsd":4640.8,"silverUsd":68.54},{"date":"2026-08-25","goldUsd":4638.1,"silverUsd":68.64},{"date":"2026-08-26","goldUsd":4598.2,"silverUsd":67.99},{"date":"2026-08-27","goldUsd":4609.7,"silverUsd":69.43}];
 
     const OZ_TO_G = 31.1035;
 
@@ -941,8 +945,15 @@
       // Precarica lo storico reale se manca o e' troppo scarno
       if (!state.priceHistory || state.priceHistory.length < 2) {
         state.priceHistory = SEED_HISTORY.slice();
-        savePriceHistory();
+      } else {
+        // Unisci il backfill precaricato con i punti gia' salvati (per le date mancanti)
+        const byDate = {};
+        SEED_HISTORY.forEach(function (h) { byDate[h.date] = h; });
+        state.priceHistory.forEach(function (h) { byDate[h.date] = h; });
+        state.priceHistory = Object.keys(byDate).map(function (k) { return byDate[k]; })
+          .sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
       }
+      savePriceHistory();
     }
 
     // Salva storico prezzi
@@ -1419,6 +1430,7 @@
       editState = JSON.parse(JSON.stringify(p));
       document.getElementById('editMetal').value = editState.metal || 'gold';
       document.getElementById('editDescription').value = editState.description || '';
+      document.getElementById('editNotes').value = editState.notes || '';
       onEditMetalChange();
       if (editState.metal !== 'other' && editState.purity != null) {
         document.getElementById('editPurity').value = editState.purity;
@@ -1483,6 +1495,7 @@
       const metal = document.getElementById('editMetal').value;
       editState.metal = metal;
       editState.description = (document.getElementById('editDescription').value || '').trim();
+      editState.notes = (document.getElementById('editNotes').value || '').trim();
       editState.quantity = parseFloat(document.getElementById('editQuantity').value) || 0;
       const pr = parseFloat(document.getElementById('editPrice').value);
       editState.price = isNaN(pr) ? 0 : pr;
@@ -1510,27 +1523,45 @@
       editState = null;
     }
 
-    // Pressione prolungata (3 secondi) su una riga per aprirne il dettaglio
+    // Pressione prolungata (2 secondi) su una riga per aprirne il dettaglio
     (function setupLongPress() {
       const body = document.getElementById('historyTable');
       if (!body) return;
-      let timer = null, row = null;
+      const clock = document.getElementById('pressClock');
+      const DURATION = 2000;
+      let timer = null, raf = null, startT = 0;
+      function place(e) {
+        const x = (e.touches ? e.touches[0].clientX : e.clientX);
+        const y = (e.touches ? e.touches[0].clientY : e.clientY);
+        clock.style.left = (x - 20) + 'px';
+        clock.style.top = (y - 20) + 'px';
+      }
+      function tick(now) {
+        const frac = Math.min((now - startT) / DURATION, 1);
+        const deg = frac * 360;
+        clock.style.background = 'conic-gradient(#d4af37 ' + deg + 'deg, rgba(212,175,55,0.18) ' + deg + 'deg)';
+        if (frac < 1) raf = requestAnimationFrame(tick);
+      }
       function start(e) {
         const tr = e.target.closest('tr[data-idx]');
         if (!tr) return;
-        row = tr;
-        tr.classList.add('pressing');
+        place(e);
+        clock.classList.add('on');
+        startT = performance.now();
+        clock.style.background = 'conic-gradient(#d4af37 0deg, rgba(212,175,55,0.18) 0deg)';
+        raf = requestAnimationFrame(tick);
         timer = setTimeout(function () {
-          tr.classList.remove('pressing');
-          timer = null; row = null;
+          cancel();
           openDetail(parseInt(tr.dataset.idx, 10));
-        }, 3000);
+        }, DURATION);
       }
       function cancel() {
         if (timer) { clearTimeout(timer); timer = null; }
-        if (row) { row.classList.remove('pressing'); row = null; }
+        if (raf) { cancelAnimationFrame(raf); raf = null; }
+        clock.classList.remove('on');
       }
       body.addEventListener('pointerdown', start);
+      body.addEventListener('pointermove', function (e) { if (timer) place(e); });
       body.addEventListener('pointerup', cancel);
       body.addEventListener('pointerleave', cancel);
       body.addEventListener('pointercancel', cancel);
