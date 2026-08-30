@@ -116,6 +116,35 @@
       color: #0a0e27;
     }
 
+    .karat-selector {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.6rem;
+      align-items: center;
+    }
+    .karat-selector .karat-label {
+      color: #d4af37;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-right: 0.2rem;
+    }
+    .karat-btn {
+      background: transparent;
+      border: 1px solid #d4af37;
+      color: #e0e0e0;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      border-radius: 4px;
+      font-weight: 600;
+      transition: all 0.3s;
+      font-size: 0.8rem;
+    }
+    .karat-btn.active {
+      background: #d4af37;
+      color: #0a0e27;
+    }
+
     .chart-container {
       background: linear-gradient(135deg, #1a1f3a 0%, #0f1220 100%);
       border: 1px solid #d4af37;
@@ -472,6 +501,24 @@
       font-size: 0.85rem;
     }
     .refresh-btn:disabled { opacity: 0.5; cursor: default; }
+      .history-hint { color:#8a90a8; font-size:0.85rem; margin:0 0 0.75rem; }
+    #historyTable tr { cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+    #historyTable tr.pressing td {
+      background-image: linear-gradient(to right, rgba(212,175,55,0.35), rgba(212,175,55,0.35));
+      background-repeat: no-repeat;
+      background-size: 0% 100%;
+      animation: pressFill 3s linear forwards;
+    }
+    @keyframes pressFill { to { background-size: 100% 100%; } }
+    #detailModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:flex-start; justify-content:center; overflow-y:auto; padding:2rem 1rem; }
+    #detailModal.open { display:flex; }
+    .detail-card { background:linear-gradient(135deg,#1a1f3a 0%,#0f1220 100%); color:#e0e0e0; border:1px solid rgba(212,175,55,0.3); border-radius:14px; padding:1.5rem; width:100%; max-width:460px; position:relative; box-shadow:0 10px 40px rgba(0,0,0,0.5); }
+    .detail-close { position:absolute; top:0.6rem; right:0.9rem; background:none; border:none; font-size:1.7rem; line-height:1; cursor:pointer; color:#8a90a8; }
+    .detail-title { margin:0 0 1.5rem; font-size:1.2rem; color:#d4af37; }
+    .detail-actions { display:flex; flex-wrap:wrap; gap:0.6rem; margin-top:1rem; }
+    .detail-actions .btn { width:auto; padding:0.7rem 1.2rem; }
+    .btn-secondary { background:rgba(212,175,55,0.12); color:#e0e0e0; border:1px solid rgba(212,175,55,0.4); padding:0.7rem 1.2rem; border-radius:8px; cursor:pointer; font-weight:600; }
+    .btn-danger { background:#f87171; color:#fff; border:none; padding:0.7rem 1.2rem; border-radius:8px; cursor:pointer; font-weight:700; margin-left:auto; }
   </style>
 </head>
 <body>
@@ -534,10 +581,20 @@
 
       <div class="chart-card">
         <div class="chart-live-header">
-          <span class="chart-metal-name">Oro</span>
+          <span class="chart-metal-name" id="goldMetalName">Oro</span>
           <span class="chart-live-price" id="goldLivePrice">&ndash;</span>
           <span class="chart-live-change" id="goldLiveChange"></span>
           <span class="chart-live-sub" id="goldLiveSub"></span>
+        </div>
+        <div class="karat-selector" id="karatSelector">
+          <span class="karat-label">Caratura grafico:</span>
+          <button class="karat-btn active" data-karat="24">24k</button>
+          <button class="karat-btn" data-karat="22">22k</button>
+          <button class="karat-btn" data-karat="21">21k</button>
+          <button class="karat-btn" data-karat="18">18k</button>
+          <button class="karat-btn" data-karat="14">14k</button>
+          <button class="karat-btn" data-karat="10">10k</button>
+          <button class="karat-btn" data-karat="9">9k</button>
         </div>
         <div class="chart-canvas-wrap">
           <canvas id="goldChart"></canvas>
@@ -558,8 +615,8 @@
 
       <div class="tabs">
         <button class="tab-btn active" data-tab="overview">Panoramica</button>
-        <button class="tab-btn" data-tab="new">Nuovo Acquisto</button>
         <button class="tab-btn" data-tab="history">Storico</button>
+        <button class="tab-btn" data-tab="new">Nuovo Acquisto</button>
       </div>
 
       <div class="tab-content active" id="overview">
@@ -636,6 +693,7 @@
       </div>
 
       <div class="tab-content" id="history">
+        <p class="history-hint">Tieni premuto 3 secondi su una posizione per aprirla, modificarla o eliminarla.</p>
         <table>
           <thead>
             <tr>
@@ -647,8 +705,7 @@
               <th>Prezzo Tot.</th>
               <th>Valuta</th>
               <th>Costo/g (CHF)</th>
-              <th>Foto</th>
-              <th>Azione</th>
+              <th>Valore att. (CHF)</th>
             </tr>
           </thead>
           <tbody id="historyTable"></tbody>
@@ -660,6 +717,57 @@
   <div id="lightbox" onclick="closeLightbox()">
     <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
     <img id="lightboxImg" src="" alt="Foto articolo" onclick="event.stopPropagation()">
+  </div>
+
+  <div id="detailModal" onclick="closeDetail()">
+    <div class="detail-card" onclick="event.stopPropagation()">
+      <button class="detail-close" onclick="closeDetail()" title="Chiudi">&times;</button>
+      <h2 class="detail-title">Dettaglio posizione</h2>
+      <div class="form-group">
+        <label>Metallo</label>
+        <select id="editMetal" onchange="onEditMetalChange()">
+          <option value="gold">Oro</option>
+          <option value="silver">Argento</option>
+          <option value="other">Altro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Descrizione</label>
+        <input type="text" id="editDescription">
+      </div>
+      <div class="form-group" id="editPurityGroup">
+        <label id="editPurityLabel">Caratura</label>
+        <select id="editPurity"></select>
+      </div>
+      <div class="form-group">
+        <label>Peso totale (grammi)</label>
+        <input type="number" id="editQuantity" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Prezzo Totale Pagato</label>
+        <div style="display:flex; gap:0.5rem;">
+          <input type="number" id="editPrice" step="0.01" style="flex:1;">
+          <select id="editCurrency" style="width:90px; padding:0.5rem; border-radius:6px;">
+            <option value="CHF">CHF</option>
+            <option value="EUR">EUR</option>
+            <option value="USD">USD</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Data Acquisto</label>
+        <input type="date" id="editDate">
+      </div>
+      <div class="form-group">
+        <label>Foto articolo</label>
+        <div class="photo-preview" id="editPhotoPreview"></div>
+      </div>
+      <div class="detail-actions">
+        <button class="btn" onclick="saveDetail()">Salva modifiche</button>
+        <button class="btn-secondary" onclick="closeDetail()">Annulla</button>
+        <button class="btn-danger" onclick="deleteFromDetail()">Elimina posizione</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -680,6 +788,7 @@
       exchangeRates: { CHF: 1, EUR: 0.93, USD: 0.80 },
       priceHistory: [], // Array di {date, gold, silver}
       selectedPeriod: 30,
+      goldKarat: 24,
       lastUpdate: null,
       lastUpdateOk: false,
       syncBusy: false
@@ -1011,7 +1120,7 @@
           photoHtml += `<span class="photo-thumb"><img src="${src}" onclick="openLightbox(${i},${pi})"><button class="photo-del" onclick="removePhoto(${i},${pi})" title="Rimuovi foto">&times;</button></span>`;
         });
         photoHtml += `<button class="add-photo-btn" onclick="triggerAddPhotos(${i})" title="Aggiungi foto">+</button></div>`;
-        tbody.innerHTML += `<tr>
+        tbody.innerHTML += `<tr data-idx="${i}">
           <td>${formatDate(pos.date)}</td>
           <td>${metalLabel}</td>
           <td>${descSafe}</td>
@@ -1020,8 +1129,7 @@
           <td>${(pos.price || 0).toFixed(2)}</td>
           <td>${currency}</td>
           <td>${w > 0 ? costPerG.toFixed(2) : '&ndash;'}</td>
-          <td>${photoHtml}</td>
-          <td><button onclick="deletePosition(${i})" style="background:#f87171;color:white;border:none;padding:0.5rem;border-radius:4px;cursor:pointer;font-weight:600;">Elimina</button></td>
+          <td>${currentValueChf(pos).toFixed(2)}</td>
         </tr>`;
       });
     }
@@ -1096,8 +1204,8 @@
           data: {
             labels: chartData.labels,
             datasets: [{
-              label: `Oro (CHF/g)`,
-              data: chartData.data.map(h => h.gold),
+              label: `Oro ${state.goldKarat}k (CHF/g)`,
+              data: chartData.data.map(h => h.gold == null ? null : h.gold * (state.goldKarat / 24)),
               borderColor: '#d4af37',
               backgroundColor: 'rgba(212, 175, 55, 0.1)',
               tension: 0.3,
@@ -1269,7 +1377,10 @@
         el.style.color = up ? '#4ade80' : '#f87171';
         el.style.background = up ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
       }
-      setBadge('goldLivePrice', 'goldLiveChange', 'goldLiveSub', goldG, changePct('gold'));
+      const kf = state.goldKarat / 24;
+      const gmn = document.getElementById('goldMetalName');
+      if (gmn) gmn.textContent = state.goldKarat === 24 ? 'Oro' : 'Oro ' + state.goldKarat + 'k';
+      setBadge('goldLivePrice', 'goldLiveChange', 'goldLiveSub', goldG * kf, changePct('gold'));
       setBadge('silverLivePrice', 'silverLiveChange', 'silverLiveSub', silverG, changePct('silver'));
     }
 
@@ -1296,6 +1407,136 @@
       link.download = 'portafoglio-oro.csv';
       link.click();
     }
+
+    // === Dettaglio / modifica posizione (v9) ===
+    let editIndex = null;
+    let editState = null;
+
+    function openDetail(index) {
+      const p = state.positions[index];
+      if (!p) return;
+      editIndex = index;
+      editState = JSON.parse(JSON.stringify(p));
+      document.getElementById('editMetal').value = editState.metal || 'gold';
+      document.getElementById('editDescription').value = editState.description || '';
+      onEditMetalChange();
+      if (editState.metal !== 'other' && editState.purity != null) {
+        document.getElementById('editPurity').value = editState.purity;
+      }
+      document.getElementById('editQuantity').value = (editState.quantity != null ? editState.quantity : '');
+      document.getElementById('editPrice').value = (editState.price != null ? editState.price : '');
+      document.getElementById('editCurrency').value = (editState.priceCurrency || 'CHF');
+      document.getElementById('editDate').value = editState.date || '';
+      renderEditPhotos();
+      document.getElementById('detailModal').classList.add('open');
+    }
+
+    function onEditMetalChange() {
+      const metal = document.getElementById('editMetal').value;
+      const pg = document.getElementById('editPurityGroup');
+      const psel = document.getElementById('editPurity');
+      const plabel = document.getElementById('editPurityLabel');
+      const qInput = document.getElementById('editQuantity');
+      if (metal === 'other') { pg.style.display = 'none'; qInput.required = false; return; }
+      pg.style.display = '';
+      qInput.required = true;
+      let opts = '';
+      if (metal === 'gold') {
+        plabel.textContent = 'Caratura';
+        [24, 22, 21, 18, 14, 10, 9].forEach(function (k) { opts += '<option value="' + k + '">' + k + 'k</option>'; });
+      } else {
+        plabel.textContent = 'Titolo (millesimi)';
+        [['999', '999 (fino)'], ['925', '925 (sterling)'], ['900', '900'], ['835', '835'], ['800', '800']].forEach(function (o) { opts += '<option value="' + o[0] + '">' + o[1] + '</option>'; });
+      }
+      psel.innerHTML = opts;
+    }
+
+    function renderEditPhotos() {
+      const c = document.getElementById('editPhotoPreview');
+      c.innerHTML = '';
+      (editState.photos || []).forEach(function (src, idx) {
+        c.innerHTML += `<span class="photo-thumb"><img src="${src}" onclick="openLightboxSrc(this.src)"><button type="button" class="photo-del" onclick="editRemovePhoto(${idx})">&times;</button></span>`;
+      });
+      c.innerHTML += `<button type="button" class="add-photo-btn" onclick="editAddPhotos()" title="Aggiungi foto">+</button>`;
+    }
+
+    function editAddPhotos() {
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true;
+      inp.onchange = async function () {
+        const imgs = await filesToCompressed(inp.files);
+        if (!editState.photos) editState.photos = [];
+        editState.photos = editState.photos.concat(imgs);
+        renderEditPhotos();
+      };
+      inp.click();
+    }
+
+    function editRemovePhoto(idx) {
+      if (!editState.photos) return;
+      editState.photos.splice(idx, 1);
+      renderEditPhotos();
+    }
+
+    function saveDetail() {
+      if (editIndex == null || !editState) return;
+      const metal = document.getElementById('editMetal').value;
+      editState.metal = metal;
+      editState.description = (document.getElementById('editDescription').value || '').trim();
+      editState.quantity = parseFloat(document.getElementById('editQuantity').value) || 0;
+      const pr = parseFloat(document.getElementById('editPrice').value);
+      editState.price = isNaN(pr) ? 0 : pr;
+      editState.priceCurrency = (document.getElementById('editCurrency').value || 'CHF').toUpperCase();
+      editState.purity = metal === 'other' ? null : parseFloat(document.getElementById('editPurity').value);
+      editState.date = document.getElementById('editDate').value;
+      state.positions[editIndex] = editState;
+      saveData();
+      closeDetail();
+      updateUI();
+    }
+
+    function deleteFromDetail() {
+      if (editIndex == null) return;
+      if (!confirm('Eliminare definitivamente questa posizione?')) return;
+      state.positions.splice(editIndex, 1);
+      saveData();
+      closeDetail();
+      updateUI();
+    }
+
+    function closeDetail() {
+      document.getElementById('detailModal').classList.remove('open');
+      editIndex = null;
+      editState = null;
+    }
+
+    // Pressione prolungata (3 secondi) su una riga per aprirne il dettaglio
+    (function setupLongPress() {
+      const body = document.getElementById('historyTable');
+      if (!body) return;
+      let timer = null, row = null;
+      function start(e) {
+        const tr = e.target.closest('tr[data-idx]');
+        if (!tr) return;
+        row = tr;
+        tr.classList.add('pressing');
+        timer = setTimeout(function () {
+          tr.classList.remove('pressing');
+          timer = null; row = null;
+          openDetail(parseInt(tr.dataset.idx, 10));
+        }, 3000);
+      }
+      function cancel() {
+        if (timer) { clearTimeout(timer); timer = null; }
+        if (row) { row.classList.remove('pressing'); row = null; }
+      }
+      body.addEventListener('pointerdown', start);
+      body.addEventListener('pointerup', cancel);
+      body.addEventListener('pointerleave', cancel);
+      body.addEventListener('pointercancel', cancel);
+      body.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    })();
+
 
     // Tab switching
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1324,6 +1565,17 @@
         e.target.classList.add('active');
         state.selectedPeriod = e.target.dataset.period === 'all' ? 'all' : parseInt(e.target.dataset.period);
         updateChart();
+      });
+    });
+
+    // Karat switching (solo grafico Oro)
+    document.querySelectorAll('.karat-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.karat-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        state.goldKarat = parseInt(e.target.dataset.karat);
+        updateChart();
+        updateLivePrices();
       });
     });
 
