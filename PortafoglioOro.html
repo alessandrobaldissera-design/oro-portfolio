@@ -511,6 +511,23 @@
     #pressClock.on { display:block; }
     #detailModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:flex-start; justify-content:center; overflow-y:auto; padding:2rem 1rem; }
     #detailModal.open { display:flex; }
+    .sales-section { border-top:1px solid rgba(212,175,55,0.25); margin-top:1rem; padding-top:1rem; }
+    .sales-title { color:#d4af37; font-size:1rem; margin:0 0 0.5rem; }
+    .sales-remaining { font-size:0.9rem; color:#c9cee0; margin-bottom:0.75rem; }
+    .sales-empty { color:#8a90a8; font-size:0.9rem; font-style:italic; margin-bottom:0.75rem; }
+    .sale-item { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:0.6rem 0.75rem; margin-bottom:0.5rem; }
+    .sale-item-head { display:flex; justify-content:space-between; align-items:center; gap:0.5rem; font-size:0.9rem; }
+    .sale-item-detail { font-size:0.82rem; color:#aab0c6; margin-top:0.35rem; }
+    .sale-del { background:transparent; border:none; color:#f87171; font-size:1.3rem; line-height:1; cursor:pointer; padding:0 0.25rem; }
+    .sale-total { margin-top:0.5rem; font-weight:600; font-size:0.92rem; }
+    .sale-form { background:rgba(212,175,55,0.06); border:1px dashed rgba(212,175,55,0.3); border-radius:8px; padding:0.75rem; margin-top:0.75rem; }
+    .sale-form-row { display:flex; flex-wrap:wrap; gap:0.5rem; }
+    .sale-field { display:flex; flex-direction:column; flex:1 1 120px; }
+    .sale-field label { font-size:0.78rem; color:#aab0c6; margin-bottom:0.2rem; }
+    .sale-field input, .sale-field select { padding:0.45rem; border-radius:6px; border:1px solid rgba(255,255,255,0.15); background:#0f1220; color:#e0e0e0; }
+    .sale-field-cur { flex:0 0 80px; }
+    .btn-sale-add { margin-top:0.6rem; background:#d4af37; color:#1a1f3a; border:none; padding:0.5rem 1rem; border-radius:6px; font-weight:600; cursor:pointer; }
+    .sold-badge { background:rgba(248,113,113,0.15); color:#f87171; font-size:0.72em; padding:0.1em 0.45em; border-radius:6px; vertical-align:middle; }
     .detail-card { background:linear-gradient(135deg,#1a1f3a 0%,#0f1220 100%); color:#e0e0e0; border:1px solid rgba(212,175,55,0.3); border-radius:14px; padding:1.5rem; width:100%; max-width:640px; position:relative; box-shadow:0 10px 40px rgba(0,0,0,0.5); }
     .detail-close { position:absolute; top:0.6rem; right:0.9rem; background:none; border:none; font-size:1.7rem; line-height:1; cursor:pointer; color:#8a90a8; }
     .detail-title { margin:0 0 1.5rem; font-size:1.2rem; color:#d4af37; }
@@ -557,7 +574,7 @@
           <div class="currency" id="totalCurrency">CHF</div>
         </div>
         <div class="card">
-          <h3>Guadagno / Perdita</h3>
+          <h3>Andamento</h3>
           <div class="value" id="gainLoss" style="color: #d4af37;">0.00</div>
           <div class="currency" id="gainLossPct">0%</div>
         </div>
@@ -602,10 +619,18 @@
 
       <div class="chart-card">
         <div class="chart-live-header">
-          <span class="chart-metal-name">Argento</span>
+          <span class="chart-metal-name" id="silverMetalName">Argento</span>
           <span class="chart-live-price" id="silverLivePrice">&ndash;</span>
           <span class="chart-live-change" id="silverLiveChange"></span>
           <span class="chart-live-sub" id="silverLiveSub"></span>
+        </div>
+        <div class="karat-selector" id="silverPuritySelector">
+          <span class="karat-label">Titolo grafico:</span>
+          <button class="karat-btn active" data-purity="999">999</button>
+          <button class="karat-btn" data-purity="925">925</button>
+          <button class="karat-btn" data-purity="900">900</button>
+          <button class="karat-btn" data-purity="835">835</button>
+          <button class="karat-btn" data-purity="800">800</button>
         </div>
         <div class="chart-canvas-wrap">
           <canvas id="silverChart"></canvas>
@@ -766,6 +791,20 @@
         <label>Foto articolo</label>
         <div class="photo-preview" id="editPhotoPreview"></div>
       </div>
+      <div class="sales-section">
+        <h3 class="sales-title">Vendite / Movimenti</h3>
+        <div class="sales-remaining" id="editRemainingInfo"></div>
+        <div id="editSalesList"></div>
+        <div class="sale-form">
+          <div class="sale-form-row">
+            <div class="sale-field"><label>Grammi venduti</label><input type="number" id="saleGrams" step="0.01" min="0"></div>
+            <div class="sale-field"><label>Prezzo di vendita</label><input type="number" id="salePrice" step="0.01" min="0"></div>
+            <div class="sale-field sale-field-cur"><label>Valuta</label><select id="saleCurrency"><option value="CHF">CHF</option><option value="EUR">EUR</option><option value="USD">USD</option></select></div>
+            <div class="sale-field"><label>Data</label><input type="date" id="saleDate"></div>
+          </div>
+          <button type="button" class="btn-sale-add" onclick="editAddSale()">Aggiungi vendita</button>
+        </div>
+      </div>
       <div class="detail-actions">
         <button class="btn" onclick="saveDetail()">Salva modifiche</button>
         <button class="btn-secondary" onclick="closeDetail()">Annulla</button>
@@ -793,6 +832,7 @@
       priceHistory: [], // Array di {date, gold, silver}
       selectedPeriod: 30,
       goldKarat: 24,
+      silverPurity: 999,
       lastUpdate: null,
       lastUpdateOk: false,
       syncBusy: false
@@ -1024,12 +1064,40 @@
       const cur = (p.priceCurrency || 'CHF').toUpperCase();
       return (p.price || 0) * (state.exchangeRates[cur] || 1);
     }
-    // Valore attuale in CHF (per Altro = costo, nessuna quotazione live)
+    // Grammi venduti e residui
+    function soldGrams(p) { return (p.sales || []).reduce((s, x) => s + (parseFloat(x.grams) || 0), 0); }
+    function remainingQty(p) { return Math.max(0, (p.quantity || 0) - soldGrams(p)); }
+    // Costo di carico proporzionale al residuo (in CHF)
+    function costChfRemaining(p) {
+      const q = p.quantity || 0;
+      if (q <= 0) return costChf(p);
+      return costChf(p) * (remainingQty(p) / q);
+    }
+    // Incasso di una vendita in CHF
+    function saleProceedsChf(sale) {
+      const cur = (sale.currency || 'CHF').toUpperCase();
+      return (parseFloat(sale.price) || 0) * (state.exchangeRates[cur] || 1);
+    }
+    // Costo di carico della quota venduta in CHF
+    function saleBasisChf(p, sale) {
+      const q = p.quantity || 0;
+      if (q <= 0) return 0;
+      return costChf(p) * ((parseFloat(sale.grams) || 0) / q);
+    }
+    // Plusvalenza realizzata su una posizione (CHF)
+    function realizedGainChf(p) {
+      return (p.sales || []).reduce((s, sale) => s + (saleProceedsChf(sale) - saleBasisChf(p, sale)), 0);
+    }
+    // Plusvalenza realizzata totale del portafoglio (CHF)
+    function totalRealizedChf() {
+      return state.positions.reduce((s, p) => s + realizedGainChf(p), 0);
+    }
+    // Valore attuale in CHF del residuo (per Altro = costo, nessuna quotazione live)
     function currentValueChf(p) {
       const f = purityFraction(p);
       if (f === null) return costChf(p);
       const spot = p.metal === 'gold' ? state.currentPrices.gold : state.currentPrices.silver;
-      return (p.quantity || 0) * f * spot;
+      return remainingQty(p) * f * spot;
     }
     // Popola caratura/titolo in base al metallo e gestisce "Altro"
     function onMetalChange() {
@@ -1081,8 +1149,8 @@
         const ps = state.positions.filter(p => p.metal === m);
         if (ps.length === 0) return;
         any = true;
-        const weight = ps.reduce((s, p) => s + (p.quantity || 0), 0);
-        const cost = ps.reduce((s, p) => s + costChf(p), 0) / rate;
+        const weight = ps.reduce((s, p) => s + remainingQty(p), 0);
+        const cost = ps.reduce((s, p) => s + costChfRemaining(p), 0) / rate;
         const val = ps.reduce((s, p) => s + currentValueChf(p), 0) / rate;
         const gain = val - cost;
         const gainPct = cost > 0 ? ((gain / cost) * 100).toFixed(2) : '0.00';
@@ -1118,6 +1186,8 @@
       rows.forEach(({ pos, idx: i }) => {
         const currency = pos.priceCurrency || 'CHF';
         const w = pos.quantity || 0;
+        const wRem = remainingQty(pos);
+        const sold = soldGrams(pos);
         const cChf = costChf(pos);
         const costPerG = w > 0 ? (cChf / w) : 0;
         const metalLabel = pos.metal === 'gold' ? 'Oro' : (pos.metal === 'silver' ? 'Argento' : 'Altro');
@@ -1136,7 +1206,7 @@
           <td>${metalLabel}</td>
           <td>${descSafe}</td>
           <td>${titolo}</td>
-          <td>${w > 0 ? w.toFixed(2) + 'g' : '&ndash;'}</td>
+          <td>${w > 0 ? (sold > 0 ? wRem.toFixed(2) + 'g <span style="color:#8a90a8;font-size:0.8em">/' + w.toFixed(2) + '</span>' : w.toFixed(2) + 'g') : '&ndash;'}${wRem <= 0 && w > 0 ? ' <span class="sold-badge">venduto</span>' : ''}</td>
           <td>${(pos.price || 0).toFixed(2)}</td>
           <td>${currency}</td>
           <td>${w > 0 ? costPerG.toFixed(2) : '&ndash;'}</td>
@@ -1146,8 +1216,8 @@
     }
 
     function updateSummary() {
-      // Costo totale e valore attuale in CHF (con purezza per oro/argento; Altro a costo)
-      const totalCostInChf = state.positions.reduce((sum, p) => sum + costChf(p), 0);
+      // Costo del residuo e valore attuale in CHF (con purezza per oro/argento; Altro a costo)
+      const totalCostInChf = state.positions.reduce((sum, p) => sum + costChfRemaining(p), 0);
       const totalValueInChf = state.positions.reduce((sum, p) => sum + currentValueChf(p), 0);
 
       // Converti nella valuta selezionata
@@ -1246,8 +1316,8 @@
           data: {
             labels: chartData.labels,
             datasets: [{
-              label: `Argento (CHF/g)`,
-              data: chartData.data.map(h => h.silver),
+              label: state.silverPurity === 999 ? `Argento (CHF/g)` : `Argento ${state.silverPurity}\u2030 (CHF/g)`,
+              data: chartData.data.map(h => h.silver == null ? null : h.silver * (state.silverPurity / 1000)),
               borderColor: '#c0c0c0',
               backgroundColor: 'rgba(192, 192, 192, 0.1)',
               tension: 0.3,
@@ -1391,8 +1461,11 @@
       const kf = state.goldKarat / 24;
       const gmn = document.getElementById('goldMetalName');
       if (gmn) gmn.textContent = state.goldKarat === 24 ? 'Oro' : 'Oro ' + state.goldKarat + 'k';
+      const sf = state.silverPurity / 1000;
+      const smn = document.getElementById('silverMetalName');
+      if (smn) smn.textContent = state.silverPurity === 999 ? 'Argento' : 'Argento ' + state.silverPurity + '\u2030';
       setBadge('goldLivePrice', 'goldLiveChange', 'goldLiveSub', goldG * kf, changePct('gold'));
-      setBadge('silverLivePrice', 'silverLiveChange', 'silverLiveSub', silverG, changePct('silver'));
+      setBadge('silverLivePrice', 'silverLiveChange', 'silverLiveSub', silverG * sf, changePct('silver'));
     }
 
     function deletePosition(index) {
@@ -1440,6 +1513,7 @@
       document.getElementById('editCurrency').value = (editState.priceCurrency || 'CHF');
       document.getElementById('editDate').value = editState.date || '';
       renderEditPhotos();
+      renderEditSales();
       document.getElementById('detailModal').classList.add('open');
     }
 
@@ -1488,6 +1562,70 @@
       if (!editState.photos) return;
       editState.photos.splice(idx, 1);
       renderEditPhotos();
+    }
+
+    function renderEditSales() {
+      if (!editState) return;
+      const p = editState;
+      const q = p.quantity || 0;
+      const sold = (p.sales || []).reduce((s, x) => s + (parseFloat(x.grams) || 0), 0);
+      const rem = Math.max(0, q - sold);
+      const info = document.getElementById('editRemainingInfo');
+      info.innerHTML = 'Peso acquistato: <b>' + q.toFixed(2) + ' g</b> &middot; Venduto: <b>' + sold.toFixed(2) + ' g</b> &middot; Residuo: <b style="color:#d4af37">' + rem.toFixed(2) + ' g</b>';
+      const list = document.getElementById('editSalesList');
+      list.innerHTML = '';
+      if (!(p.sales && p.sales.length)) {
+        list.innerHTML = '<div class="sales-empty">Nessuna vendita registrata.</div>';
+        return;
+      }
+      let totReal = 0;
+      p.sales.forEach(function (sale, idx) {
+        const cur = (sale.currency || 'CHF').toUpperCase();
+        const proceedsChf = (parseFloat(sale.price) || 0) * (state.exchangeRates[cur] || 1);
+        const g = parseFloat(sale.grams) || 0;
+        const basisChf = q > 0 ? costChf(p) * (g / q) : 0;
+        const gainChf = proceedsChf - basisChf;
+        totReal += gainChf;
+        const pct = basisChf > 0 ? (gainChf / basisChf * 100) : 0;
+        const cls = gainChf >= 0 ? 'gain' : 'loss';
+        const esito = gainChf >= 0 ? 'Guadagno' : 'Perdita';
+        list.innerHTML += '<div class="sale-item">' +
+          '<div class="sale-item-head">' +
+            '<span>' + formatDate(sale.date) + ' &middot; <b>' + g.toFixed(2) + ' g</b> a <b>' + (parseFloat(sale.price) || 0).toFixed(2) + ' ' + cur + '</b></span>' +
+            '<button type="button" class="sale-del" onclick="editRemoveSale(' + idx + ')" title="Rimuovi vendita">&times;</button>' +
+          '</div>' +
+          '<div class="sale-item-detail">Costo di carico: ' + basisChf.toFixed(2) + ' CHF &middot; Incasso: ' + proceedsChf.toFixed(2) + ' CHF' +
+            '<span class="' + cls + '"> &middot; ' + esito + ': ' + (gainChf >= 0 ? '+' : '') + gainChf.toFixed(2) + ' CHF (' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%)</span>' +
+          '</div>' +
+        '</div>';
+      });
+      list.innerHTML += '<div class="sale-total ' + (totReal >= 0 ? 'gain' : 'loss') + '">Guadagno realizzato totale: ' + (totReal >= 0 ? '+' : '') + totReal.toFixed(2) + ' CHF</div>';
+    }
+
+    function editAddSale() {
+      if (!editState) return;
+      const g = parseFloat(document.getElementById('saleGrams').value);
+      const pr = parseFloat(document.getElementById('salePrice').value);
+      const cur = (document.getElementById('saleCurrency').value || 'CHF').toUpperCase();
+      const dt = document.getElementById('saleDate').value;
+      if (!g || g <= 0) { alert('Inserisci i grammi venduti.'); return; }
+      const q = editState.quantity || 0;
+      const sold = (editState.sales || []).reduce(function (s, x) { return s + (parseFloat(x.grams) || 0); }, 0);
+      const rem = q - sold;
+      if (q > 0 && g > rem + 1e-9) { alert('Non puoi vendere piu dei ' + rem.toFixed(2) + ' g residui.'); return; }
+      if (isNaN(pr) || pr < 0) { alert('Inserisci il prezzo di vendita.'); return; }
+      if (!editState.sales) editState.sales = [];
+      editState.sales.push({ grams: g, price: pr, currency: cur, date: dt || new Date().toISOString().slice(0, 10) });
+      document.getElementById('saleGrams').value = '';
+      document.getElementById('salePrice').value = '';
+      document.getElementById('saleDate').value = '';
+      renderEditSales();
+    }
+
+    function editRemoveSale(idx) {
+      if (!editState || !editState.sales) return;
+      editState.sales.splice(idx, 1);
+      renderEditSales();
     }
 
     function saveDetail() {
@@ -1599,12 +1737,23 @@
       });
     });
 
-    // Karat switching (solo grafico Oro)
-    document.querySelectorAll('.karat-btn').forEach(btn => {
+    // Karat switching (grafico Oro)
+    document.querySelectorAll('#karatSelector .karat-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.karat-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#karatSelector .karat-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
         state.goldKarat = parseInt(e.target.dataset.karat);
+        updateChart();
+        updateLivePrices();
+      });
+    });
+
+    // Titolo switching (grafico Argento)
+    document.querySelectorAll('#silverPuritySelector .karat-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('#silverPuritySelector .karat-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        state.silverPurity = parseInt(e.target.dataset.purity);
         updateChart();
         updateLivePrices();
       });
