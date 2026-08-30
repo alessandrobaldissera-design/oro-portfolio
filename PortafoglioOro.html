@@ -193,6 +193,15 @@
     .gain { color: #4ade80; }
     .loss { color: #f87171; }
 
+    .andamento-badge {
+      display: inline-block;
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+      margin-top: 0.5rem;
+    }
+
     .tabs {
       display: flex;
       gap: 1rem;
@@ -575,8 +584,8 @@
         </div>
         <div class="card">
           <h3>Andamento</h3>
-          <div class="value" id="gainLoss" style="color: #d4af37;">0.00</div>
-          <div class="currency" id="gainLossPct">0%</div>
+          <div class="value" id="gainLoss">0.00</div>
+          <span class="andamento-badge" id="gainLossPct"></span>
         </div>
         <div class="card">
           <h3>Posizioni Attive</h3>
@@ -1231,9 +1240,14 @@
 
       document.getElementById('totalValue').textContent = totalValue.toFixed(2);
       document.getElementById('totalCurrency').textContent = state.currentCurrency;
-      document.getElementById('gainLoss').textContent = gainLoss.toFixed(2);
-      document.getElementById('gainLoss').className = 'value ' + (gainLoss >= 0 ? 'gain' : 'loss');
-      document.getElementById('gainLossPct').textContent = gainLossPct + '%';
+      const glUp = gainLoss >= 0;
+      const glEl = document.getElementById('gainLoss');
+      glEl.textContent = (glUp ? '+' : '') + gainLoss.toFixed(2);
+      glEl.className = 'value ' + (glUp ? 'gain' : 'loss');
+      const glBadge = document.getElementById('gainLossPct');
+      glBadge.textContent = (glUp ? '\u25b2 +' : '\u25bc ') + gainLossPct + '%';
+      glBadge.style.color = glUp ? '#4ade80' : '#f87171';
+      glBadge.style.background = glUp ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
       document.getElementById('positionCount').textContent = state.positions.length;
     }
 
@@ -1666,7 +1680,7 @@
       const body = document.getElementById('historyTable');
       if (!body) return;
       const clock = document.getElementById('pressClock');
-      const DURATION = 2000;
+      const DURATION = 1000;
       let timer = null, raf = null, startT = 0;
       function place(e) {
         const x = (e.touches ? e.touches[0].clientX : e.clientX);
