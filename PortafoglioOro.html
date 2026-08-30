@@ -544,6 +544,61 @@
     .detail-actions .btn { width:auto; padding:0.7rem 1.2rem; }
     .btn-secondary { background:rgba(212,175,55,0.12); color:#e0e0e0; border:1px solid rgba(212,175,55,0.4); padding:0.7rem 1.2rem; border-radius:8px; cursor:pointer; font-weight:600; }
     .btn-danger { background:#f87171; color:#fff; border:none; padding:0.7rem 1.2rem; border-radius:8px; cursor:pointer; font-weight:700; margin-left:auto; }
+
+    /* ===== Orologi ===== */
+    .summary.summary-watches { grid-template-columns: 1fr 1fr; }
+    @media (max-width: 768px) {
+      .summary.summary-watches { grid-template-columns: 1fr; }
+    }
+    .watch-card {
+      background: linear-gradient(135deg, #1a1f3a 0%, #0f1220 100%);
+      border: 1px solid rgba(212,175,55,0.3);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .watch-brand-circle {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: rgba(212,175,55,0.15);
+      border: 1px solid #d4af37;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #d4af37;
+      font-weight: 700;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    .watch-card-body { flex: 1; min-width: 0; }
+    .watch-card-title { font-weight: 700; color: #e0e0e0; font-size: 1.05rem; }
+    .watch-card-sub { color: #9aa0b4; font-size: 0.85rem; margin-bottom: 0.4rem; }
+    .watch-card-cols { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; font-size: 0.9rem; margin-bottom: 0.3rem; }
+    .watch-card-updated { color: #8a90a8; font-size: 0.78rem; margin-bottom: 0.4rem; }
+    .watch-card-footer { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+    .watch-sold-strike { text-decoration: line-through; opacity: 0.6; }
+    .chrono24-btn {
+      display: inline-block;
+      background: transparent;
+      color: #d4af37;
+      border: 1px solid #d4af37;
+      border-radius: 6px;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .chrono24-btn:hover { background: rgba(212,175,55,0.12); }
+    .add-watch-btn { margin-bottom: 1rem; }
+    #watchDetailModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:flex-start; justify-content:center; overflow-y:auto; padding:2rem 1rem; }
+    #watchDetailModal.open { display:flex; }
   </style>
 </head>
 <body>
@@ -650,6 +705,7 @@
         <button class="tab-btn active" data-tab="overview">Panoramica</button>
         <button class="tab-btn" data-tab="history">Storico</button>
         <button class="tab-btn" data-tab="new">Nuovo Acquisto</button>
+        <button class="tab-btn" data-tab="watches">Orologi</button>
       </div>
 
       <div class="tab-content active" id="overview">
@@ -693,6 +749,15 @@
           <div class="form-group" id="purityGroup">
             <label id="purityLabel">Caratura</label>
             <select id="purity"></select>
+          </div>
+          <div class="form-group" id="typeGroup">
+            <label>Tipologia</label>
+            <select id="itemType">
+              <option value="moneta">Moneta</option>
+              <option value="lingotto">Lingotto</option>
+              <option value="lavorato">Lavorato</option>
+              <option value="oro_virtuale">Oro Virtuale</option>
+            </select>
           </div>
           <div class="form-group">
             <label>Peso totale (grammi)</label>
@@ -744,6 +809,88 @@
           <tbody id="historyTable"></tbody>
         </table>
       </div>
+
+      <div class="tab-content" id="watches">
+        <div class="summary summary-watches">
+          <div class="card">
+            <h3>Valore Orologi</h3>
+            <div class="value" id="watchTotalValue">0.00</div>
+            <div class="currency" id="watchTotalCurrency">CHF</div>
+          </div>
+          <div class="card">
+            <h3>Andamento Orologi</h3>
+            <div class="value" id="watchGainLoss">0.00</div>
+            <span class="andamento-badge" id="watchGainLossPct"></span>
+          </div>
+        </div>
+
+        <button class="btn add-watch-btn" type="button" onclick="toggleWatchForm()">Aggiungi Orologio</button>
+
+        <form id="watchForm" style="display:none;" onsubmit="addWatch(event)">
+          <div class="form-group">
+            <label>Marca</label>
+            <select id="watchBrand" required></select>
+          </div>
+          <div class="form-group">
+            <label>Modello</label>
+            <input type="text" id="watchModel" required>
+          </div>
+          <div class="form-group">
+            <label>Referenza</label>
+            <input type="text" id="watchReference" required>
+          </div>
+          <div class="form-group">
+            <label>Numero di Serie <span style="color:#888;font-weight:400;">(facoltativo)</span></label>
+            <input type="text" id="watchSerial">
+          </div>
+          <div class="form-group">
+            <label>Data Acquisto</label>
+            <input type="date" id="watchPurchaseDate" required>
+          </div>
+          <div class="form-group">
+            <label>Prezzo di Acquisto</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="number" id="watchPurchasePrice" step="0.01" required style="flex: 1;">
+              <select id="watchPurchaseCurrency" style="width: 90px; padding: 0.5rem; border-radius: 6px;">
+                <option value="CHF">CHF</option>
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Valore di Mercato Attuale</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="number" id="watchMarketValue" step="0.01" required style="flex: 1;">
+              <select id="watchMarketValueCurrency" style="width: 90px; padding: 0.5rem; border-radius: 6px;">
+                <option value="CHF">CHF</option>
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Data Ultimo Aggiornamento Valore</label>
+            <input type="date" id="watchMarketValueDate" required>
+          </div>
+          <div class="form-group">
+            <label>Note</label>
+            <textarea id="watchNotes" rows="3" placeholder="Es. condizioni, scatola e documenti, provenienza..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Foto orologio (fotocamera o galleria)</label>
+            <label class="photo-input-label">
+              &#128247; Aggiungi foto
+              <input type="file" id="watchPhotos" accept="image/*" multiple onchange="handleWatchPhotoSelect(this)">
+            </label>
+            <div class="photo-preview" id="watchPhotoPreview"></div>
+          </div>
+          <button class="btn" type="submit">Salva Orologio</button>
+        </form>
+
+        <div id="watchListContainer"></div>
+        <button class="export-btn" onclick="exportWatchesCSV()">Esporta CSV Orologi</button>
+      </div>
     </div>
   </div>
 
@@ -776,6 +923,15 @@
       <div class="form-group" id="editPurityGroup">
         <label id="editPurityLabel">Caratura</label>
         <select id="editPurity"></select>
+      </div>
+      <div class="form-group" id="editTypeGroup">
+        <label>Tipologia</label>
+        <select id="editItemType">
+          <option value="moneta">Moneta</option>
+          <option value="lingotto">Lingotto</option>
+          <option value="lavorato">Lavorato</option>
+          <option value="oro_virtuale">Oro Virtuale</option>
+        </select>
       </div>
       <div class="form-group">
         <label>Peso totale (grammi)</label>
@@ -822,6 +978,73 @@
     </div>
   </div>
 
+  <div id="watchDetailModal" onclick="closeWatchDetail()">
+    <div class="detail-card" onclick="event.stopPropagation()">
+      <button class="detail-close" onclick="closeWatchDetail()" title="Chiudi">&times;</button>
+      <h2 class="detail-title">Dettaglio orologio</h2>
+      <div class="form-group">
+        <label>Marca</label>
+        <select id="editWatchBrand"></select>
+      </div>
+      <div class="form-group">
+        <label>Modello</label>
+        <input type="text" id="editWatchModel">
+      </div>
+      <div class="form-group">
+        <label>Referenza</label>
+        <input type="text" id="editWatchReference">
+      </div>
+      <div class="form-group">
+        <label>Numero di Serie</label>
+        <input type="text" id="editWatchSerial">
+      </div>
+      <div class="form-group">
+        <label>Data Acquisto</label>
+        <input type="date" id="editWatchPurchaseDate">
+      </div>
+      <div class="form-group">
+        <label>Prezzo di Acquisto</label>
+        <div style="display:flex; gap:0.5rem;">
+          <input type="number" id="editWatchPurchasePrice" step="0.01" style="flex:1;">
+          <select id="editWatchPurchaseCurrency" style="width:90px; padding:0.5rem; border-radius:6px;">
+            <option value="CHF">CHF</option>
+            <option value="EUR">EUR</option>
+            <option value="USD">USD</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Valore di Mercato Attuale</label>
+        <div style="display:flex; gap:0.5rem;">
+          <input type="number" id="editWatchMarketValue" step="0.01" style="flex:1;">
+          <select id="editWatchMarketValueCurrency" style="width:90px; padding:0.5rem; border-radius:6px;">
+            <option value="CHF">CHF</option>
+            <option value="EUR">EUR</option>
+            <option value="USD">USD</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Data Ultimo Aggiornamento Valore</label>
+        <input type="date" id="editWatchMarketValueDate">
+      </div>
+      <div class="form-group">
+        <label>Note</label>
+        <textarea id="editWatchNotes" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Foto orologio</label>
+        <div class="photo-preview" id="editWatchPhotoPreview"></div>
+      </div>
+      <div class="sales-section" id="watchSaleSection"></div>
+      <div class="detail-actions">
+        <button class="btn" onclick="saveWatchDetail()">Salva modifiche</button>
+        <button class="btn-secondary" onclick="closeWatchDetail()">Annulla</button>
+        <button class="btn-danger" onclick="deleteWatchFromDetail()">Elimina orologio</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Google OAuth Configuration
     const GOOGLE_CLIENT_ID = '747638907098-bpk0m9j5jc5v7kqk8lmnop9q8r9s0t1u.apps.googleusercontent.com';
@@ -832,9 +1055,13 @@
 
     const OZ_TO_G = 31.1035;
 
+    // Elenco marche orologi di lusso supportate
+    const WATCH_BRANDS = ['Rolex', 'Patek Philippe', 'Audemars Piguet', 'Richard Mille', 'Vacheron Constantin', 'A. Lange & Söhne', 'Jaeger-LeCoultre', 'Hublot', 'Cartier', 'IWC Schaffhausen', 'Breitling', 'Panerai', 'TAG Heuer', 'Zenith', 'Girard-Perregaux', 'Ulysse Nardin', 'Chopard', 'Piaget', 'Bvlgari', 'Tudor', 'MB&F', 'F.P. Journe', 'H. Moser & Cie', 'Greubel Forsey', 'Jacob & Co', 'Roger Dubuis', 'Franck Muller', 'De Bethune'];
+
     // App State
     const state = {
       positions: [],
+      watches: [],
       currentCurrency: 'CHF',
       currentPrices: { gold: 115.0, silver: 1.72 },
       exchangeRates: { CHF: 1, EUR: 0.93, USD: 0.80 },
@@ -885,7 +1112,9 @@
           }
         }
 
-        // 2) Prezzi metalli reali in USD per oncia troy
+
+
+        // 3) Prezzi metalli reali in USD per oncia troy
         try {
           const [goldRes, silverRes] = await Promise.all([
             fetch('https://api.gold-api.com/price/XAU'),
@@ -1040,6 +1269,22 @@
       }
     }
 
+    // Load/save orologi da localStorage
+    function loadWatches() {
+      const saved = localStorage.getItem('watchPortfolio');
+      if (saved) {
+        try { state.watches = JSON.parse(saved) || []; } catch (err) { console.log('loadWatches err', err); state.watches = []; }
+      }
+    }
+    function saveWatches() {
+      try {
+        localStorage.setItem('watchPortfolio', JSON.stringify(state.watches));
+      } catch (err) {
+        console.log('save watches err', err);
+        alert('Spazio di archiviazione pieno: alcune foto potrebbero non essere state salvate. Rimuovi qualche foto o usa immagini piu piccole.');
+      }
+    }
+
     // Add position
     async function addPosition(e) {
       e.preventDefault();
@@ -1052,7 +1297,8 @@
       const date = document.getElementById('date').value;
       const photos = pendingPhotos.slice();
 
-      state.positions.push({ metal, description, quantity, purity, price, priceCurrency, date, photos });
+      const itemType = metal === 'other' ? null : (document.getElementById('itemType').value || 'lingotto');
+      state.positions.push({ metal, description, quantity, purity, price, priceCurrency, date, photos, itemType });
       saveData();
       pendingPhotos = [];
       document.getElementById('photoPreview').innerHTML = '';
@@ -1108,6 +1354,44 @@
       const spot = p.metal === 'gold' ? state.currentPrices.gold : state.currentPrices.silver;
       return remainingQty(p) * f * spot;
     }
+
+    // ===== Calcoli Orologi =====
+    // Costo di acquisto convertito in CHF
+    function costChfWatch(w) {
+      const cur = (w.purchaseCurrency || 'CHF').toUpperCase();
+      return (w.purchasePrice || 0) * (state.exchangeRates[cur] || 1);
+    }
+    // Valore di mercato convertito in CHF
+    function marketValueChfWatch(w) {
+      const cur = (w.marketValueCurrency || 'CHF').toUpperCase();
+      return (w.marketValue || 0) * (state.exchangeRates[cur] || 1);
+    }
+    // Incasso di vendita convertito in CHF (se venduto)
+    function saleProceedsChfWatch(w) {
+      if (!w.sale) return 0;
+      const cur = (w.sale.currency || 'CHF').toUpperCase();
+      return (parseFloat(w.sale.price) || 0) * (state.exchangeRates[cur] || 1);
+    }
+    // Guadagno/perdita in CHF (mercato se non venduto, incasso vendita se venduto)
+    function watchGainChf(w) {
+      const cost = costChfWatch(w);
+      if (w.sale) return saleProceedsChfWatch(w) - cost;
+      return marketValueChfWatch(w) - cost;
+    }
+    // Formattazione svizzera con apice come separatore delle migliaia (XX'XXX.XX)
+    function formatSwissAmount(n) {
+      const num = (typeof n === 'number' ? n : parseFloat(n)) || 0;
+      const fixed = num.toFixed(2);
+      const parts = fixed.split('.');
+      let intPart = parts[0];
+      const neg = intPart.startsWith('-');
+      if (neg) intPart = intPart.slice(1);
+      intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+      return (neg ? '-' : '') + intPart + '.' + parts[1];
+    }
+    function escapeHtml(s) {
+      return (s == null ? '' : String(s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
     // Popola caratura/titolo in base al metallo e gestisce "Altro"
     function onMetalChange() {
       const metal = document.getElementById('metal').value;
@@ -1116,13 +1400,16 @@
       const plabel = document.getElementById('purityLabel');
       const qInput = document.getElementById('quantity');
       const descHint = document.getElementById('descHint');
+      const tg = document.getElementById('typeGroup');
       if (metal === 'other') {
         pg.style.display = 'none';
+        if (tg) tg.style.display = 'none';
         qInput.required = false;
         if (descHint) descHint.textContent = '(descrivi cosa hai preso)';
         return;
       }
       pg.style.display = '';
+      if (tg) tg.style.display = '';
       qInput.required = true;
       if (descHint) descHint.textContent = '(facoltativa)';
       let opts = '';
@@ -1144,6 +1431,7 @@
       updateChart();
       updateLivePrices();
       updateStatusIndicator();
+      updateWatchUI();
     }
 
     function updatePositionsTable() {
@@ -1167,13 +1455,34 @@
         const priceNow = weight > 0 ? (val / weight) : 0;
         const cur = state.currentCurrency;
         tbody.innerHTML += `<tr>
-          <td>${label}</td>
+          <td><b>${label}</b></td>
           <td>${weight > 0 ? weight.toFixed(2) + 'g' : '&ndash;'}</td>
           <td>${m === 'other' ? 'n/d' : priceNow.toFixed(2) + ' ' + cur + '/g'}</td>
           <td>${val.toFixed(2)} ${cur}</td>
           <td>${m === 'other' ? '&ndash;' : costAvg.toFixed(2) + ' ' + cur + '/g'}</td>
           <td class="${gain >= 0 ? 'gain' : 'loss'}">${m === 'other' ? '&ndash;' : gain.toFixed(2) + ' (' + gainPct + '%)'}</td>
         </tr>`;
+        if (m !== 'other') {
+          const types = [['moneta', 'Monete'], ['lingotto', 'Lingotti'], ['lavorato', 'Lavorato'], ['oro_virtuale', 'Oro Virtuale']];
+          types.forEach(function (t) {
+            const typeKey = t[0], typeLabel = t[1];
+            const typPs = ps.filter(function (p) { return (p.itemType || 'lingotto') === typeKey; });
+            if (typPs.length === 0) return;
+            const tWeight = typPs.reduce(function (s, p) { return s + remainingQty(p); }, 0);
+            const tCost = typPs.reduce(function (s, p) { return s + costChfRemaining(p); }, 0) / rate;
+            const tVal = typPs.reduce(function (s, p) { return s + currentValueChf(p); }, 0) / rate;
+            const tGain = tVal - tCost;
+            const tGainPct = tCost > 0 ? ((tGain / tCost) * 100).toFixed(2) : '0.00';
+            tbody.innerHTML += '<tr style="color:#9aa0b4; font-size:0.85rem;">' +
+              '<td style="padding-left:2rem;">\u203A ' + typeLabel + '</td>' +
+              '<td>' + (tWeight > 0 ? tWeight.toFixed(2) + 'g' : '&ndash;') + '</td>' +
+              '<td></td>' +
+              '<td>' + tVal.toFixed(2) + ' ' + cur + '</td>' +
+              '<td></td>' +
+              '<td class="' + (tGain >= 0 ? 'gain' : 'loss') + '">' + tGain.toFixed(2) + ' (' + tGainPct + '%)</td>' +
+            '</tr>';
+          });
+        }
       });
       if (!any) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#888;">Nessuna posizione. Aggiungi un nuovo acquisto dal tab "Nuovo Acquisto".</td></tr>';
@@ -1482,6 +1791,362 @@
       setBadge('silverLivePrice', 'silverLiveChange', 'silverLiveSub', silverG * sf, changePct('silver'));
     }
 
+    // ===== Orologi: form, foto pendenti, rendering, dettaglio =====
+    let pendingWatchPhotos = [];
+
+    function populateWatchBrandSelects() {
+      const opts = WATCH_BRANDS.map(function (b) {
+        const safe = b.replace(/&/g, '&amp;');
+        return '<option value="' + safe + '">' + safe + '</option>';
+      }).join('');
+      const s1 = document.getElementById('watchBrand');
+      const s2 = document.getElementById('editWatchBrand');
+      if (s1 && !s1.options.length) s1.innerHTML = opts;
+      if (s2 && !s2.options.length) s2.innerHTML = opts;
+    }
+
+    function toggleWatchForm() {
+      const f = document.getElementById('watchForm');
+      if (!f) return;
+      const isHidden = f.style.display === 'none' || !f.style.display;
+      f.style.display = isHidden ? 'block' : 'none';
+      if (isHidden) {
+        const dEl = document.getElementById('watchMarketValueDate');
+        if (dEl && !dEl.value) dEl.value = new Date().toISOString().slice(0, 10);
+      }
+    }
+
+    async function handleWatchPhotoSelect(input) {
+      const imgs = await filesToCompressed(input.files);
+      pendingWatchPhotos = pendingWatchPhotos.concat(imgs);
+      renderWatchPhotoPreview();
+      input.value = '';
+    }
+
+    function renderWatchPhotoPreview() {
+      const c = document.getElementById('watchPhotoPreview');
+      c.innerHTML = '';
+      pendingWatchPhotos.forEach((src, idx) => {
+        c.innerHTML += `<span class="photo-thumb"><img src="${src}" onclick="openLightboxSrc(this.src)"><button type="button" class="photo-del" onclick="removePendingWatchPhoto(${idx})">&times;</button></span>`;
+      });
+    }
+
+    function removePendingWatchPhoto(idx) {
+      pendingWatchPhotos.splice(idx, 1);
+      renderWatchPhotoPreview();
+    }
+
+    // Aggiungi orologio
+    async function addWatch(e) {
+      e.preventDefault();
+      const brand = document.getElementById('watchBrand').value;
+      const model = (document.getElementById('watchModel').value || '').trim();
+      const reference = (document.getElementById('watchReference').value || '').trim();
+      const serial = (document.getElementById('watchSerial').value || '').trim();
+      const purchaseDate = document.getElementById('watchPurchaseDate').value;
+      const purchasePrice = parseFloat(document.getElementById('watchPurchasePrice').value) || 0;
+      const purchaseCurrency = (document.getElementById('watchPurchaseCurrency').value || 'CHF').toUpperCase();
+      const marketValue = parseFloat(document.getElementById('watchMarketValue').value) || 0;
+      const marketValueCurrency = (document.getElementById('watchMarketValueCurrency').value || 'CHF').toUpperCase();
+      const marketValueDate = document.getElementById('watchMarketValueDate').value;
+      const notes = (document.getElementById('watchNotes').value || '').trim();
+      const photos = pendingWatchPhotos.slice();
+      const id = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+      state.watches.push({ id, brand, model, reference, serial, purchasePrice, purchaseCurrency, purchaseDate, marketValue, marketValueCurrency, marketValueDate, notes, photos, sale: null });
+      saveWatches();
+      pendingWatchPhotos = [];
+      document.getElementById('watchPhotoPreview').innerHTML = '';
+      document.getElementById('watchForm').reset();
+      document.getElementById('watchForm').style.display = 'none';
+      updateWatchUI();
+    }
+
+    // Aggiorna riepilogo + lista orologi
+    function updateWatchUI() {
+      renderWatchCards();
+      updateWatchSummary();
+    }
+
+    function updateWatchSummary() {
+      const rate = state.exchangeRates[state.currentCurrency] || 1;
+      let totalMarketChf = 0, totalCostChf = 0;
+      state.watches.forEach(function (w) {
+        if (w.sale) return; // gli orologi venduti sono esclusi dal valore del portafoglio
+        totalMarketChf += marketValueChfWatch(w);
+        totalCostChf += costChfWatch(w);
+      });
+      const totalMarket = totalMarketChf / rate;
+      const gainChf = totalMarketChf - totalCostChf;
+      const gain = gainChf / rate;
+      const gainPct = totalCostChf > 0 ? (gainChf / totalCostChf * 100) : 0;
+
+      const valEl = document.getElementById('watchTotalValue');
+      if (valEl) valEl.textContent = formatSwissAmount(totalMarket);
+      const curEl = document.getElementById('watchTotalCurrency');
+      if (curEl) curEl.textContent = state.currentCurrency;
+
+      const up = gainChf >= 0;
+      const glEl = document.getElementById('watchGainLoss');
+      if (glEl) {
+        glEl.textContent = (up ? '+' : '') + formatSwissAmount(gain);
+        glEl.className = 'value ' + (up ? 'gain' : 'loss');
+      }
+      const glBadge = document.getElementById('watchGainLossPct');
+      if (glBadge) {
+        glBadge.textContent = (up ? '\u25b2 +' : '\u25bc ') + gainPct.toFixed(2) + '%';
+        glBadge.style.color = up ? '#4ade80' : '#f87171';
+        glBadge.style.background = up ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
+      }
+    }
+
+    function renderWatchCards() {
+      const c = document.getElementById('watchListContainer');
+      if (!c) return;
+      if (!state.watches.length) {
+        c.innerHTML = '<div class="empty-state">Nessun orologio. Aggiungine uno con il pulsante qui sopra.</div>';
+        setupWatchLongPress();
+        return;
+      }
+      const cur = state.currentCurrency;
+      const rate = state.exchangeRates[cur] || 1;
+      let html = '';
+      state.watches.forEach(function (w, i) {
+        const initial = (w.brand || '?').charAt(0).toUpperCase();
+        const costChfW = costChfWatch(w);
+        const marketChfW = marketValueChfWatch(w);
+        const gainChf = watchGainChf(w);
+        const gainPct = costChfW > 0 ? (gainChf / costChfW * 100) : 0;
+        const up = gainChf >= 0;
+        const soldBadge = w.sale ? '<span class="sold-badge">VENDUTO</span>' : '';
+        const strike = w.sale ? 'watch-sold-strike' : '';
+        const chrono24Query = encodeURIComponent((w.brand + ' ' + w.model + ' ' + w.reference).trim()).replace(/%20/g, '+');
+        html += '<div class="watch-card" data-idx="' + i + '">' +
+          '<div class="watch-brand-circle">' + escapeHtml(initial) + '</div>' +
+          '<div class="watch-card-body">' +
+            '<div class="watch-card-title">' + escapeHtml(w.brand) + ' ' + escapeHtml(w.model) + '</div>' +
+            '<div class="watch-card-sub">Ref. ' + escapeHtml(w.reference) + '</div>' +
+            '<div class="watch-card-cols ' + strike + '">' +
+              '<span>Acquisto: ' + cur + ' ' + formatSwissAmount(costChfW / rate) + '</span>' +
+              '<span>Mercato: ' + cur + ' ' + formatSwissAmount(marketChfW / rate) + '</span>' +
+            '</div>' +
+            '<div class="watch-card-updated">Aggiornato: ' + formatDate(w.marketValueDate) + '</div>' +
+            '<div class="watch-card-footer">' +
+              '<span class="andamento-badge" style="margin:0; color:' + (up ? '#4ade80' : '#f87171') + '; background:' + (up ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)') + ';">' + (up ? '\u25b2 +' : '\u25bc ') + gainPct.toFixed(2) + '%</span>' +
+              soldBadge +
+              '<a class="chrono24-btn" href="https://www.chrono24.ch/search/index.htm?query=' + chrono24Query + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Chrono24</a>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      });
+      c.innerHTML = html;
+      setupWatchLongPress();
+    }
+
+    // Esporta CSV orologi
+    function exportWatchesCSV() {
+      let csv = 'Marca,Modello,Referenza,Numero Serie,Data Acquisto,Prezzo Acquisto,Valuta Acquisto,Valore Mercato,Valuta Mercato,Data Aggiornamento,Venduto,Prezzo Vendita,Valuta Vendita,Data Vendita,Note\n';
+      state.watches.forEach(function (w) {
+        const notes = (w.notes || '').replace(/,/g, ' ');
+        csv += [
+          w.brand, w.model, w.reference, (w.serial || ''), formatDate(w.purchaseDate), w.purchasePrice, w.purchaseCurrency,
+          w.marketValue, w.marketValueCurrency, formatDate(w.marketValueDate),
+          w.sale ? 'SI' : 'NO', (w.sale ? w.sale.price : ''), (w.sale ? w.sale.currency : ''), (w.sale ? formatDate(w.sale.date) : ''), notes
+        ].join(',') + '\n';
+      });
+      const link = document.createElement('a');
+      link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+      link.download = 'orologi.csv';
+      link.click();
+    }
+
+    // ===== Dettaglio / modifica orologio =====
+    let editWatchIndex = null;
+    let editWatchState = null;
+
+    function openWatchDetail(index) {
+      const w = state.watches[index];
+      if (!w) return;
+      editWatchIndex = index;
+      editWatchState = JSON.parse(JSON.stringify(w));
+      populateWatchBrandSelects();
+      document.getElementById('editWatchBrand').value = editWatchState.brand || '';
+      document.getElementById('editWatchModel').value = editWatchState.model || '';
+      document.getElementById('editWatchReference').value = editWatchState.reference || '';
+      document.getElementById('editWatchSerial').value = editWatchState.serial || '';
+      document.getElementById('editWatchPurchaseDate').value = editWatchState.purchaseDate || '';
+      document.getElementById('editWatchPurchasePrice').value = (editWatchState.purchasePrice != null ? editWatchState.purchasePrice : '');
+      document.getElementById('editWatchPurchaseCurrency').value = editWatchState.purchaseCurrency || 'CHF';
+      document.getElementById('editWatchMarketValue').value = (editWatchState.marketValue != null ? editWatchState.marketValue : '');
+      document.getElementById('editWatchMarketValueCurrency').value = editWatchState.marketValueCurrency || 'CHF';
+      document.getElementById('editWatchMarketValueDate').value = editWatchState.marketValueDate || '';
+      document.getElementById('editWatchNotes').value = editWatchState.notes || '';
+      renderEditWatchPhotos();
+      renderWatchSaleSection();
+      document.getElementById('watchDetailModal').classList.add('open');
+    }
+
+    function renderEditWatchPhotos() {
+      const c = document.getElementById('editWatchPhotoPreview');
+      c.innerHTML = '';
+      (editWatchState.photos || []).forEach(function (src, idx) {
+        c.innerHTML += `<span class="photo-thumb"><img src="${src}" onclick="openLightboxSrc(this.src)"><button type="button" class="photo-del" onclick="editRemoveWatchPhoto(${idx})">&times;</button></span>`;
+      });
+      c.innerHTML += `<button type="button" class="add-photo-btn" onclick="editAddWatchPhotos()" title="Aggiungi foto">+</button>`;
+    }
+
+    function editAddWatchPhotos() {
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true;
+      inp.onchange = async function () {
+        const imgs = await filesToCompressed(inp.files);
+        if (!editWatchState.photos) editWatchState.photos = [];
+        editWatchState.photos = editWatchState.photos.concat(imgs);
+        renderEditWatchPhotos();
+      };
+      inp.click();
+    }
+
+    function editRemoveWatchPhoto(idx) {
+      if (!editWatchState.photos) return;
+      editWatchState.photos.splice(idx, 1);
+      renderEditWatchPhotos();
+    }
+
+    function renderWatchSaleSection() {
+      const w = editWatchState;
+      const sec = document.getElementById('watchSaleSection');
+      if (!w || !sec) return;
+      const costChfW = costChfWatch(w);
+      if (w.sale) {
+        const proceedsChf = saleProceedsChfWatch(w);
+        const gainChf = proceedsChf - costChfW;
+        const pct = costChfW > 0 ? (gainChf / costChfW * 100) : 0;
+        const cls = gainChf >= 0 ? 'gain' : 'loss';
+        const esito = gainChf >= 0 ? 'Guadagno' : 'Perdita';
+        sec.innerHTML =
+          '<h3 class="sales-title">Vendita</h3>' +
+          '<div class="sale-item">' +
+            '<div class="sale-item-head"><span>Venduto il ' + formatDate(w.sale.date) + ' a <b>' + (parseFloat(w.sale.price) || 0).toFixed(2) + ' ' + (w.sale.currency || 'CHF') + '</b></span></div>' +
+            '<div class="sale-item-detail">Prezzo Acquisto CHF: ' + costChfW.toFixed(2) + ' &middot; Prezzo Vendita CHF: ' + proceedsChf.toFixed(2) +
+              '<span class="' + cls + '"> &middot; ' + esito + ': ' + (gainChf >= 0 ? '+' : '') + gainChf.toFixed(2) + ' CHF (' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%)</span>' +
+            '</div>' +
+          '</div>' +
+          '<button type="button" class="btn-sale-add" onclick="undoWatchSale()">Annulla Vendita</button>';
+      } else {
+        sec.innerHTML =
+          '<h3 class="sales-title">Vendita</h3>' +
+          '<div class="sales-empty">Orologio non venduto.</div>' +
+          '<div class="sale-form">' +
+            '<div class="sale-form-row">' +
+              '<div class="sale-field"><label>Prezzo di Vendita</label><input type="number" id="watchSalePrice" step="0.01" min="0"></div>' +
+              '<div class="sale-field sale-field-cur"><label>Valuta</label><select id="watchSaleCurrency"><option value="CHF">CHF</option><option value="EUR">EUR</option><option value="USD">USD</option></select></div>' +
+              '<div class="sale-field"><label>Data Vendita</label><input type="date" id="watchSaleDate"></div>' +
+            '</div>' +
+            '<div class="sale-item-detail" style="margin-top:0.5rem;">Prezzo Acquisto CHF: ' + costChfW.toFixed(2) + '</div>' +
+            '<button type="button" class="btn-sale-add" onclick="registerWatchSale()">Registra Vendita</button>' +
+          '</div>';
+      }
+    }
+
+    function registerWatchSale() {
+      const price = parseFloat(document.getElementById('watchSalePrice').value);
+      const currency = (document.getElementById('watchSaleCurrency').value || 'CHF').toUpperCase();
+      const date = document.getElementById('watchSaleDate').value;
+      if (isNaN(price) || price < 0) { alert('Inserisci il prezzo di vendita.'); return; }
+      editWatchState.sale = { price: price, currency: currency, date: date || new Date().toISOString().slice(0, 10) };
+      renderWatchSaleSection();
+    }
+
+    function undoWatchSale() {
+      if (!confirm('Annullare la vendita registrata?')) return;
+      editWatchState.sale = null;
+      renderWatchSaleSection();
+    }
+
+    function saveWatchDetail() {
+      if (editWatchIndex == null || !editWatchState) return;
+      editWatchState.brand = document.getElementById('editWatchBrand').value;
+      editWatchState.model = (document.getElementById('editWatchModel').value || '').trim();
+      editWatchState.reference = (document.getElementById('editWatchReference').value || '').trim();
+      editWatchState.serial = (document.getElementById('editWatchSerial').value || '').trim();
+      editWatchState.purchaseDate = document.getElementById('editWatchPurchaseDate').value;
+      const pp = parseFloat(document.getElementById('editWatchPurchasePrice').value);
+      editWatchState.purchasePrice = isNaN(pp) ? 0 : pp;
+      editWatchState.purchaseCurrency = (document.getElementById('editWatchPurchaseCurrency').value || 'CHF').toUpperCase();
+      const mv = parseFloat(document.getElementById('editWatchMarketValue').value);
+      editWatchState.marketValue = isNaN(mv) ? 0 : mv;
+      editWatchState.marketValueCurrency = (document.getElementById('editWatchMarketValueCurrency').value || 'CHF').toUpperCase();
+      editWatchState.marketValueDate = document.getElementById('editWatchMarketValueDate').value;
+      editWatchState.notes = (document.getElementById('editWatchNotes').value || '').trim();
+      state.watches[editWatchIndex] = editWatchState;
+      saveWatches();
+      closeWatchDetail();
+      updateWatchUI();
+    }
+
+    function deleteWatchFromDetail() {
+      if (editWatchIndex == null) return;
+      if (!confirm('Eliminare definitivamente questo orologio?')) return;
+      state.watches.splice(editWatchIndex, 1);
+      saveWatches();
+      closeWatchDetail();
+      updateWatchUI();
+    }
+
+    function closeWatchDetail() {
+      document.getElementById('watchDetailModal').classList.remove('open');
+      editWatchIndex = null;
+      editWatchState = null;
+    }
+
+    // Pressione prolungata (1 secondo) su una card orologio per aprirne il dettaglio
+    let watchLongPressReady = false;
+    function setupWatchLongPress() {
+      const body = document.getElementById('watchListContainer');
+      if (!body || watchLongPressReady) return;
+      watchLongPressReady = true;
+      const clock = document.getElementById('pressClock');
+      const DURATION = 1000;
+      let timer = null, raf = null, startT = 0;
+      function place(e) {
+        const x = (e.touches ? e.touches[0].clientX : e.clientX);
+        const y = (e.touches ? e.touches[0].clientY : e.clientY);
+        clock.style.left = (x - 20) + 'px';
+        clock.style.top = (y - 20) + 'px';
+      }
+      function tick(now) {
+        const frac = Math.min((now - startT) / DURATION, 1);
+        const deg = frac * 360;
+        clock.style.background = 'conic-gradient(#d4af37 ' + deg + 'deg, rgba(212,175,55,0.18) ' + deg + 'deg)';
+        if (frac < 1) raf = requestAnimationFrame(tick);
+      }
+      function start(e) {
+        const card = e.target.closest('.watch-card[data-idx]');
+        if (!card) return;
+        place(e);
+        clock.classList.add('on');
+        startT = performance.now();
+        clock.style.background = 'conic-gradient(#d4af37 0deg, rgba(212,175,55,0.18) 0deg)';
+        raf = requestAnimationFrame(tick);
+        timer = setTimeout(function () {
+          cancel();
+          openWatchDetail(parseInt(card.dataset.idx, 10));
+        }, DURATION);
+      }
+      function cancel() {
+        if (timer) { clearTimeout(timer); timer = null; }
+        if (raf) { cancelAnimationFrame(raf); raf = null; }
+        clock.classList.remove('on');
+      }
+      body.addEventListener('pointerdown', start);
+      body.addEventListener('pointermove', function (e) { if (timer) place(e); });
+      body.addEventListener('pointerup', cancel);
+      body.addEventListener('pointerleave', cancel);
+      body.addEventListener('pointercancel', cancel);
+      body.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    }
+
     function deletePosition(index) {
       state.positions.splice(index, 1);
       saveData();
@@ -1522,6 +2187,9 @@
       if (editState.metal !== 'other' && editState.purity != null) {
         document.getElementById('editPurity').value = editState.purity;
       }
+      if (editState.metal !== 'other') {
+        document.getElementById('editItemType').value = editState.itemType || 'lingotto';
+      }
       document.getElementById('editQuantity').value = (editState.quantity != null ? editState.quantity : '');
       document.getElementById('editPrice').value = (editState.price != null ? editState.price : '');
       document.getElementById('editCurrency').value = (editState.priceCurrency || 'CHF');
@@ -1537,8 +2205,10 @@
       const psel = document.getElementById('editPurity');
       const plabel = document.getElementById('editPurityLabel');
       const qInput = document.getElementById('editQuantity');
-      if (metal === 'other') { pg.style.display = 'none'; qInput.required = false; return; }
+      const etg = document.getElementById('editTypeGroup');
+      if (metal === 'other') { pg.style.display = 'none'; if (etg) etg.style.display = 'none'; qInput.required = false; return; }
       pg.style.display = '';
+      if (etg) etg.style.display = '';
       qInput.required = true;
       let opts = '';
       if (metal === 'gold') {
@@ -1653,6 +2323,7 @@
       editState.price = isNaN(pr) ? 0 : pr;
       editState.priceCurrency = (document.getElementById('editCurrency').value || 'CHF').toUpperCase();
       editState.purity = metal === 'other' ? null : parseFloat(document.getElementById('editPurity').value);
+      editState.itemType = metal === 'other' ? null : (document.getElementById('editItemType').value || 'lingotto');
       editState.date = document.getElementById('editDate').value;
       state.positions[editIndex] = editState;
       saveData();
@@ -1836,7 +2507,7 @@
 
       try {
         // Crea o aggiorna il file su Drive
-        const fileData = JSON.stringify({ positions: state.positions, priceHistory: state.priceHistory }, null, 2);
+        const fileData = JSON.stringify({ positions: state.positions, priceHistory: state.priceHistory, watches: state.watches }, null, 2);
         const metadata = {
           name: 'portafoglio-oro.json',
           mimeType: 'application/json'
@@ -1914,8 +2585,10 @@
         const data = await downloadResponse.json();
         state.positions = migratePositions(data.positions || []);
         state.priceHistory = data.priceHistory || [];
+        state.watches = data.watches || [];
         saveData();
         savePriceHistory();
+        saveWatches();
         updateUI();
 
         statusEl.textContent = '✅ Dati caricati da Google Drive!';
@@ -1938,9 +2611,11 @@
 
     // Initialize
     loadData();
+    loadWatches();
     loadMeta();
     loadPriceHistory();
     onMetalChange();
+    populateWatchBrandSelects();
     (function () {
       const rb = document.getElementById('refreshBtn');
       if (rb) rb.addEventListener('click', function () { fetchPrices(); });
