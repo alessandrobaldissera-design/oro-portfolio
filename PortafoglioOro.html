@@ -750,18 +750,18 @@
             <label>Descrizione <span id="descHint" style="color:#888;font-weight:400;">(facoltativa)</span></label>
             <input type="text" id="description" placeholder="Es. Krugerrand 1oz, Lingotto PAMP 50g...">
           </div>
-          <div class="form-group" id="purityGroup">
-            <label id="purityLabel">Caratura</label>
-            <select id="purity"></select>
-          </div>
           <div class="form-group" id="typeGroup">
             <label>Tipologia</label>
-            <select id="itemType">
-              <option value="moneta">Moneta</option>
+            <select id="itemType" onchange="onItemTypeChange()">
               <option value="lingotto">Lingotto</option>
+              <option value="moneta">Moneta</option>
               <option value="lavorato">Lavorato</option>
               <option value="oro_virtuale">Oro Virtuale</option>
             </select>
+          </div>
+          <div class="form-group" id="purityGroup">
+            <label id="purityLabel">Caratura</label>
+            <select id="purity"></select>
           </div>
           <div class="form-group">
             <label>Peso totale (grammi)</label>
@@ -924,18 +924,18 @@
         <label>Note</label>
         <textarea id="editNotes" rows="3" placeholder="Es. tiratura, provenienza, certificato, numero di serie..."></textarea>
       </div>
-      <div class="form-group" id="editPurityGroup">
-        <label id="editPurityLabel">Caratura</label>
-        <select id="editPurity"></select>
-      </div>
       <div class="form-group" id="editTypeGroup">
         <label>Tipologia</label>
-        <select id="editItemType">
-          <option value="moneta">Moneta</option>
+        <select id="editItemType" onchange="onEditItemTypeChange()">
           <option value="lingotto">Lingotto</option>
+          <option value="moneta">Moneta</option>
           <option value="lavorato">Lavorato</option>
           <option value="oro_virtuale">Oro Virtuale</option>
         </select>
+      </div>
+      <div class="form-group" id="editPurityGroup">
+        <label id="editPurityLabel">Caratura</label>
+        <select id="editPurity"></select>
       </div>
       <div class="form-group">
         <label>Peso totale (grammi)</label>
@@ -1341,9 +1341,14 @@
       updateUI();
     }
 
-    // Frazione di purezza: oro = caratura/24, argento = titolo/1000, altro = null
+    // Frazione di purezza: oro = caratura/24 o millesimi/1000 per monete, argento = titolo/1000, altro = null
     function purityFraction(p) {
-      if (p.metal === 'gold') return (p.purity || 24) / 24;
+      if (p.metal === 'gold') {
+        const pur = p.purity || 24;
+        // Monete: millesimi (valore > 24); carature legacy (<=24) per compatibilita'
+        if (p.itemType === 'moneta' && pur > 24) return pur / 1000;
+        return pur / 24;
+      }
       if (p.metal === 'silver') return (p.purity || 999) / 1000;
       return null;
     }
@@ -1426,6 +1431,22 @@
       return (s == null ? '' : String(s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
     // Popola caratura/titolo in base al metallo e gestisce "Altro"
+    // Opzioni purezza per monete d'oro (millesimi)
+    function populateGoldCoinOptions(psel, plabel) {
+      plabel.textContent = 'Titolo (millesimi)';
+      var coinOpts = [['999', '999 (Filarmonica, Maple Leaf)'], ['986', '986 (Ducato)'], ['917', '917 (Sterlina, Krugerrand)'], ['900', '900 (Marengo, Napoleone)']];
+      var opts = '';
+      coinOpts.forEach(function (o) { opts += '<option value="' + o[0] + '">' + o[1] + '</option>'; });
+      psel.innerHTML = opts;
+    }
+    // Opzioni purezza per oro non-moneta (carature)
+    function populateGoldKaratOptions(psel, plabel) {
+      plabel.textContent = 'Caratura';
+      var opts = '';
+      [24, 22, 21, 18, 14, 10, 9].forEach(function (k) { opts += '<option value="' + k + '">' + k + 'k</option>'; });
+      psel.innerHTML = opts;
+    }
+
     function onMetalChange() {
       const metal = document.getElementById('metal').value;
       const pg = document.getElementById('purityGroup');
@@ -1445,15 +1466,33 @@
       if (tg) tg.style.display = '';
       qInput.required = true;
       if (descHint) descHint.textContent = '(facoltativa)';
-      let opts = '';
       if (metal === 'gold') {
-        plabel.textContent = 'Caratura';
-        [24, 22, 21, 18, 14, 10, 9].forEach(function (k) { opts += '<option value="' + k + '">' + k + 'k</option>'; });
+        const itemType = document.getElementById('itemType').value;
+        if (itemType === 'moneta') {
+          populateGoldCoinOptions(psel, plabel);
+        } else {
+          populateGoldKaratOptions(psel, plabel);
+        }
       } else {
         plabel.textContent = 'Titolo (millesimi)';
+        var opts = '';
         [['999', '999 (fino)'], ['925', '925 (sterling)'], ['900', '900'], ['835', '835'], ['800', '800']].forEach(function (o) { opts += '<option value="' + o[0] + '">' + o[1] + '</option>'; });
+        psel.innerHTML = opts;
       }
-      psel.innerHTML = opts;
+    }
+
+    function onItemTypeChange() {
+      const metal = document.getElementById('metal').value;
+      if (metal === 'gold') {
+        const psel = document.getElementById('purity');
+        const plabel = document.getElementById('purityLabel');
+        const itemType = document.getElementById('itemType').value;
+        if (itemType === 'moneta') {
+          populateGoldCoinOptions(psel, plabel);
+        } else {
+          populateGoldKaratOptions(psel, plabel);
+        }
+      }
     }
 
     // Update UI
@@ -1543,7 +1582,11 @@
         const costPerG = w > 0 ? (cChf / w) : 0;
         const metalLabel = pos.metal === 'gold' ? 'Oro' : (pos.metal === 'silver' ? 'Argento' : 'Altro');
         let titolo = '&ndash;';
-        if (pos.metal === 'gold') titolo = (pos.purity || 24) + 'k';
+        if (pos.metal === 'gold') {
+          const pur = pos.purity || 24;
+          if (pos.itemType === 'moneta' && pur > 24) titolo = pur + '/1000';
+          else titolo = pur + 'k';
+        }
         else if (pos.metal === 'silver') titolo = String(pos.purity || 999);
         const descSafe = pos.description ? pos.description.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '&ndash;';
         const photos = pos.photos || [];
@@ -2471,7 +2514,8 @@
         const w = pos.quantity || 0;
         const costPerG = w > 0 ? (costInChf / w) : 0;
         const valChf = currentValueChf(pos);
-        const titolo = pos.metal === 'gold' ? (pos.purity || 24) + 'k' : (pos.metal === 'silver' ? String(pos.purity || 999) : '');
+        const purVal = pos.purity || (pos.metal === 'gold' ? 24 : 999);
+        const titolo = pos.metal === 'gold' ? (pos.itemType === 'moneta' && purVal > 24 ? purVal + '/1000' : purVal + 'k') : (pos.metal === 'silver' ? String(purVal) : '');
         const desc = (pos.description || '').replace(/,/g, ' ');
         csv += `${formatDate(pos.date)},${pos.metal},${desc},${titolo},${w},${pos.price},${pos.priceCurrency},${costPerG.toFixed(2)},${valChf.toFixed(2)}\n`;
       });
@@ -2493,12 +2537,12 @@
       document.getElementById('editMetal').value = editState.metal || 'gold';
       document.getElementById('editDescription').value = editState.description || '';
       document.getElementById('editNotes').value = editState.notes || '';
+      if (editState.metal !== 'other') {
+        document.getElementById('editItemType').value = editState.itemType || 'lingotto';
+      }
       onEditMetalChange();
       if (editState.metal !== 'other' && editState.purity != null) {
         document.getElementById('editPurity').value = editState.purity;
-      }
-      if (editState.metal !== 'other') {
-        document.getElementById('editItemType').value = editState.itemType || 'lingotto';
       }
       document.getElementById('editQuantity').value = (editState.quantity != null ? editState.quantity : '');
       document.getElementById('editPrice').value = (editState.price != null ? editState.price : '');
@@ -2520,15 +2564,33 @@
       pg.style.display = '';
       if (etg) etg.style.display = '';
       qInput.required = true;
-      let opts = '';
       if (metal === 'gold') {
-        plabel.textContent = 'Caratura';
-        [24, 22, 21, 18, 14, 10, 9].forEach(function (k) { opts += '<option value="' + k + '">' + k + 'k</option>'; });
+        const itemType = document.getElementById('editItemType').value;
+        if (itemType === 'moneta') {
+          populateGoldCoinOptions(psel, plabel);
+        } else {
+          populateGoldKaratOptions(psel, plabel);
+        }
       } else {
         plabel.textContent = 'Titolo (millesimi)';
+        var opts = '';
         [['999', '999 (fino)'], ['925', '925 (sterling)'], ['900', '900'], ['835', '835'], ['800', '800']].forEach(function (o) { opts += '<option value="' + o[0] + '">' + o[1] + '</option>'; });
+        psel.innerHTML = opts;
       }
-      psel.innerHTML = opts;
+    }
+
+    function onEditItemTypeChange() {
+      const metal = document.getElementById('editMetal').value;
+      if (metal === 'gold') {
+        const psel = document.getElementById('editPurity');
+        const plabel = document.getElementById('editPurityLabel');
+        const itemType = document.getElementById('editItemType').value;
+        if (itemType === 'moneta') {
+          populateGoldCoinOptions(psel, plabel);
+        } else {
+          populateGoldKaratOptions(psel, plabel);
+        }
+      }
     }
 
     function renderEditPhotos() {
