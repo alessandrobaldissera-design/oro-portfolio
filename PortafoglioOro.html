@@ -1787,14 +1787,29 @@
         const ctx = chart.ctx;
         const x = pt.x, y = pt.y;
         const time = Date.now();
-        const pulse = 0.5 + 0.5 * Math.sin(time / 400);
-        const radius = 5 + pulse * 4;
-        const color = ds.borderColor || '#d4af37';
+        // Pulsazione lenta e morbida (ciclo ~3.8 sec)
+        const pulse = 0.5 + 0.5 * Math.sin(time / 600);
+        // Colore bianco per entrambi i grafici
+        const color = '#ffffff';
+        const glowColor = 'rgba(255,255,255,';
+        // Alone esterno (glow)
+        const glowRadius = 7 + pulse * 4;
         ctx.save();
         ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.arc(x, y, glowRadius, 0, Math.PI * 2);
+        ctx.fillStyle = glowColor + (0.08 + pulse * 0.12) + ')';
+        ctx.fill();
+        // Cerchio medio
+        const midRadius = 4 + pulse * 2;
+        ctx.beginPath();
+        ctx.arc(x, y, midRadius, 0, Math.PI * 2);
+        ctx.fillStyle = glowColor + (0.2 + pulse * 0.2) + ')';
+        ctx.fill();
+        // Punto centrale solido
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5, 0, Math.PI * 2);
         ctx.fillStyle = color;
-        ctx.globalAlpha = 0.3 + pulse * 0.3;
+        ctx.globalAlpha = 0.85 + pulse * 0.15;
         ctx.fill();
         ctx.restore();
       }
@@ -1887,24 +1902,40 @@
       const currRate = (state.currentCurrency === 'CHF') ? 1 : (state.exchangeRates[state.currentCurrency] || 1);
 
       // Oro Chart
+      // Helper: determina trend e colori
+      function trendColors(dataArr, ctx2d, defaultColor) {
+        const valid = dataArr.filter(v => v != null);
+        if (valid.length < 2) return { line: defaultColor, fill: defaultColor.replace(')', ',0.1)').replace('rgb(','rgba('), point: defaultColor, up: true };
+        const isUp = valid[valid.length - 1] >= valid[0];
+        const green = { line: '#00c853', fillTop: 'rgba(0,200,83,0.28)', fillBot: 'rgba(0,200,83,0.02)', point: '#00c853' };
+        const red   = { line: '#ff1744', fillTop: 'rgba(255,23,68,0.28)', fillBot: 'rgba(255,23,68,0.02)', point: '#ff1744' };
+        const c = isUp ? green : red;
+        const grad = ctx2d.createLinearGradient(0, 0, 0, ctx2d.canvas.height);
+        grad.addColorStop(0, c.fillTop);
+        grad.addColorStop(1, c.fillBot);
+        return { line: c.line, fill: grad, point: c.point, up: isUp };
+      }
+
       const goldCtx = document.getElementById('goldChart')?.getContext('2d');
       if (goldCtx) {
         if (goldChartInstance) goldChartInstance.destroy();
+        const goldDataArr = chartData.data.map(h => h.gold == null ? null : (h.gold / currRate) * (state.goldKarat / 24));
+        const goldTrend = trendColors(goldDataArr, goldCtx, '#d4af37');
         goldChartInstance = new Chart(goldCtx, {
           type: 'line',
           data: {
             labels: chartData.labels,
             datasets: [{
               label: `Oro ${state.goldKarat}k (${currSym}/g)`,
-              data: chartData.data.map(h => h.gold == null ? null : (h.gold / currRate) * (state.goldKarat / 24)),
-              borderColor: '#d4af37',
-              backgroundColor: 'rgba(212, 175, 55, 0.1)',
+              data: goldDataArr,
+              borderColor: goldTrend.line,
+              backgroundColor: goldTrend.fill,
               tension: 0.3,
               fill: true,
-              pointRadius: chartData.data.map((_, i) => i === chartData.data.length - 1 ? 7 : 2),
-              pointBackgroundColor: chartData.data.map((_, i) => i === chartData.data.length - 1 ? '#fff' : '#d4af37'),
-              pointBorderColor: chartData.data.map((_, i) => i === chartData.data.length - 1 ? '#d4af37' : 'transparent'),
-              pointBorderWidth: chartData.data.map((_, i) => i === chartData.data.length - 1 ? 3 : 0),
+              pointRadius: goldDataArr.map((_, i) => i === goldDataArr.length - 1 ? 4 : 1.5),
+              pointBackgroundColor: goldDataArr.map((_, i) => i === goldDataArr.length - 1 ? '#fff' : goldTrend.point),
+              pointBorderColor: goldDataArr.map((_, i) => i === goldDataArr.length - 1 ? '#fff' : 'transparent'),
+              pointBorderWidth: goldDataArr.map((_, i) => i === goldDataArr.length - 1 ? 3 : 0),
               pointHoverRadius: 8
             }]
           },
@@ -1917,9 +1948,9 @@
               legend: { display: false },
               tooltip: {
                 backgroundColor: '#1a1f3a',
-                borderColor: '#d4af37',
+                borderColor: goldTrend.line,
                 borderWidth: 1,
-                titleColor: '#d4af37',
+                titleColor: goldTrend.line,
                 bodyColor: '#e0e0e0',
                 padding: 12,
                 cornerRadius: 8,
@@ -1936,8 +1967,16 @@
               }
             },
             scales: {
-              y: { ticks: { color: '#888' }, grid: { color: 'rgba(26,31,58,0.5)' } },
-              x: { ticks: { color: '#888', maxRotation: 45 }, grid: { color: 'rgba(26,31,58,0.3)' } }
+              y: {
+                ticks: { color: '#aaa', font: { size: 11 }, padding: 6 },
+                grid: { color: 'rgba(180,170,140,0.18)', lineWidth: 1 },
+                border: { color: 'rgba(180,170,140,0.3)', width: 1 }
+              },
+              x: {
+                ticks: { color: '#aaa', maxRotation: 45, font: { size: 11 }, padding: 4 },
+                grid: { color: 'rgba(180,170,140,0.12)', lineWidth: 1 },
+                border: { color: 'rgba(180,170,140,0.3)', width: 1 }
+              }
             }
           }
         });
@@ -1947,21 +1986,23 @@
       const silverCtx = document.getElementById('silverChart')?.getContext('2d');
       if (silverCtx) {
         if (silverChartInstance) silverChartInstance.destroy();
+        const silverDataArr = chartData.data.map(h => h.silver == null ? null : (h.silver / currRate) * (state.silverPurity / 1000));
+        const silverTrend = trendColors(silverDataArr, silverCtx, '#c0c0c0');
         silverChartInstance = new Chart(silverCtx, {
           type: 'line',
           data: {
             labels: chartData.labels,
             datasets: [{
               label: state.silverPurity === 999 ? `Argento (${currSym}/g)` : `Argento ${state.silverPurity}\u2030 (${currSym}/g)`,
-              data: chartData.data.map(h => h.silver == null ? null : (h.silver / currRate) * (state.silverPurity / 1000)),
-              borderColor: '#c0c0c0',
-              backgroundColor: 'rgba(192, 192, 192, 0.1)',
+              data: silverDataArr,
+              borderColor: silverTrend.line,
+              backgroundColor: silverTrend.fill,
               tension: 0.3,
               fill: true,
-              pointRadius: chartData.data.map((_, i) => i === chartData.data.length - 1 ? 7 : 2),
-              pointBackgroundColor: chartData.data.map((_, i) => i === chartData.data.length - 1 ? '#fff' : '#c0c0c0'),
-              pointBorderColor: chartData.data.map((_, i) => i === chartData.data.length - 1 ? '#c0c0c0' : 'transparent'),
-              pointBorderWidth: chartData.data.map((_, i) => i === chartData.data.length - 1 ? 3 : 0),
+              pointRadius: silverDataArr.map((_, i) => i === silverDataArr.length - 1 ? 4 : 1.5),
+              pointBackgroundColor: silverDataArr.map((_, i) => i === silverDataArr.length - 1 ? '#fff' : silverTrend.point),
+              pointBorderColor: silverDataArr.map((_, i) => i === silverDataArr.length - 1 ? '#fff' : 'transparent'),
+              pointBorderWidth: silverDataArr.map((_, i) => i === silverDataArr.length - 1 ? 3 : 0),
               pointHoverRadius: 8
             }]
           },
@@ -1974,9 +2015,9 @@
               legend: { display: false },
               tooltip: {
                 backgroundColor: '#1a1f3a',
-                borderColor: '#c0c0c0',
+                borderColor: silverTrend.line,
                 borderWidth: 1,
-                titleColor: '#c0c0c0',
+                titleColor: silverTrend.line,
                 bodyColor: '#e0e0e0',
                 padding: 12,
                 cornerRadius: 8,
@@ -1993,8 +2034,16 @@
               }
             },
             scales: {
-              y: { ticks: { color: '#888' }, grid: { color: 'rgba(26,31,58,0.5)' } },
-              x: { ticks: { color: '#888', maxRotation: 45 }, grid: { color: 'rgba(26,31,58,0.3)' } }
+              y: {
+                ticks: { color: '#aaa', font: { size: 11 }, padding: 6 },
+                grid: { color: 'rgba(180,190,210,0.18)', lineWidth: 1 },
+                border: { color: 'rgba(180,190,210,0.3)', width: 1 }
+              },
+              x: {
+                ticks: { color: '#aaa', maxRotation: 45, font: { size: 11 }, padding: 4 },
+                grid: { color: 'rgba(180,190,210,0.12)', lineWidth: 1 },
+                border: { color: 'rgba(180,190,210,0.3)', width: 1 }
+              }
             }
           }
         });
