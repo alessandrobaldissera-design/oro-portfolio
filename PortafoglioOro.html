@@ -600,17 +600,7 @@
     .add-watch-btn { margin-top: 1.5rem; margin-bottom: 1rem; }
     #watchDetailModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:flex-start; justify-content:center; overflow-y:auto; padding:2rem 1rem; }
     #watchDetailModal.open { display:flex; }
-    .chart-metal-name {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-    .chart-metal-icon {
-      width: 36px;
-      height: 28px;
-      flex-shrink: 0;
-      filter: drop-shadow(1px 2px 3px rgba(0,0,0,0.4));
-    }
+
     </style>
 
 </head>
@@ -675,23 +665,7 @@
 
       <div class="chart-card">
         <div class="chart-live-header">
-          <span class="chart-metal-name" id="goldMetalName"><svg class="chart-metal-icon" viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
-<defs>
-<linearGradient id="gFr" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f0d060"/><stop offset="50%" stop-color="#d4af37"/><stop offset="100%" stop-color="#8b6914"/></linearGradient>
-<linearGradient id="gTp" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffe89a"/><stop offset="30%" stop-color="#f5d76e"/><stop offset="70%" stop-color="#d4af37"/><stop offset="100%" stop-color="#c9a020"/></linearGradient>
-<linearGradient id="gSd" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#c9a020"/><stop offset="100%" stop-color="#7a5a10"/></linearGradient>
-<linearGradient id="gSh" x1="0.3" y1="0" x2="0.7" y2="1"><stop offset="0%" stop-color="#fff8dc" stop-opacity="0.7"/><stop offset="100%" stop-color="#fff8dc" stop-opacity="0"/></linearGradient>
-</defs>
-<polygon points="10,65 90,65 78,30 22,30" fill="url(#gFr)" stroke="#8b6914" stroke-width="1.5"/>
-<polygon points="22,30 78,30 68,12 32,12" fill="url(#gTp)" stroke="#8b6914" stroke-width="1"/>
-<polygon points="78,30 90,65 90,65 78,30" fill="url(#gSd)" stroke="#8b6914" stroke-width="0.8"/>
-<line x1="22" y1="30" x2="10" y2="65" stroke="#a07818" stroke-width="1.2"/>
-<line x1="38" y1="17" x2="62" y2="17" stroke="#b8962e" stroke-width="1.2" opacity="0.6"/>
-<line x1="36" y1="21" x2="64" y2="21" stroke="#b8962e" stroke-width="1" opacity="0.5"/>
-<line x1="34" y1="25" x2="66" y2="25" stroke="#b8962e" stroke-width="0.8" opacity="0.4"/>
-<polygon points="22,30 40,30 35,14 32,14" fill="url(#gSh)"/>
-<line x1="10" y1="65" x2="90" y2="65" stroke="#5a3a08" stroke-width="2" opacity="0.4"/>
-</svg>Oro</span>
+          <span class="chart-metal-name" id="goldMetalName">Oro</span>
           <span class="chart-live-price" id="goldLivePrice">&ndash;</span>
           <span class="chart-live-change" id="goldLiveChange"></span>
           <span class="chart-live-sub" id="goldLiveSub"></span>
@@ -713,23 +687,7 @@
 
       <div class="chart-card">
         <div class="chart-live-header">
-          <span class="chart-metal-name" id="silverMetalName"><svg class="chart-metal-icon" viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
-<defs>
-<linearGradient id="sFr" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e0e0e0"/><stop offset="50%" stop-color="#b0b0b0"/><stop offset="100%" stop-color="#606060"/></linearGradient>
-<linearGradient id="sTp" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5f5f5"/><stop offset="30%" stop-color="#d8d8d8"/><stop offset="70%" stop-color="#b0b0b0"/><stop offset="100%" stop-color="#909090"/></linearGradient>
-<linearGradient id="sSd" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#909090"/><stop offset="100%" stop-color="#505050"/></linearGradient>
-<linearGradient id="sSh" x1="0.3" y1="0" x2="0.7" y2="1"><stop offset="0%" stop-color="#ffffff" stop-opacity="0.7"/><stop offset="100%" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
-</defs>
-<polygon points="10,65 90,65 78,30 22,30" fill="url(#sFr)" stroke="#606060" stroke-width="1.5"/>
-<polygon points="22,30 78,30 68,12 32,12" fill="url(#sTp)" stroke="#606060" stroke-width="1"/>
-<polygon points="78,30 90,65 90,65 78,30" fill="url(#sSd)" stroke="#606060" stroke-width="0.8"/>
-<line x1="22" y1="30" x2="10" y2="65" stroke="#707070" stroke-width="1.2"/>
-<line x1="38" y1="17" x2="62" y2="17" stroke="#808080" stroke-width="1.2" opacity="0.6"/>
-<line x1="36" y1="21" x2="64" y2="21" stroke="#808080" stroke-width="1" opacity="0.5"/>
-<line x1="34" y1="25" x2="66" y2="25" stroke="#808080" stroke-width="0.8" opacity="0.4"/>
-<polygon points="22,30 40,30 35,14 32,14" fill="url(#sSh)"/>
-<line x1="10" y1="65" x2="90" y2="65" stroke="#303030" stroke-width="2" opacity="0.4"/>
-</svg>Argento</span>
+          <span class="chart-metal-name" id="silverMetalName">Argento</span>
           <span class="chart-live-price" id="silverLivePrice">&ndash;</span>
           <span class="chart-live-change" id="silverLiveChange"></span>
           <span class="chart-live-sub" id="silverLiveSub"></span>
@@ -1727,13 +1685,16 @@
             if (!hourly[key] || p.ts > hourly[key].ts) hourly[key] = p;
           });
           const pts = Object.values(hourly).sort((a, b) => a.ts - b.ts);
-          const labels = pts.map(p => {
-            const d = new Date(p.ts);
-            return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) + ' ' +
-                   String(d.getHours()).padStart(2, '0') + ':00';
-          });
-          const converted = pts.map(pointToChfPerG);
-          return { labels, data: converted };
+          // Usa intraday solo se produce almeno 6 punti orari, altrimenti fallback giornaliero
+          if (pts.length >= 6) {
+            const labels = pts.map(p => {
+              const d = new Date(p.ts);
+              return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) + ' ' +
+                     String(d.getHours()).padStart(2, '0') + ':00';
+            });
+            const converted = pts.map(pointToChfPerG);
+            return { labels, data: converted };
+          }
         }
 
         // Fallback: dati giornalieri
@@ -2129,10 +2090,10 @@
       }
       const kf = state.goldKarat / 24;
       const gmn = document.getElementById('goldMetalName');
-      if (gmn) { const svg = gmn.querySelector('svg'); const txt = state.goldKarat === 24 ? 'Oro' : 'Oro ' + state.goldKarat + 'k'; if (svg) { gmn.innerHTML = ''; gmn.appendChild(svg); gmn.append(txt); } else { gmn.textContent = txt; } }
+      if (gmn) gmn.textContent = state.goldKarat === 24 ? 'Oro' : 'Oro ' + state.goldKarat + 'k';
       const sf = state.silverPurity / 1000;
       const smn = document.getElementById('silverMetalName');
-      if (smn) { const svg = smn.querySelector('svg'); const txt = state.silverPurity === 999 ? 'Argento' : 'Argento ' + state.silverPurity + '\u2030'; if (svg) { smn.innerHTML = ''; smn.appendChild(svg); smn.append(txt); } else { smn.textContent = txt; } }
+      if (smn) smn.textContent = state.silverPurity === 999 ? 'Argento' : 'Argento ' + state.silverPurity + '\u2030';
       setBadge('goldLivePrice', 'goldLiveChange', 'goldLiveSub', goldG * kf, changePct('gold'));
       setBadge('silverLivePrice', 'silverLiveChange', 'silverLiveSub', silverG * sf, changePct('silver'));
     }
