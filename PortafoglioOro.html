@@ -18,9 +18,12 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #0a0e27;
+      background-image: radial-gradient(ellipse at 50% 0%, rgba(212,175,55,0.04) 0%, transparent 60%);
       color: #e0e0e0;
       line-height: 1.6;
       overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     .container {
@@ -32,19 +35,24 @@
 
     header {
       background: linear-gradient(135deg, #1a1f3a 0%, #0f1220 100%);
-      padding: 1rem;
+      padding: 1.1rem 1.2rem;
       border-bottom: 2px solid #d4af37;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4), 0 1px 8px rgba(212,175,55,0.1);
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 1rem;
+      position: relative;
+      z-index: 10;
     }
 
     header h1 {
       font-size: 1.5rem;
       color: #d4af37;
       font-weight: 700;
+      letter-spacing: 0.04em;
+      text-shadow: 0 0 20px rgba(212,175,55,0.3);
     }
 
     .header-controls {
@@ -57,10 +65,11 @@
     .currency-selector {
       display: flex;
       gap: 0.5rem;
-      background: rgba(212, 175, 55, 0.1);
+      background: rgba(212, 175, 55, 0.08);
       padding: 0.5rem;
-      border-radius: 8px;
-      border: 1px solid #d4af37;
+      border-radius: 10px;
+      border: 1px solid rgba(212,175,55,0.6);
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
     }
 
     .currency-btn {
@@ -76,8 +85,9 @@
     }
 
     .currency-btn.active {
-      background: #d4af37;
+      background: linear-gradient(180deg, #e0bf4a 0%, #c9a030 100%);
       color: #0a0e27;
+      box-shadow: 0 2px 8px rgba(212,175,55,0.4);
     }
 
     .content {
@@ -92,28 +102,31 @@
     .period-selector {
       display: flex;
       gap: 0.5rem;
-      background: rgba(212, 175, 55, 0.1);
+      background: rgba(212, 175, 55, 0.06);
       padding: 0.75rem;
-      border-radius: 8px;
-      border: 1px solid #d4af37;
+      border-radius: 10px;
+      border: 1px solid rgba(212,175,55,0.5);
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
       flex-wrap: wrap;
     }
 
     .period-btn {
       background: transparent;
-      border: 1px solid #d4af37;
+      border: 1px solid rgba(212,175,55,0.5);
       color: #e0e0e0;
       padding: 0.5rem 0.75rem;
       cursor: pointer;
-      border-radius: 4px;
+      border-radius: 6px;
       font-weight: 600;
-      transition: all 0.3s;
+      transition: all 0.25s ease;
       font-size: 0.85rem;
     }
 
     .period-btn.active {
-      background: #d4af37;
+      background: linear-gradient(180deg, #e0bf4a 0%, #c9a030 100%);
       color: #0a0e27;
+      box-shadow: 0 2px 8px rgba(212,175,55,0.4);
+      border-color: transparent;
     }
 
     .karat-selector {
@@ -131,29 +144,32 @@
     }
     .karat-btn {
       background: transparent;
-      border: 1px solid #d4af37;
+      border: 1px solid rgba(212,175,55,0.5);
       color: #e0e0e0;
       padding: 0.3rem 0.6rem;
       cursor: pointer;
-      border-radius: 4px;
+      border-radius: 6px;
       font-weight: 600;
-      transition: all 0.3s;
+      transition: all 0.25s ease;
       font-size: 0.8rem;
     }
     .karat-btn.active {
-      background: #d4af37;
+      background: linear-gradient(180deg, #e0bf4a 0%, #c9a030 100%);
       color: #0a0e27;
+      box-shadow: 0 2px 6px rgba(212,175,55,0.35);
+      border-color: transparent;
     }
 
     .chart-container {
-      background: linear-gradient(135deg, #1a1f3a 0%, #0f1220 100%);
-      border: 1px solid #d4af37;
-      border-radius: 12px;
+      background: linear-gradient(145deg, #1c2140 0%, #0f1220 100%);
+      border: 1px solid rgba(212,175,55,0.5);
+      border-radius: 14px;
       padding: 1.5rem;
       height: 300px;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03);
     }
 
     .summary {
@@ -169,25 +185,29 @@
     }
 
     .card {
-      background: linear-gradient(135deg, #1a1f3a 0%, #0f1220 100%);
-      border: 1px solid #d4af37;
-      border-radius: 12px;
+      background: linear-gradient(145deg, #1c2140 0%, #0f1220 100%);
+      border: 1px solid rgba(212,175,55,0.45);
+      border-radius: 14px;
       padding: 1.5rem;
       text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03);
+      transition: box-shadow 0.3s ease, border-color 0.3s ease;
     }
 
     .card h3 {
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       color: #c9a961;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.6rem;
       text-transform: uppercase;
       font-weight: 600;
+      letter-spacing: 0.08em;
     }
 
     .card .value {
       font-size: 1.8rem;
       color: #d4af37;
       font-weight: 700;
+      text-shadow: 0 0 15px rgba(212,175,55,0.2);
     }
 
     .gain { color: #4ade80; }
@@ -205,7 +225,7 @@
     .tabs {
       display: flex;
       gap: 1rem;
-      border-bottom: 2px solid #1a1f3a;
+      border-bottom: 2px solid rgba(212,175,55,0.12);
       margin-bottom: 1rem;
       flex-wrap: wrap;
     }
@@ -213,18 +233,20 @@
     .tab-btn {
       background: none;
       border: none;
-      color: #888;
+      color: #6a7090;
       padding: 1rem 1.5rem;
       font-size: 1rem;
       cursor: pointer;
       border-bottom: 3px solid transparent;
-      transition: all 0.3s;
+      transition: all 0.25s ease;
       font-weight: 600;
+      letter-spacing: 0.02em;
     }
 
     .tab-btn.active {
       color: #d4af37;
       border-bottom-color: #d4af37;
+      text-shadow: 0 0 12px rgba(212,175,55,0.3);
     }
 
     .tab-content {
@@ -252,12 +274,13 @@
     .form-group select {
       width: 100%;
       padding: 0.75rem;
-      background: #1a1f3a;
-      border: 1px solid #d4af37;
+      background: #141832;
+      border: 1px solid rgba(212,175,55,0.45);
       color: #e0e0e0;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 1rem;
       font-family: inherit;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
     }
 
     .form-group textarea { resize:vertical; min-height:72px; }
@@ -265,25 +288,29 @@
     .form-group textarea:focus,
     .form-group select:focus {
       outline: none;
-      border-color: #c9a961;
-      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+      border-color: #d4af37;
+      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15), 0 0 12px rgba(212,175,55,0.08);
     }
 
     button.btn {
-      background: #d4af37;
+      background: linear-gradient(180deg, #e0bf4a 0%, #c9a030 100%);
       color: #0a0e27;
       padding: 0.75rem 2rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.25s ease;
       font-size: 1rem;
       width: 100%;
+      box-shadow: 0 3px 12px rgba(212,175,55,0.3);
+      letter-spacing: 0.02em;
     }
 
     button.btn:hover {
-      background: #c9a961;
+      background: linear-gradient(180deg, #e8c95a 0%, #d4af37 100%);
+      box-shadow: 0 5px 18px rgba(212,175,55,0.4);
+      transform: translateY(-1px);
     }
 
     table {
@@ -294,27 +321,33 @@
     }
 
     th {
-      background: rgba(212, 175, 55, 0.1);
+      background: rgba(212, 175, 55, 0.08);
       color: #d4af37;
       padding: 1rem;
       text-align: left;
       font-weight: 600;
+      letter-spacing: 0.04em;
+      font-size: 0.85rem;
+      text-transform: uppercase;
     }
 
     td {
       padding: 0.75rem 1rem;
-      border-bottom: 1px solid #1a1f3a;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
     }
 
     .export-btn {
-      background: #d4af37;
+      background: linear-gradient(180deg, #e0bf4a 0%, #c9a030 100%);
       color: #0a0e27;
       padding: 0.75rem 2rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       font-weight: 700;
       cursor: pointer;
       margin-top: 1rem;
+      box-shadow: 0 3px 12px rgba(212,175,55,0.3);
+      transition: all 0.25s ease;
+      letter-spacing: 0.02em;
     }
 
     .sync-container {
@@ -330,19 +363,21 @@
     }
 
     .sync-btn {
-      background: #d4af37;
+      background: linear-gradient(180deg, #e0bf4a 0%, #c9a030 100%);
       color: #0a0e27;
       padding: 0.75rem 1.5rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       font-weight: 700;
       cursor: pointer;
       flex: 1;
       min-width: 150px;
+      box-shadow: 0 3px 10px rgba(212,175,55,0.25);
     }
 
     .sync-btn:hover {
-      background: #c9a961;
+      background: linear-gradient(180deg, #e8c95a 0%, #d4af37 100%);
+      box-shadow: 0 5px 15px rgba(212,175,55,0.35);
     }
 
     .sync-status {
@@ -367,10 +402,11 @@
 
     /* Grafici con prezzo live in evidenza */
     .chart-card {
-      background: linear-gradient(135deg, #1a1f3a 0%, #0f1220 100%);
-      border: 1px solid #d4af37;
-      border-radius: 12px;
+      background: linear-gradient(145deg, #1c2140 0%, #0f1220 100%);
+      border: 1px solid rgba(212,175,55,0.45);
+      border-radius: 14px;
       padding: 1.5rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03);
     }
     .chart-live-header {
       display: flex;
@@ -385,12 +421,22 @@
       color: #c9a961;
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .chart-metal-icon {
+      width: 36px;
+      height: 28px;
+      flex-shrink: 0;
+      filter: drop-shadow(1px 2px 3px rgba(0,0,0,0.4));
     }
     .chart-live-price {
       font-size: 1.9rem;
       font-weight: 800;
       color: #d4af37;
       line-height: 1;
+      text-shadow: 0 0 18px rgba(212,175,55,0.25);
     }
     .chart-live-sub { font-size: 0.85rem; color: #888; }
     .chart-live-change {
@@ -406,10 +452,11 @@
     .photo-thumb {
       position: relative;
       width: 100%;
-      border-radius: 12px;
+      border-radius: 14px;
       overflow: hidden;
-      border: 1px solid #d4af37;
+      border: 1px solid rgba(212,175,55,0.45);
       background: #1a1f3a;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.25);
     }
     .photo-thumb img { width: 100%; height: auto; object-fit: cover; cursor: pointer; display: block; border-radius: 12px; }
     .photo-thumb .photo-del {
@@ -488,10 +535,11 @@
       gap: 0.75rem;
       margin: 0 0 1rem;
       padding: 0.6rem 0.9rem;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(212,175,55,0.25);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(212,175,55,0.2);
       border-radius: 10px;
       font-size: 0.85rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     }
     .sync-status { display: flex; align-items: center; gap: 0.5rem; color: #cfd3e0; }
     .sync-dot { width: 10px; height: 10px; border-radius: 50%; background: #888; flex: none; }
@@ -504,14 +552,15 @@
     .rate-info { color: #9aa0b4; }
     .refresh-btn {
       margin-left: auto;
-      background: rgba(212, 175, 55, 0.15);
+      background: rgba(212, 175, 55, 0.1);
       color: #d4af37;
-      border: 1px solid #d4af37;
+      border: 1px solid rgba(212,175,55,0.5);
       border-radius: 8px;
       padding: 0.4rem 0.9rem;
       cursor: pointer;
       font-weight: 600;
       font-size: 0.85rem;
+      transition: all 0.25s ease;
     }
     .refresh-btn:disabled { opacity: 0.5; cursor: default; }
       .history-hint { color:#8a90a8; font-size:0.85rem; margin:0 0 0.75rem; }
@@ -538,7 +587,7 @@
     .sale-field-cur { flex:0 0 80px; }
     .btn-sale-add { margin-top:0.6rem; background:#d4af37; color:#1a1f3a; border:none; padding:0.5rem 1rem; border-radius:6px; font-weight:600; cursor:pointer; }
     .sold-badge { background:rgba(248,113,113,0.15); color:#f87171; font-size:0.72em; padding:0.1em 0.45em; border-radius:6px; vertical-align:middle; }
-    .detail-card { background:linear-gradient(135deg,#1a1f3a 0%,#0f1220 100%); color:#e0e0e0; border:1px solid rgba(212,175,55,0.3); border-radius:14px; padding:1.5rem; width:100%; max-width:640px; position:relative; box-shadow:0 10px 40px rgba(0,0,0,0.5); }
+    .detail-card { background:linear-gradient(145deg,#1c2140 0%,#0f1220 100%); color:#e0e0e0; border:1px solid rgba(212,175,55,0.35); border-radius:16px; padding:1.5rem; width:100%; max-width:640px; position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.6), 0 0 30px rgba(212,175,55,0.05); }
     .detail-close { position:absolute; top:0.6rem; right:0.9rem; background:none; border:none; font-size:1.7rem; line-height:1; cursor:pointer; color:#8a90a8; }
     .detail-title { margin:0 0 1.5rem; font-size:1.2rem; color:#d4af37; }
     .detail-actions { display:flex; flex-wrap:wrap; gap:0.6rem; margin-top:1rem; }
@@ -552,9 +601,9 @@
       .summary.summary-watches { grid-template-columns: 1fr; }
     }
     .watch-card {
-      background: linear-gradient(135deg, #1a1f3a 0%, #0f1220 100%);
-      border: 1px solid rgba(212,175,55,0.3);
-      border-radius: 12px;
+      background: linear-gradient(145deg, #1c2140 0%, #0f1220 100%);
+      border: 1px solid rgba(212,175,55,0.25);
+      border-radius: 14px;
       padding: 1rem 1.2rem;
       margin-bottom: 0.75rem;
       display: flex;
@@ -563,12 +612,14 @@
       cursor: pointer;
       user-select: none;
       -webkit-user-select: none;
+      box-shadow: 0 3px 15px rgba(0,0,0,0.25);
+      transition: box-shadow 0.25s ease, border-color 0.25s ease;
     }
     .watch-brand-circle {
       width: 48px; height: 48px;
       border-radius: 50%;
-      background: rgba(212,175,55,0.15);
-      border: 1px solid #d4af37;
+      background: rgba(212,175,55,0.1);
+      border: 1px solid rgba(212,175,55,0.6);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -576,6 +627,7 @@
       font-weight: 700;
       font-size: 1.2rem;
       flex-shrink: 0;
+      box-shadow: 0 0 12px rgba(212,175,55,0.1);
     }
     .watch-card-body { flex: 1; min-width: 0; }
     .watch-card-title { font-weight: 700; color: #e0e0e0; font-size: 1.05rem; }
@@ -663,7 +715,23 @@
 
       <div class="chart-card">
         <div class="chart-live-header">
-          <span class="chart-metal-name" id="goldMetalName">Oro</span>
+          <span class="chart-metal-name" id="goldMetalName"><svg class="chart-metal-icon" viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="gFr" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f0d060"/><stop offset="50%" stop-color="#d4af37"/><stop offset="100%" stop-color="#8b6914"/></linearGradient>
+<linearGradient id="gTp" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffe89a"/><stop offset="30%" stop-color="#f5d76e"/><stop offset="70%" stop-color="#d4af37"/><stop offset="100%" stop-color="#c9a020"/></linearGradient>
+<linearGradient id="gSd" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#c9a020"/><stop offset="100%" stop-color="#7a5a10"/></linearGradient>
+<linearGradient id="gSh" x1="0.3" y1="0" x2="0.7" y2="1"><stop offset="0%" stop-color="#fff8dc" stop-opacity="0.7"/><stop offset="100%" stop-color="#fff8dc" stop-opacity="0"/></linearGradient>
+</defs>
+<polygon points="10,65 90,65 78,30 22,30" fill="url(#gFr)" stroke="#8b6914" stroke-width="1.5"/>
+<polygon points="22,30 78,30 68,12 32,12" fill="url(#gTp)" stroke="#8b6914" stroke-width="1"/>
+<polygon points="78,30 90,65 90,65 78,30" fill="url(#gSd)" stroke="#8b6914" stroke-width="0.8"/>
+<line x1="22" y1="30" x2="10" y2="65" stroke="#a07818" stroke-width="1.2"/>
+<line x1="38" y1="17" x2="62" y2="17" stroke="#b8962e" stroke-width="1.2" opacity="0.6"/>
+<line x1="36" y1="21" x2="64" y2="21" stroke="#b8962e" stroke-width="1" opacity="0.5"/>
+<line x1="34" y1="25" x2="66" y2="25" stroke="#b8962e" stroke-width="0.8" opacity="0.4"/>
+<polygon points="22,30 40,30 35,14 32,14" fill="url(#gSh)"/>
+<line x1="10" y1="65" x2="90" y2="65" stroke="#5a3a08" stroke-width="2" opacity="0.4"/>
+</svg>Oro</span>
           <span class="chart-live-price" id="goldLivePrice">&ndash;</span>
           <span class="chart-live-change" id="goldLiveChange"></span>
           <span class="chart-live-sub" id="goldLiveSub"></span>
@@ -685,7 +753,23 @@
 
       <div class="chart-card">
         <div class="chart-live-header">
-          <span class="chart-metal-name" id="silverMetalName">Argento</span>
+          <span class="chart-metal-name" id="silverMetalName"><svg class="chart-metal-icon" viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="sFr" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e0e0e0"/><stop offset="50%" stop-color="#b0b0b0"/><stop offset="100%" stop-color="#606060"/></linearGradient>
+<linearGradient id="sTp" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5f5f5"/><stop offset="30%" stop-color="#d8d8d8"/><stop offset="70%" stop-color="#b0b0b0"/><stop offset="100%" stop-color="#909090"/></linearGradient>
+<linearGradient id="sSd" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#909090"/><stop offset="100%" stop-color="#505050"/></linearGradient>
+<linearGradient id="sSh" x1="0.3" y1="0" x2="0.7" y2="1"><stop offset="0%" stop-color="#ffffff" stop-opacity="0.7"/><stop offset="100%" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+</defs>
+<polygon points="10,65 90,65 78,30 22,30" fill="url(#sFr)" stroke="#606060" stroke-width="1.5"/>
+<polygon points="22,30 78,30 68,12 32,12" fill="url(#sTp)" stroke="#606060" stroke-width="1"/>
+<polygon points="78,30 90,65 90,65 78,30" fill="url(#sSd)" stroke="#606060" stroke-width="0.8"/>
+<line x1="22" y1="30" x2="10" y2="65" stroke="#707070" stroke-width="1.2"/>
+<line x1="38" y1="17" x2="62" y2="17" stroke="#808080" stroke-width="1.2" opacity="0.6"/>
+<line x1="36" y1="21" x2="64" y2="21" stroke="#808080" stroke-width="1" opacity="0.5"/>
+<line x1="34" y1="25" x2="66" y2="25" stroke="#808080" stroke-width="0.8" opacity="0.4"/>
+<polygon points="22,30 40,30 35,14 32,14" fill="url(#sSh)"/>
+<line x1="10" y1="65" x2="90" y2="65" stroke="#303030" stroke-width="2" opacity="0.4"/>
+</svg>Argento</span>
           <span class="chart-live-price" id="silverLivePrice">&ndash;</span>
           <span class="chart-live-change" id="silverLiveChange"></span>
           <span class="chart-live-sub" id="silverLiveSub"></span>
@@ -2085,10 +2169,10 @@
       }
       const kf = state.goldKarat / 24;
       const gmn = document.getElementById('goldMetalName');
-      if (gmn) gmn.textContent = state.goldKarat === 24 ? 'Oro' : 'Oro ' + state.goldKarat + 'k';
+      if (gmn) { const svg = gmn.querySelector('svg'); const txt = state.goldKarat === 24 ? 'Oro' : 'Oro ' + state.goldKarat + 'k'; if (svg) { gmn.innerHTML = ''; gmn.appendChild(svg); gmn.append(txt); } else { gmn.textContent = txt; } }
       const sf = state.silverPurity / 1000;
       const smn = document.getElementById('silverMetalName');
-      if (smn) smn.textContent = state.silverPurity === 999 ? 'Argento' : 'Argento ' + state.silverPurity + '\u2030';
+      if (smn) { const svg = smn.querySelector('svg'); const txt = state.silverPurity === 999 ? 'Argento' : 'Argento ' + state.silverPurity + '\u2030'; if (svg) { smn.innerHTML = ''; smn.appendChild(svg); smn.append(txt); } else { smn.textContent = txt; } }
       setBadge('goldLivePrice', 'goldLiveChange', 'goldLiveSub', goldG * kf, changePct('gold'));
       setBadge('silverLivePrice', 'silverLiveChange', 'silverLiveSub', silverG * sf, changePct('silver'));
     }
