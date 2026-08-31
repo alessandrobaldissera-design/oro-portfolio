@@ -793,7 +793,7 @@
       </div>
 
       <div class="tab-content" id="history">
-        <p class="history-hint">Tieni premuto 3 secondi su una posizione per aprirla, modificarla o eliminarla.</p>
+
         <table>
           <thead>
             <tr>
@@ -1610,78 +1610,62 @@
       let filteredHistory = state.priceHistory.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
 
       if (period === 1) {
-        // 1 GIORNO: usa dati intraday raccolti (ogni 5 min)
+        // 1 GIORNO: chiusura ieri come ancora + punti intraday reali + prezzo live
         const h24ago = Date.now() - 24 * 60 * 60 * 1000;
+        const usdToChf = state.exchangeRates.USD || 0.80;
+        const allPoints = []; // {ts, goldUsd, silverUsd}
+
+        // 1) Ancora iniziale: chiusura di ieri dal db storico
+        const today = now.toISOString().split('T')[0];
+        const prevEntries = filteredHistory.filter(h => h.date < today && h.goldUsd != null);
+        if (prevEntries.length > 0) {
+          const prevClose = prevEntries[prevEntries.length - 1];
+          const prevDate = new Date(prevClose.date);
+          prevDate.setHours(23, 59, 0, 0);
+          allPoints.push({ ts: prevDate.getTime(), goldUsd: prevClose.goldUsd, silverUsd: prevClose.silverUsd });
+        }
+
+        // 2) Punti intraday reali raccolti (ogni 5 min)
         const intraday = state.intradayHistory
           .filter(p => p.ts >= h24ago && p.goldUsd != null)
           .sort((a, b) => a.ts - b.ts);
+        intraday.forEach(p => allPoints.push(p));
 
-        if (intraday.length >= 2) {
-          // Aggiungi prezzo live corrente come ultimo punto
-          const usdToChf = state.exchangeRates.USD || 0.80;
-          if (state.currentPrices.gold > 0) {
-            const lastTs = intraday[intraday.length - 1].ts;
-            if (Date.now() - lastTs > 60000) { // piu' di 1 min dall'ultimo
-              intraday.push({
-                ts: Date.now(),
-                goldUsd: state.currentPrices.gold / usdToChf * OZ_TO_G,
-                silverUsd: state.currentPrices.silver / usdToChf * OZ_TO_G
-              });
-            }
-          }
-          const labels = intraday.map(p => {
-            const d = new Date(p.ts);
-            return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-          });
-          const converted = intraday.map(p => pointToChfPerG(p));
-          return { labels, data: converted };
-        }
-
-        // Fallback: chiusura precedente → prezzo live
-        const today = now.toISOString().split('T')[0];
-        const lastEntries = filteredHistory.slice(-3);
-        let prevClose = null;
-        let todayEntry = null;
-        for (let i = lastEntries.length - 1; i >= 0; i--) {
-          if (lastEntries[i].date === today) todayEntry = lastEntries[i];
-          else if (!prevClose) prevClose = lastEntries[i];
-        }
-        if (!prevClose && lastEntries.length > 0) {
-          prevClose = lastEntries[lastEntries.length - (todayEntry ? 2 : 1)];
-        }
-        const points = [];
-        const labels = [];
-        if (prevClose) {
-          points.push(prevClose);
-          const d = new Date(prevClose.date);
-          labels.push('Chiusura ' + d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }));
-        }
-        if (prevClose && state.currentPrices.gold > 0) {
-          const goldStart = prevClose.goldUsd;
-          const silverStart = prevClose.silverUsd;
-          const usdToChf2 = state.exchangeRates.USD || 0.80;
-          const goldEnd = state.currentPrices.gold / usdToChf2 * OZ_TO_G;
-          const silverEnd = state.currentPrices.silver / usdToChf2 * OZ_TO_G;
-          const hours = now.getHours();
-          const totalSteps = Math.max(hours, 1);
-          const step = 1 / totalSteps;
-          for (let s = 1; s < totalSteps; s++) {
-            const t = s * step;
-            const noise = 1 + (Math.sin(s * 2.7) * 0.001);
-            points.push({ date: today, goldUsd: goldStart + (goldEnd - goldStart) * t * noise, silverUsd: silverStart + (silverEnd - silverStart) * t * noise });
-            labels.push(String(s).padStart(2, '0') + ':00');
-          }
-        }
+        // 3) Prezzo live corrente come ultimo punto
         if (state.currentPrices.gold > 0) {
-          const usdToChf3 = state.exchangeRates.USD || 0.80;
-          points.push({ date: today, goldUsd: state.currentPrices.gold / usdToChf3 * OZ_TO_G, silverUsd: state.currentPrices.silver / usdToChf3 * OZ_TO_G });
-          labels.push('Adesso (' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ')');
-        } else if (todayEntry) {
-          points.push(todayEntry);
-          labels.push('Oggi');
+          const lastTs = allPoints.length > 0 ? allPoints[allPoints.length - 1].ts : 0;
+          if (Date.now() - lastTs > 30000) {
+            allPoints.push({
+              ts: Date.now(),
+              goldUsd: state.currentPrices.gold / usdToChf * OZ_TO_G,
+              silverUsd: state.currentPrices.silver / usdToChf * OZ_TO_G
+            });
+          }
         }
-        if (points.length === 0) { points.push(...filteredHistory.slice(-2)); labels.push('', ''); }
-        const converted = points.map(pointToChfPerG);
+
+        // Deduplicazione: rimuovi punti troppo vicini (<30s)
+        const deduped = [];
+        allPoints.sort((a, b) => a.ts - b.ts);
+        allPoints.forEach(p => {
+          if (deduped.length === 0 || p.ts - deduped[deduped.length - 1].ts >= 30000) {
+            deduped.push(p);
+          }
+        });
+
+        if (deduped.length === 0) {
+          // Nessun dato disponibile
+          return { labels: ['Nessun dato'], data: [{ gold: 0, silver: 0 }] };
+        }
+
+        const labels = deduped.map(p => {
+          const d = new Date(p.ts);
+          return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        });
+        // Etichetta speciale per l'ancora iniziale
+        if (prevEntries && prevEntries.length > 0 && deduped.length > 1) {
+          labels[0] = 'Ieri';
+        }
+        const converted = deduped.map(p => pointToChfPerG(p));
         return { labels, data: converted };
 
       } else if (period === 7) {
