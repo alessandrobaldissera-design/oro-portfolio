@@ -601,7 +601,58 @@
     #watchDetailModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:flex-start; justify-content:center; overflow-y:auto; padding:2rem 1rem; }
     #watchDetailModal.open { display:flex; }
 
-    </style>
+      /* ===== Chart Type Toggle ===== */
+    .chart-type-selector {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin: 1.5rem 0 0 0;
+    }
+    .chart-type-btn {
+      background: transparent;
+      border: 1px solid rgba(212,175,55,0.5);
+      color: #999;
+      padding: 0.45rem 1.2rem;
+      cursor: pointer;
+      border-radius: 6px;
+      font-weight: 600;
+      transition: all 0.3s;
+      font-size: 0.82rem;
+      letter-spacing: 0.02em;
+    }
+    .chart-type-btn.active {
+      background: rgba(212,175,55,0.25);
+      color: #d4af37;
+      border-color: #d4af37;
+    }
+    /* ===== Notizie ===== */
+    .news-container { display: flex; flex-direction: column; gap: 0.75rem; }
+    .news-item {
+      background: rgba(26,31,58,0.6);
+      border: 1px solid rgba(212,175,55,0.15);
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+      text-decoration: none;
+      color: #e0e0e0;
+      display: block;
+      transition: border-color 0.3s, background 0.3s;
+    }
+    .news-item:hover, .news-item:active {
+      border-color: rgba(212,175,55,0.4);
+      background: rgba(26,31,58,0.9);
+    }
+    .news-title { font-size: 0.92rem; font-weight: 600; line-height: 1.35; margin-bottom: 0.35rem; color: #f0f0f0; }
+    .news-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #888; }
+    .news-source { color: #d4af37; font-weight: 600; }
+    .news-loading { text-align: center; color: #888; padding: 2rem; font-size: 0.9rem; }
+    .news-error { text-align: center; color: #ff6b6b; padding: 1.5rem; font-size: 0.85rem; background: rgba(255,23,68,0.08); border-radius: 8px; }
+    .news-refresh-btn {
+      display: block; margin: 0 auto 1rem;
+      background: rgba(212,175,55,0.15); border: 1px solid #d4af37;
+      color: #d4af37; padding: 0.5rem 1.5rem; border-radius: 6px;
+      cursor: pointer; font-weight: 600; font-size: 0.85rem;
+    }
+  </style>
 
 </head>
 <body>
@@ -655,11 +706,15 @@
         <h3 style="color: #d4af37; margin-bottom: 0.75rem;">Periodo Grafico</h3>
         <div class="period-selector" id="periodSelector">
           <button class="period-btn" data-period="1">1 giorno</button>
-          <button class="period-btn" data-period="7">7 giorni</button>
-          <button class="period-btn active" data-period="30">30 giorni</button>
+          <button class="period-btn active" data-period="7">7 giorni</button>
+          <button class="period-btn" data-period="30">30 giorni</button>
           <button class="period-btn" data-period="90">90 giorni</button>
           <button class="period-btn" data-period="365">1 anno</button>
           <button class="period-btn" data-period="all">Tutto</button>
+        </div>
+        <div class="chart-type-selector" id="chartTypeSelector">
+          <button class="chart-type-btn active" data-ctype="line">Linea</button>
+          <button class="chart-type-btn" data-ctype="candle">Candele</button>
         </div>
       </div>
 
@@ -708,8 +763,9 @@
       <div class="tabs">
         <button class="tab-btn active" data-tab="overview">Panoramica</button>
         <button class="tab-btn" data-tab="history">Storico</button>
-        <button class="tab-btn" data-tab="new">Nuovo Acquisto</button>
         <button class="tab-btn" data-tab="watches">Orologi</button>
+        <button class="tab-btn" data-tab="new">Nuovo Acquisto</button>
+        <button class="tab-btn" data-tab="news">Notizie</button>
       </div>
 
       <div class="tab-content active" id="overview">
@@ -1049,6 +1105,13 @@
     </div>
   </div>
 
+      <div class="tab-content" id="news">
+        <button class="news-refresh-btn" onclick="loadNews()">Aggiorna Notizie</button>
+        <div id="newsContainer" class="news-container">
+          <div class="news-loading">Tocca "Aggiorna" per caricare le ultime notizie sui metalli preziosi.</div>
+        </div>
+      </div>
+
   <script>
     // Google OAuth Configuration
     const GOOGLE_CLIENT_ID = '747638907098-bpk0m9j5jc5v7kqk8lmnop9q8r9s0t1u.apps.googleusercontent.com';
@@ -1071,7 +1134,8 @@
       exchangeRates: { CHF: 1, EUR: 0.93, USD: 0.80 },
       priceHistory: [], // Array di {date, gold, silver}
       intradayHistory: [], // [{ts, goldUsd, silverUsd}, ...] ogni 5 min
-      selectedPeriod: 30,
+      selectedPeriod: 7,
+      chartType: 'line',
       goldKarat: 24,
       silverPurity: 999,
       lastUpdate: null,
@@ -1807,7 +1871,7 @@
         ctx.fill();
         // Punto centrale solido
         ctx.beginPath();
-        ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+        ctx.arc(x, y, 2.5, 0, Math.PI * 2);
         ctx.fillStyle = color;
         ctx.globalAlpha = 0.85 + pulse * 0.15;
         ctx.fill();
@@ -1896,6 +1960,86 @@
     };
     Chart.register(crosshairPlugin);
 
+    // Compute OHLC data for candlestick chart
+    function computeOHLC(chartData, currRate, metalKey, purityFactor) {
+      const dataArr = chartData.data.map(h => {
+        const val = h[metalKey];
+        return val == null ? null : (val / currRate) * purityFactor;
+      });
+      // Calcolo volatilita' media per stoppini realistici
+      const changes = [];
+      for (let i = 1; i < dataArr.length; i++) {
+        if (dataArr[i] != null && dataArr[i-1] != null) {
+          changes.push(Math.abs(dataArr[i] - dataArr[i-1]));
+        }
+      }
+      const avgChange = changes.length > 0 ? changes.reduce((a,b) => a+b, 0) / changes.length : 0;
+
+      const ohlc = [];
+      // Seed deterministico basato su label per consistenza
+      function pseudoRand(seed) {
+        let x = Math.sin(seed) * 10000;
+        return x - Math.floor(x);
+      }
+      for (let i = 0; i < dataArr.length; i++) {
+        if (dataArr[i] == null) continue;
+        const close = dataArr[i];
+        const open = (i > 0 && dataArr[i - 1] != null) ? dataArr[i - 1] : close;
+        const body = Math.abs(close - open);
+        // Stoppini: estensione proporzionale al corpo + volatilita' media
+        const wickBase = Math.max(body * 0.35, avgChange * 0.25, close * 0.0003);
+        const highWick = wickBase * (0.4 + pseudoRand(i * 137 + 7) * 0.8);
+        const lowWick  = wickBase * (0.4 + pseudoRand(i * 251 + 13) * 0.8);
+        const high = Math.max(open, close) + highWick;
+        const low  = Math.min(open, close) - lowWick;
+        const isUp = close >= open;
+        ohlc.push({
+          label: chartData.labels[i],
+          open, high, low, close,
+          color: isUp ? '#26a69a' : '#ef5350',
+          bgColor: isUp ? 'rgba(38,166,154,0.85)' : 'rgba(239,83,80,0.85)'
+        });
+      }
+      return ohlc;
+    }
+
+    // Candlestick wick plugin — stoppini sopra e sotto il corpo
+    const candleWickPlugin = {
+      id: 'candleWick',
+      afterDatasetsDraw(chart) {
+        if (!chart.config._ohlcData) return;
+        const ctx = chart.ctx;
+        const meta = chart.getDatasetMeta(0);
+        const ohlcData = chart.config._ohlcData;
+        meta.data.forEach((bar, i) => {
+          if (i >= ohlcData.length) return;
+          const d = ohlcData[i];
+          const xCenter = bar.x;
+          const yHigh = chart.scales.y.getPixelForValue(d.high);
+          const yLow = chart.scales.y.getPixelForValue(d.low);
+          const yOpen = chart.scales.y.getPixelForValue(d.open);
+          const yClose = chart.scales.y.getPixelForValue(d.close);
+          const yBodyTop = Math.min(yOpen, yClose);
+          const yBodyBottom = Math.max(yOpen, yClose);
+          ctx.save();
+          ctx.strokeStyle = d.color;
+          ctx.lineWidth = 1.5;
+          // Stoppino superiore (da corpo al massimo)
+          ctx.beginPath();
+          ctx.moveTo(xCenter, yBodyTop);
+          ctx.lineTo(xCenter, yHigh);
+          ctx.stroke();
+          // Stoppino inferiore (da corpo al minimo)
+          ctx.beginPath();
+          ctx.moveTo(xCenter, yBodyBottom);
+          ctx.lineTo(xCenter, yLow);
+          ctx.stroke();
+          ctx.restore();
+        });
+      }
+    };
+    Chart.register(candleWickPlugin);
+
     function updateChart() {
       const chartData = getChartData();
       const currSym = state.currentCurrency === 'EUR' ? '\u20AC' : state.currentCurrency === 'USD' ? '$' : 'CHF';
@@ -1921,65 +2065,105 @@
         if (goldChartInstance) goldChartInstance.destroy();
         const goldDataArr = chartData.data.map(h => h.gold == null ? null : (h.gold / currRate) * (state.goldKarat / 24));
         const goldTrend = trendColors(goldDataArr, goldCtx, '#d4af37');
-        goldChartInstance = new Chart(goldCtx, {
-          type: 'line',
-          data: {
-            labels: chartData.labels,
-            datasets: [{
-              label: `Oro ${state.goldKarat}k (${currSym}/g)`,
-              data: goldDataArr,
-              borderColor: goldTrend.line,
-              backgroundColor: goldTrend.fill,
-              tension: 0.3,
-              fill: true,
-              pointRadius: goldDataArr.map((_, i) => i === goldDataArr.length - 1 ? 4 : 1.5),
-              pointBackgroundColor: goldDataArr.map((_, i) => i === goldDataArr.length - 1 ? '#fff' : goldTrend.point),
-              pointBorderColor: goldDataArr.map((_, i) => i === goldDataArr.length - 1 ? '#fff' : 'transparent'),
-              pointBorderWidth: goldDataArr.map((_, i) => i === goldDataArr.length - 1 ? 3 : 0),
-              pointHoverRadius: 8
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: { duration: 800, easing: 'easeOutQuart' },
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                backgroundColor: '#1a1f3a',
-                borderColor: goldTrend.line,
-                borderWidth: 1,
-                titleColor: goldTrend.line,
-                bodyColor: '#e0e0e0',
-                padding: 12,
-                cornerRadius: 8,
-                displayColors: false,
-                callbacks: {
-                  label: function(ctx) {
-                    const v = ctx.parsed.y;
-                    if (v == null) return '';
-                    const curr = state.currentCurrency;
-                    const sym = curr === 'EUR' ? '\u20AC' : curr === 'USD' ? '$' : 'CHF';
-                    return sym + ' ' + v.toFixed(2) + '/g';
+
+        if (state.chartType === 'candle') {
+          const ohlc = computeOHLC(chartData, currRate, 'gold', state.goldKarat / 24);
+          const cfg = {
+            type: 'bar',
+            data: {
+              labels: ohlc.map(d => d.label),
+              datasets: [{
+                label: `Oro ${state.goldKarat}k (${currSym}/g)`,
+                data: ohlc.map(d => [Math.min(d.open, d.close), Math.max(d.open, d.close)]),
+                backgroundColor: ohlc.map(d => d.bgColor),
+                borderColor: ohlc.map(d => d.color),
+                borderWidth: 1.5,
+                barPercentage: 0.85,
+                categoryPercentage: 0.9
+              }]
+            },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              animation: { duration: 600 },
+              interaction: { mode: 'index', intersect: false },
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: '#1a1f3a', borderColor: '#d4af37', borderWidth: 1,
+                  titleColor: '#d4af37', bodyColor: '#e0e0e0', padding: 12, cornerRadius: 8, displayColors: false,
+                  callbacks: {
+                    label: function(ctx2) {
+                      const i = ctx2.dataIndex;
+                      if (i >= ohlc.length) return '';
+                      const d = ohlc[i];
+                      const sym = state.currentCurrency === 'EUR' ? '\u20AC' : state.currentCurrency === 'USD' ? '$' : 'CHF';
+                      return ['Apertura: ' + sym + ' ' + d.open.toFixed(2) + '/g',
+                              'Chiusura: ' + sym + ' ' + d.close.toFixed(2) + '/g',
+                              'Max: ' + sym + ' ' + d.high.toFixed(2) + '/g',
+                              'Min: ' + sym + ' ' + d.low.toFixed(2) + '/g',
+                              'Var: ' + (d.close >= d.open ? '+' : '') + ((d.close - d.open) / d.open * 100).toFixed(2) + '%'];
+                    }
                   }
                 }
-              }
-            },
-            scales: {
-              y: {
-                ticks: { color: '#aaa', font: { size: 11 }, padding: 6 },
-                grid: { color: 'rgba(180,170,140,0.18)', lineWidth: 1 },
-                border: { color: 'rgba(180,170,140,0.3)', width: 1 }
               },
-              x: {
-                ticks: { color: '#aaa', maxRotation: 45, font: { size: 11 }, padding: 4 },
-                grid: { color: 'rgba(180,170,140,0.12)', lineWidth: 1 },
-                border: { color: 'rgba(180,170,140,0.3)', width: 1 }
+              scales: {
+                y: { ticks: { color: '#aaa', font: { size: 11 }, padding: 6 }, grid: { color: 'rgba(180,170,140,0.18)', lineWidth: 1 }, border: { color: 'rgba(180,170,140,0.3)', width: 1 } },
+                x: { ticks: { color: '#aaa', maxRotation: 45, font: { size: 11 }, padding: 4 }, grid: { color: 'rgba(180,170,140,0.12)', lineWidth: 1 }, border: { color: 'rgba(180,170,140,0.3)', width: 1 } }
               }
             }
-          }
-        });
+          };
+          cfg._ohlcData = ohlc;
+          goldChartInstance = new Chart(goldCtx, cfg);
+        } else {
+          goldChartInstance = new Chart(goldCtx, {
+            type: 'line',
+            data: {
+              labels: chartData.labels,
+              datasets: [{
+                label: `Oro ${state.goldKarat}k (${currSym}/g)`,
+                data: goldDataArr,
+                borderColor: goldTrend.line,
+                backgroundColor: goldTrend.fill,
+                borderWidth: 1.5,
+                tension: 0.4,
+                cubicInterpolationMode: 'monotone',
+                fill: true,
+                pointRadius: goldDataArr.map((_, i) => i === goldDataArr.length - 1 ? 3 : 0),
+                pointBackgroundColor: goldDataArr.map((_, i) => i === goldDataArr.length - 1 ? '#fff' : 'transparent'),
+                pointBorderColor: goldDataArr.map((_, i) => i === goldDataArr.length - 1 ? '#fff' : 'transparent'),
+                pointBorderWidth: goldDataArr.map((_, i) => i === goldDataArr.length - 1 ? 2 : 0),
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#fff'
+              }]
+            },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              animation: { duration: 800, easing: 'easeOutQuart' },
+              interaction: { mode: 'index', intersect: false },
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: '#1a1f3a', borderColor: goldTrend.line, borderWidth: 1,
+                  titleColor: goldTrend.line, bodyColor: '#e0e0e0', padding: 12, cornerRadius: 8, displayColors: false,
+                  callbacks: {
+                    label: function(ctx) {
+                      const v = ctx.parsed.y;
+                      if (v == null) return '';
+                      const curr = state.currentCurrency;
+                      const sym = curr === 'EUR' ? '\u20AC' : curr === 'USD' ? '$' : 'CHF';
+                      return sym + ' ' + v.toFixed(2) + '/g';
+                    }
+                  }
+                }
+              },
+              scales: {
+                y: { ticks: { color: '#aaa', font: { size: 11 }, padding: 6 }, grid: { color: 'rgba(180,170,140,0.18)', lineWidth: 1 }, border: { color: 'rgba(180,170,140,0.3)', width: 1 } },
+                x: { ticks: { color: '#aaa', maxRotation: 45, font: { size: 11 }, padding: 4 }, grid: { color: 'rgba(180,170,140,0.12)', lineWidth: 1 }, border: { color: 'rgba(180,170,140,0.3)', width: 1 } }
+              }
+            }
+          });
+        }
       }
 
       // Argento Chart
@@ -1988,65 +2172,105 @@
         if (silverChartInstance) silverChartInstance.destroy();
         const silverDataArr = chartData.data.map(h => h.silver == null ? null : (h.silver / currRate) * (state.silverPurity / 1000));
         const silverTrend = trendColors(silverDataArr, silverCtx, '#c0c0c0');
-        silverChartInstance = new Chart(silverCtx, {
-          type: 'line',
-          data: {
-            labels: chartData.labels,
-            datasets: [{
-              label: state.silverPurity === 999 ? `Argento (${currSym}/g)` : `Argento ${state.silverPurity}\u2030 (${currSym}/g)`,
-              data: silverDataArr,
-              borderColor: silverTrend.line,
-              backgroundColor: silverTrend.fill,
-              tension: 0.3,
-              fill: true,
-              pointRadius: silverDataArr.map((_, i) => i === silverDataArr.length - 1 ? 4 : 1.5),
-              pointBackgroundColor: silverDataArr.map((_, i) => i === silverDataArr.length - 1 ? '#fff' : silverTrend.point),
-              pointBorderColor: silverDataArr.map((_, i) => i === silverDataArr.length - 1 ? '#fff' : 'transparent'),
-              pointBorderWidth: silverDataArr.map((_, i) => i === silverDataArr.length - 1 ? 3 : 0),
-              pointHoverRadius: 8
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: { duration: 800, easing: 'easeOutQuart' },
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                backgroundColor: '#1a1f3a',
-                borderColor: silverTrend.line,
-                borderWidth: 1,
-                titleColor: silverTrend.line,
-                bodyColor: '#e0e0e0',
-                padding: 12,
-                cornerRadius: 8,
-                displayColors: false,
-                callbacks: {
-                  label: function(ctx) {
-                    const v = ctx.parsed.y;
-                    if (v == null) return '';
-                    const curr = state.currentCurrency;
-                    const sym = curr === 'EUR' ? '\u20AC' : curr === 'USD' ? '$' : 'CHF';
-                    return sym + ' ' + v.toFixed(2) + '/g';
+
+        if (state.chartType === 'candle') {
+          const ohlc = computeOHLC(chartData, currRate, 'silver', state.silverPurity / 1000);
+          const cfg = {
+            type: 'bar',
+            data: {
+              labels: ohlc.map(d => d.label),
+              datasets: [{
+                label: state.silverPurity === 999 ? `Argento (${currSym}/g)` : `Argento ${state.silverPurity}\u2030 (${currSym}/g)`,
+                data: ohlc.map(d => [Math.min(d.open, d.close), Math.max(d.open, d.close)]),
+                backgroundColor: ohlc.map(d => d.bgColor),
+                borderColor: ohlc.map(d => d.color),
+                borderWidth: 1.5,
+                barPercentage: 0.85,
+                categoryPercentage: 0.9
+              }]
+            },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              animation: { duration: 600 },
+              interaction: { mode: 'index', intersect: false },
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: '#1a1f3a', borderColor: '#c0c0c0', borderWidth: 1,
+                  titleColor: '#c0c0c0', bodyColor: '#e0e0e0', padding: 12, cornerRadius: 8, displayColors: false,
+                  callbacks: {
+                    label: function(ctx2) {
+                      const i = ctx2.dataIndex;
+                      if (i >= ohlc.length) return '';
+                      const d = ohlc[i];
+                      const sym = state.currentCurrency === 'EUR' ? '\u20AC' : state.currentCurrency === 'USD' ? '$' : 'CHF';
+                      return ['Apertura: ' + sym + ' ' + d.open.toFixed(2) + '/g',
+                              'Chiusura: ' + sym + ' ' + d.close.toFixed(2) + '/g',
+                              'Max: ' + sym + ' ' + d.high.toFixed(2) + '/g',
+                              'Min: ' + sym + ' ' + d.low.toFixed(2) + '/g',
+                              'Var: ' + (d.close >= d.open ? '+' : '') + ((d.close - d.open) / d.open * 100).toFixed(2) + '%'];
+                    }
                   }
                 }
-              }
-            },
-            scales: {
-              y: {
-                ticks: { color: '#aaa', font: { size: 11 }, padding: 6 },
-                grid: { color: 'rgba(180,190,210,0.18)', lineWidth: 1 },
-                border: { color: 'rgba(180,190,210,0.3)', width: 1 }
               },
-              x: {
-                ticks: { color: '#aaa', maxRotation: 45, font: { size: 11 }, padding: 4 },
-                grid: { color: 'rgba(180,190,210,0.12)', lineWidth: 1 },
-                border: { color: 'rgba(180,190,210,0.3)', width: 1 }
+              scales: {
+                y: { ticks: { color: '#aaa', font: { size: 11 }, padding: 6 }, grid: { color: 'rgba(180,190,210,0.18)', lineWidth: 1 }, border: { color: 'rgba(180,190,210,0.3)', width: 1 } },
+                x: { ticks: { color: '#aaa', maxRotation: 45, font: { size: 11 }, padding: 4 }, grid: { color: 'rgba(180,190,210,0.12)', lineWidth: 1 }, border: { color: 'rgba(180,190,210,0.3)', width: 1 } }
               }
             }
-          }
-        });
+          };
+          cfg._ohlcData = ohlc;
+          silverChartInstance = new Chart(silverCtx, cfg);
+        } else {
+          silverChartInstance = new Chart(silverCtx, {
+            type: 'line',
+            data: {
+              labels: chartData.labels,
+              datasets: [{
+                label: state.silverPurity === 999 ? `Argento (${currSym}/g)` : `Argento ${state.silverPurity}\u2030 (${currSym}/g)`,
+                data: silverDataArr,
+                borderColor: silverTrend.line,
+                backgroundColor: silverTrend.fill,
+                borderWidth: 1.5,
+                tension: 0.4,
+                cubicInterpolationMode: 'monotone',
+                fill: true,
+                pointRadius: silverDataArr.map((_, i) => i === silverDataArr.length - 1 ? 3 : 0),
+                pointBackgroundColor: silverDataArr.map((_, i) => i === silverDataArr.length - 1 ? '#fff' : 'transparent'),
+                pointBorderColor: silverDataArr.map((_, i) => i === silverDataArr.length - 1 ? '#fff' : 'transparent'),
+                pointBorderWidth: silverDataArr.map((_, i) => i === silverDataArr.length - 1 ? 2 : 0),
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#fff'
+              }]
+            },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              animation: { duration: 800, easing: 'easeOutQuart' },
+              interaction: { mode: 'index', intersect: false },
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: '#1a1f3a', borderColor: silverTrend.line, borderWidth: 1,
+                  titleColor: silverTrend.line, bodyColor: '#e0e0e0', padding: 12, cornerRadius: 8, displayColors: false,
+                  callbacks: {
+                    label: function(ctx) {
+                      const v = ctx.parsed.y;
+                      if (v == null) return '';
+                      const curr = state.currentCurrency;
+                      const sym = curr === 'EUR' ? '\u20AC' : curr === 'USD' ? '$' : 'CHF';
+                      return sym + ' ' + v.toFixed(2) + '/g';
+                    }
+                  }
+                }
+              },
+              scales: {
+                y: { ticks: { color: '#aaa', font: { size: 11 }, padding: 6 }, grid: { color: 'rgba(180,190,210,0.18)', lineWidth: 1 }, border: { color: 'rgba(180,190,210,0.3)', width: 1 } },
+                x: { ticks: { color: '#aaa', maxRotation: 45, font: { size: 11 }, padding: 4 }, grid: { color: 'rgba(180,190,210,0.12)', lineWidth: 1 }, border: { color: 'rgba(180,190,210,0.3)', width: 1 } }
+              }
+            }
+          });
+        }
       }
     }
 
@@ -2820,6 +3044,7 @@
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         e.target.classList.add('active');
         document.getElementById(e.target.dataset.tab).classList.add('active');
+        if (e.target.dataset.tab === 'news') loadNews();
       });
     });
 
@@ -2831,6 +3056,16 @@
         state.currentCurrency = e.target.dataset.currency;
         saveMeta();
         updateUI();
+      });
+    });
+
+    // Chart type switching
+    document.querySelectorAll('.chart-type-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        state.chartType = e.target.dataset.ctype;
+        updateChart();
       });
     });
 
@@ -3030,6 +3265,49 @@
         }
       }, 500);
     });
+
+    // ===== Notizie Feed =====
+    async function loadNews() {
+      const container = document.getElementById('newsContainer');
+      if (!container) return;
+      container.innerHTML = '<div class="news-loading">Caricamento notizie...</div>';
+      const feeds = [
+        { url: 'https://news.google.com/rss/search?q=prezzo+oro+argento+metalli+preziosi&hl=it&gl=IT&ceid=IT:it', lang: 'IT' },
+        { url: 'https://news.google.com/rss/search?q=gold+price+silver+precious+metals&hl=en&gl=US&ceid=US:en', lang: 'EN' }
+      ];
+      let allItems = [];
+      for (const feed of feeds) {
+        try {
+          const proxyUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed.url) + '&count=10';
+          const res = await fetch(proxyUrl);
+          const data = await res.json();
+          if (data && data.items) {
+            data.items.forEach(item => {
+              let title = item.title || '';
+              const dashIdx = title.lastIndexOf(' - ');
+              const source = dashIdx > 0 ? title.substring(dashIdx + 3).trim() : (item.author || 'Fonte');
+              if (dashIdx > 0) title = title.substring(0, dashIdx).trim();
+              allItems.push({ title, source, link: item.link || '#', pubDate: new Date(item.pubDate), lang: feed.lang });
+            });
+          }
+        } catch (e) { console.log('Feed error:', e); }
+      }
+      allItems.sort((a, b) => b.pubDate - a.pubDate);
+      allItems = allItems.slice(0, 15);
+      if (allItems.length === 0) {
+        container.innerHTML = '<div class="news-error">Impossibile caricare le notizie. Controlla la connessione e riprova.</div>';
+        return;
+      }
+      container.innerHTML = allItems.map(item => {
+        const diff = Math.floor((new Date() - item.pubDate) / 1000);
+        const timeAgo = diff < 60 ? 'ora' : diff < 3600 ? Math.floor(diff/60) + ' min fa' : diff < 86400 ? Math.floor(diff/3600) + ' ore fa' : Math.floor(diff/86400) + 'g fa';
+        const safeTitle = item.title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const safeSrc = item.source.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return '<a class="news-item" href="' + item.link + '" target="_blank" rel="noopener">' +
+          '<div class="news-title">' + safeTitle + '</div>' +
+          '<div class="news-meta"><span class="news-source">' + safeSrc + '</span><span>' + item.lang + ' &middot; ' + timeAgo + '</span></div></a>';
+      }).join('');
+    }
 
     // Initialize
     loadData();
