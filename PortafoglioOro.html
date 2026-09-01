@@ -827,11 +827,22 @@
           <h3>Valore Totale</h3>
           <div class="value" id="totalValue">0.00</div>
           <div class="currency" id="totalCurrency">CHF</div>
+          <div style="margin-top:0.6rem;border-top:1px solid rgba(27,58,45,0.1);padding-top:0.5rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:#5a7a68;margin-bottom:0.25rem;">
+              <span>Metalli</span>
+              <span id="totalMetals" style="font-weight:700;color:#1B3A2D;">0.00</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:#5a7a68;">
+              <span>Orologi</span>
+              <span id="totalWatches" style="font-weight:700;color:#1B3A2D;">0.00</span>
+            </div>
+          </div>
         </div>
-        <div class="card">
+        <div class="card" style="position:relative;overflow:hidden;">
           <h3>Andamento</h3>
           <div class="value" id="gainLoss">0.00</div>
           <span class="andamento-badge" id="gainLossPct"></span>
+          <canvas id="sparklineCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:45px;pointer-events:none;"></canvas>
         </div>
         <div class="card">
           <h3>Posizioni Attive</h3>
@@ -1790,16 +1801,8 @@
         const subtitle = [metalLabel, titolo, formatDate(pos.date)].filter(Boolean).join(' \u00b7 ');
         const soldBadge = (wRem <= 0 && w > 0) ? '<span class="sold-badge">VENDUTO</span>' : '';
         const strike = (wRem <= 0 && w > 0) ? 'watch-sold-strike' : '';
-        // Photos
-        const photos = pos.photos || [];
-        let photoHtml = '';
-        if (photos.length > 0 || true) {
-          photoHtml = '<div class="photo-cell history-card-photos">';
-          photos.forEach((src, pi) => {
-            photoHtml += '<span class="photo-thumb"><img src="' + src + '" onclick="event.stopPropagation();openLightbox(' + i + ',' + pi + ')"><button class="photo-del" onclick="event.stopPropagation();removePhoto(' + i + ',' + pi + ')" title="Rimuovi foto">&times;</button></span>';
-          });
-          photoHtml += '<button class="add-photo-btn" onclick="event.stopPropagation();triggerAddPhotos(' + i + ')" title="Aggiungi foto">+</button></div>';
-        }
+        // Photos only visible in detail modal
+        const photoHtml = '';
         html += '<div class="history-card" data-idx="' + i + '">' +
           '<div class="history-metal-circle ' + metalClass + '">' + metalSymbol + '</div>' +
           '<div class="history-card-body">' +
@@ -1822,6 +1825,81 @@
       setupHistoryLongPress();
     }
 
+
+    // ===== Mini Sparkline per card Andamento =====
+    function drawAndamentoSparkline() {
+      const canvas = document.getElementById('sparklineCanvas');
+      if (!canvas) return;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width * 2;  // retina
+      canvas.height = 90;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Raccoglie ultimi 30 punti di storico prezzo oro
+      const history = (state.priceHistory || []).filter(h => h.goldUsd != null || h.gold != null);
+      if (history.length < 2) return;
+
+      const sorted = history.sort((a, b) => new Date(a.date) - new Date(b.date));
+      const last30 = sorted.slice(-30);
+      const values = last30.map(h => h.goldUsd != null ? h.goldUsd : h.gold);
+
+      const minV = Math.min(...values);
+      const maxV = Math.max(...values);
+      const range = maxV - minV || 1;
+      const w = canvas.width;
+      const h = canvas.height;
+      const paddingTop = 15;
+      const paddingBottom = 5;
+      const drawH = h - paddingTop - paddingBottom;
+
+      // Trend: confronta primo e ultimo
+      const isUp = values[values.length - 1] >= values[0];
+      const trendColor = isUp ? '76, 175, 80' : '244, 67, 54';
+
+      // Draw smooth curve
+      const points = values.map((v, i) => ({
+        x: (i / (values.length - 1)) * w,
+        y: paddingTop + drawH - ((v - minV) / range) * drawH
+      }));
+
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        const prev = points[i - 1];
+        const curr = points[i];
+        const cpx = (prev.x + curr.x) / 2;
+        ctx.quadraticCurveTo(prev.x + (cpx - prev.x) * 0.8, prev.y, cpx, (prev.y + curr.y) / 2);
+        ctx.quadraticCurveTo(curr.x - (curr.x - cpx) * 0.8, curr.y, curr.x, curr.y);
+      }
+
+      // Fill with gradient (white -> trend color)
+      const lastPoint = points[points.length - 1];
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+
+      const gradient = ctx.createLinearGradient(0, 0, 0, h);
+      gradient.addColorStop(0, 'rgba(' + trendColor + ', 0.25)');
+      gradient.addColorStop(1, 'rgba(' + trendColor + ', 0.02)');
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Stroke the line
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        const prev = points[i - 1];
+        const curr = points[i];
+        const cpx = (prev.x + curr.x) / 2;
+        ctx.quadraticCurveTo(prev.x + (cpx - prev.x) * 0.8, prev.y, cpx, (prev.y + curr.y) / 2);
+        ctx.quadraticCurveTo(curr.x - (curr.x - cpx) * 0.8, curr.y, curr.x, curr.y);
+      }
+      ctx.strokeStyle = 'rgba(' + trendColor + ', 0.5)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
     function updateSummary() {
       // Costo del residuo e valore attuale in CHF (con purezza per oro/argento; Altro a costo)
       const totalCostInChf = state.positions.reduce((sum, p) => sum + costChfRemaining(p), 0);
@@ -1833,10 +1911,22 @@
       const totalCost = totalCostInChf / rate;
 
       // Calcola gain/loss
-      const gainLoss = totalValue - totalCost;
-      const gainLossPct = totalCost > 0 ? ((gainLoss / totalCost) * 100).toFixed(2) : 0;
+      // Gain/Loss include orologi
+      const watchesCostChf = (state.watches || []).reduce((s, w) => s + costChfWatch(w), 0);
+      const grandCost = totalCost + (watchesCostChf / rate);
+      const gainLoss = grandTotal - grandCost;
+      const gainLossPct = grandCost > 0 ? ((gainLoss / grandCost) * 100).toFixed(2) : 0;
 
-      document.getElementById('totalValue').textContent = totalValue.toFixed(2);
+      // Valore metalli e orologi separati
+      const watchesTotalChf = (state.watches || []).reduce((s, w) => s + marketValueChfWatch(w), 0);
+      const metalsTotalChf = totalValueInChf;
+      const grandTotalChf = metalsTotalChf + watchesTotalChf;
+      const grandTotal = grandTotalChf / rate;
+      document.getElementById('totalValue').textContent = grandTotal.toFixed(2);
+      const tmEl = document.getElementById('totalMetals');
+      if (tmEl) tmEl.textContent = (metalsTotalChf / rate).toFixed(2);
+      const twEl = document.getElementById('totalWatches');
+      if (twEl) twEl.textContent = (watchesTotalChf / rate).toFixed(2);
       document.getElementById('totalCurrency').textContent = state.currentCurrency;
       const glUp = gainLoss >= 0;
       const glEl = document.getElementById('gainLoss');
@@ -1882,6 +1972,9 @@
           + '<div class="breakdown-bar-segment" style="width:'+wP+'%;background:#4C6558;"></div>';
         barEl.style.display = 'flex';
       } else { barEl.style.display = 'none'; }
+
+      // Aggiorna sparkline andamento
+      drawAndamentoSparkline();
     }
 
     let goldChartInstance = null;
