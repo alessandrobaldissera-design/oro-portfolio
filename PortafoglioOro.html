@@ -827,22 +827,32 @@
           <h3>Valore Totale</h3>
           <div class="value" id="totalValue">0.00</div>
           <div class="currency" id="totalCurrency">CHF</div>
-          <div style="margin-top:0.6rem;border-top:1px solid rgba(27,58,45,0.1);padding-top:0.5rem;">
-            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:#5a7a68;margin-bottom:0.25rem;">
-              <span>Metalli</span>
-              <span id="totalMetals" style="font-weight:700;color:#1B3A2D;">0.00</span>
+          <div style="margin-top:0.75rem;border-top:1px solid rgba(27,58,45,0.12);padding-top:0.75rem;display:flex;flex-direction:column;gap:0.6rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:0.92rem;font-weight:600;color:#5a7a68;">Metalli</span>
+              <span id="totalMetals" style="font-size:1.05rem;font-weight:800;color:#1B3A2D;">0.00</span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:#5a7a68;">
-              <span>Orologi</span>
-              <span id="totalWatches" style="font-weight:700;color:#1B3A2D;">0.00</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:0.92rem;font-weight:600;color:#5a7a68;">Orologi</span>
+              <span id="totalWatches" style="font-size:1.05rem;font-weight:800;color:#1B3A2D;">0.00</span>
             </div>
           </div>
         </div>
-        <div class="card" style="position:relative;overflow:hidden;">
+        <div class="card" style="position:relative;overflow:hidden;min-height:160px;">
           <h3>Andamento</h3>
           <div class="value" id="gainLoss">0.00</div>
           <span class="andamento-badge" id="gainLossPct"></span>
-          <canvas id="sparklineCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:45px;pointer-events:none;"></canvas>
+          <div style="margin-top:0.5rem;display:flex;flex-direction:column;gap:0.35rem;position:relative;z-index:1;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:0.82rem;font-weight:600;color:#5a7a68;">Metalli</span>
+              <span class="andamento-badge" id="metalsGainLossPct" style="margin:0;font-size:0.72rem;"></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:0.82rem;font-weight:600;color:#5a7a68;">Orologi</span>
+              <span class="andamento-badge" id="watchesGainLossPct" style="margin:0;font-size:0.72rem;"></span>
+            </div>
+          </div>
+          <canvas id="sparklineCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:55%;pointer-events:none;"></canvas>
         </div>
         <div class="card">
           <h3>Posizioni Attive</h3>
@@ -1830,9 +1840,10 @@
     function drawAndamentoSparkline() {
       const canvas = document.getElementById('sparklineCanvas');
       if (!canvas) return;
-      const rect = canvas.parentElement.getBoundingClientRect();
-      canvas.width = rect.width * 2;  // retina
-      canvas.height = 90;
+      const parentRect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = parentRect.width * 2;  // retina
+      canvas.height = Math.max(parentRect.height * 0.55, 90) * 2; // almeno 55% del riquadro, retina
+      canvas.style.height = Math.max(parentRect.height * 0.55, 90) + 'px';
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -1935,6 +1946,31 @@
       glBadge.textContent = (glUp ? '\u25b2 +' : '\u25bc ') + gainLossPct + '%';
       glBadge.style.color = glUp ? '#4ade80' : '#f87171';
       glBadge.style.background = glUp ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
+
+      // Andamento Metalli
+      const metalsGainLoss = totalValue - totalCost;
+      const metalsGainPct = totalCost > 0 ? ((metalsGainLoss / totalCost) * 100).toFixed(2) : '0.00';
+      const mUp = metalsGainLoss >= 0;
+      const mBadge = document.getElementById('metalsGainLossPct');
+      if (mBadge) {
+        mBadge.textContent = (mUp ? '\u25b2 +' : '\u25bc ') + metalsGainPct + '%';
+        mBadge.style.color = mUp ? '#4ade80' : '#f87171';
+        mBadge.style.background = mUp ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
+      }
+
+      // Andamento Orologi
+      const watchesCostConverted = watchesCostChf / rate;
+      const watchesValueConverted = watchesTotalChf / rate;
+      const watchesGainLoss = watchesValueConverted - watchesCostConverted;
+      const watchesGainPct = watchesCostConverted > 0 ? ((watchesGainLoss / watchesCostConverted) * 100).toFixed(2) : '0.00';
+      const wUp = watchesGainLoss >= 0;
+      const wBadge = document.getElementById('watchesGainLossPct');
+      if (wBadge) {
+        wBadge.textContent = (wUp ? '\u25b2 +' : '\u25bc ') + watchesGainPct + '%';
+        wBadge.style.color = wUp ? '#4ade80' : '#f87171';
+        wBadge.style.background = wUp ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
+      }
+
       document.getElementById('positionCount').textContent = state.positions.length;
 
       // Breakdown per categoria
