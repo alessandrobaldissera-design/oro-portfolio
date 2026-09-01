@@ -1910,18 +1910,17 @@
       const totalValue = totalValueInChf / rate;
       const totalCost = totalCostInChf / rate;
 
-      // Calcola gain/loss
-      // Gain/Loss include orologi
-      const watchesCostChf = (state.watches || []).reduce((s, w) => s + costChfWatch(w), 0);
-      const grandCost = totalCost + (watchesCostChf / rate);
-      const gainLoss = grandTotal - grandCost;
-      const gainLossPct = grandCost > 0 ? ((gainLoss / grandCost) * 100).toFixed(2) : 0;
-
       // Valore metalli e orologi separati
       const watchesTotalChf = (state.watches || []).reduce((s, w) => s + marketValueChfWatch(w), 0);
       const metalsTotalChf = totalValueInChf;
       const grandTotalChf = metalsTotalChf + watchesTotalChf;
       const grandTotal = grandTotalChf / rate;
+
+      // Calcola gain/loss (include orologi)
+      const watchesCostChf = (state.watches || []).reduce((s, w) => s + costChfWatch(w), 0);
+      const grandCost = totalCost + (watchesCostChf / rate);
+      const gainLoss = grandTotal - grandCost;
+      const gainLossPct = grandCost > 0 ? ((gainLoss / grandCost) * 100).toFixed(2) : 0;
       document.getElementById('totalValue').textContent = grandTotal.toFixed(2);
       const tmEl = document.getElementById('totalMetals');
       if (tmEl) tmEl.textContent = (metalsTotalChf / rate).toFixed(2);
