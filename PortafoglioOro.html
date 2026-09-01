@@ -823,11 +823,11 @@
 
     <div class="content">
       <div class="summary">
-        <div class="card">
-          <h3>Valore Totale</h3>
+        <div class="card" style="display:flex;flex-direction:column;">
+          <h3>Patrimonio</h3>
           <div class="value" id="totalValue">0.00</div>
           <div class="currency" id="totalCurrency">CHF</div>
-          <div style="margin-top:0.75rem;border-top:1px solid rgba(27,58,45,0.12);padding-top:0.75rem;display:flex;flex-direction:column;gap:0.6rem;">
+          <div style="margin-top:auto;border-top:1px solid rgba(27,58,45,0.12);padding-top:0.75rem;display:flex;flex-direction:column;gap:0.9rem;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <span style="font-size:0.92rem;font-weight:600;color:#5a7a68;">Metalli</span>
               <span id="totalMetals" style="font-size:1.05rem;font-weight:800;color:#1B3A2D;">0.00</span>
@@ -838,18 +838,18 @@
             </div>
           </div>
         </div>
-        <div class="card" style="position:relative;overflow:hidden;min-height:160px;">
+        <div class="card" style="position:relative;overflow:hidden;display:flex;flex-direction:column;">
           <h3>Andamento</h3>
           <div class="value" id="gainLoss">0.00</div>
           <span class="andamento-badge" id="gainLossPct"></span>
-          <div style="margin-top:0.5rem;display:flex;flex-direction:column;gap:0.35rem;position:relative;z-index:1;">
+          <div style="margin-top:auto;border-top:1px solid rgba(27,58,45,0.12);padding-top:0.75rem;display:flex;flex-direction:column;gap:0.9rem;position:relative;z-index:1;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
-              <span style="font-size:0.82rem;font-weight:600;color:#5a7a68;">Metalli</span>
-              <span class="andamento-badge" id="metalsGainLossPct" style="margin:0;font-size:0.72rem;"></span>
+              <span style="font-size:0.92rem;font-weight:600;color:#5a7a68;">Metalli</span>
+              <span id="metalsGainVal" style="font-size:1.05rem;font-weight:800;color:#1B3A2D;">0.00</span>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;">
-              <span style="font-size:0.82rem;font-weight:600;color:#5a7a68;">Orologi</span>
-              <span class="andamento-badge" id="watchesGainLossPct" style="margin:0;font-size:0.72rem;"></span>
+              <span style="font-size:0.92rem;font-weight:600;color:#5a7a68;">Orologi</span>
+              <span id="watchesGainVal" style="font-size:1.05rem;font-weight:800;color:#1B3A2D;">0.00</span>
             </div>
           </div>
           <canvas id="sparklineCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:55%;pointer-events:none;"></canvas>
@@ -1868,45 +1868,45 @@
       const isUp = values[values.length - 1] >= values[0];
       const trendColor = isUp ? '76, 175, 80' : '244, 67, 54';
 
-      // Draw smooth curve
+      // Draw smooth Catmull-Rom spline
       const points = values.map((v, i) => ({
         x: (i / (values.length - 1)) * w,
         y: paddingTop + drawH - ((v - minV) / range) * drawH
       }));
 
-      ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i < points.length; i++) {
-        const prev = points[i - 1];
-        const curr = points[i];
-        const cpx = (prev.x + curr.x) / 2;
-        ctx.quadraticCurveTo(prev.x + (cpx - prev.x) * 0.8, prev.y, cpx, (prev.y + curr.y) / 2);
-        ctx.quadraticCurveTo(curr.x - (curr.x - cpx) * 0.8, curr.y, curr.x, curr.y);
+      // Catmull-Rom helper: genera punti di controllo cubici dolci
+      function catmullRomPath(pts, tension) {
+        tension = tension || 0.35;
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 0; i < pts.length - 1; i++) {
+          var p0 = pts[i === 0 ? 0 : i - 1];
+          var p1 = pts[i];
+          var p2 = pts[i + 1];
+          var p3 = pts[i + 2 >= pts.length ? pts.length - 1 : i + 2];
+          var cp1x = p1.x + (p2.x - p0.x) * tension;
+          var cp1y = p1.y + (p2.y - p0.y) * tension;
+          var cp2x = p2.x - (p3.x - p1.x) * tension;
+          var cp2y = p2.y - (p3.y - p1.y) * tension;
+          ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+        }
       }
 
-      // Fill with gradient (white -> trend color)
-      const lastPoint = points[points.length - 1];
+      // Fill area
+      catmullRomPath(points, 0.35);
       ctx.lineTo(w, h);
       ctx.lineTo(0, h);
       ctx.closePath();
 
       const gradient = ctx.createLinearGradient(0, 0, 0, h);
-      gradient.addColorStop(0, 'rgba(' + trendColor + ', 0.25)');
+      gradient.addColorStop(0, 'rgba(' + trendColor + ', 0.20)');
       gradient.addColorStop(1, 'rgba(' + trendColor + ', 0.02)');
       ctx.fillStyle = gradient;
       ctx.fill();
 
       // Stroke the line
-      ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i < points.length; i++) {
-        const prev = points[i - 1];
-        const curr = points[i];
-        const cpx = (prev.x + curr.x) / 2;
-        ctx.quadraticCurveTo(prev.x + (cpx - prev.x) * 0.8, prev.y, cpx, (prev.y + curr.y) / 2);
-        ctx.quadraticCurveTo(curr.x - (curr.x - cpx) * 0.8, curr.y, curr.x, curr.y);
-      }
-      ctx.strokeStyle = 'rgba(' + trendColor + ', 0.5)';
+      catmullRomPath(points, 0.35);
+      ctx.strokeStyle = 'rgba(' + trendColor + ', 0.45)';
       ctx.lineWidth = 2;
       ctx.stroke();
     }
@@ -1947,28 +1947,24 @@
       glBadge.style.color = glUp ? '#4ade80' : '#f87171';
       glBadge.style.background = glUp ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
 
-      // Andamento Metalli
+      // Andamento Metalli (in valuta)
       const metalsGainLoss = totalValue - totalCost;
-      const metalsGainPct = totalCost > 0 ? ((metalsGainLoss / totalCost) * 100).toFixed(2) : '0.00';
       const mUp = metalsGainLoss >= 0;
-      const mBadge = document.getElementById('metalsGainLossPct');
-      if (mBadge) {
-        mBadge.textContent = (mUp ? '\u25b2 +' : '\u25bc ') + metalsGainPct + '%';
-        mBadge.style.color = mUp ? '#4ade80' : '#f87171';
-        mBadge.style.background = mUp ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
+      const mValEl = document.getElementById('metalsGainVal');
+      if (mValEl) {
+        mValEl.textContent = (mUp ? '+' : '') + metalsGainLoss.toFixed(2);
+        mValEl.style.color = mUp ? '#4ade80' : '#f87171';
       }
 
-      // Andamento Orologi
+      // Andamento Orologi (in valuta)
       const watchesCostConverted = watchesCostChf / rate;
       const watchesValueConverted = watchesTotalChf / rate;
       const watchesGainLoss = watchesValueConverted - watchesCostConverted;
-      const watchesGainPct = watchesCostConverted > 0 ? ((watchesGainLoss / watchesCostConverted) * 100).toFixed(2) : '0.00';
       const wUp = watchesGainLoss >= 0;
-      const wBadge = document.getElementById('watchesGainLossPct');
-      if (wBadge) {
-        wBadge.textContent = (wUp ? '\u25b2 +' : '\u25bc ') + watchesGainPct + '%';
-        wBadge.style.color = wUp ? '#4ade80' : '#f87171';
-        wBadge.style.background = wUp ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
+      const wValEl = document.getElementById('watchesGainVal');
+      if (wValEl) {
+        wValEl.textContent = (wUp ? '+' : '') + watchesGainLoss.toFixed(2);
+        wValEl.style.color = wUp ? '#4ade80' : '#f87171';
       }
 
       document.getElementById('positionCount').textContent = state.positions.length;
