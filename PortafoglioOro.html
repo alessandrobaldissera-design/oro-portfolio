@@ -602,29 +602,6 @@
     #watchDetailModal.open { display:flex; }
 
       /* ===== Chart Type Toggle ===== */
-    .chart-type-selector {
-      display: flex;
-      justify-content: center;
-      gap: 0.5rem;
-      margin: 1.5rem 0 0 0;
-    }
-    .chart-type-btn {
-      background: transparent;
-      border: 1px solid rgba(212,175,55,0.5);
-      color: #999;
-      padding: 0.45rem 1.2rem;
-      cursor: pointer;
-      border-radius: 6px;
-      font-weight: 600;
-      transition: all 0.3s;
-      font-size: 0.82rem;
-      letter-spacing: 0.02em;
-    }
-    .chart-type-btn.active {
-      background: rgba(212,175,55,0.25);
-      color: #d4af37;
-      border-color: #d4af37;
-    }
     /* ===== Notizie ===== */
     .news-container { display: flex; flex-direction: column; gap: 0.75rem; }
     .news-item {
@@ -712,10 +689,7 @@
           <button class="period-btn" data-period="365">1 anno</button>
           <button class="period-btn" data-period="all">Tutto</button>
         </div>
-        <div class="chart-type-selector" id="chartTypeSelector">
-          <button class="chart-type-btn active" data-ctype="line">Linea</button>
-          <button class="chart-type-btn" data-ctype="candle">Candele</button>
-        </div>
+
       </div>
 
       <div class="chart-card">
@@ -1135,7 +1109,7 @@
       priceHistory: [], // Array di {date, gold, silver}
       intradayHistory: [], // [{ts, goldUsd, silverUsd}, ...] ogni 5 min
       selectedPeriod: 7,
-      chartType: 'line',
+
       goldKarat: 24,
       silverPurity: 999,
       lastUpdate: null,
@@ -1221,9 +1195,9 @@
               goldUsd: goldUsd,
               silverUsd: silverUsd
             });
-            // Mantieni solo ultimi 7 giorni di dati intraday
-            const cutoff7d = Date.now() - 7 * 24 * 60 * 60 * 1000;
-            state.intradayHistory = state.intradayHistory.filter(p => p.ts >= cutoff7d);
+            // Mantieni ultimi 365 giorni di dati intraday
+            const cutoff365d = Date.now() - 365 * 24 * 60 * 60 * 1000;
+            state.intradayHistory = state.intradayHistory.filter(p => p.ts >= cutoff365d);
             saveIntradayHistory();
           }
         } catch (metErr) {
@@ -1326,7 +1300,7 @@
         const saved = localStorage.getItem('intradayHistory');
         if (saved) {
           state.intradayHistory = JSON.parse(saved);
-          const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+          const cutoff = Date.now() - 365 * 24 * 60 * 60 * 1000;
           state.intradayHistory = state.intradayHistory.filter(p => p.ts >= cutoff);
         }
       } catch (e) { state.intradayHistory = []; }
@@ -1715,170 +1689,100 @@
     function getChartData() {
       const period = state.selectedPeriod;
       const now = new Date();
+      const usdToChf = state.exchangeRates.USD || 0.80;
 
-      let filteredHistory = state.priceHistory.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
-
-      if (period === 1) {
-        // 1 GIORNO: chiusura ieri come ancora + punti intraday reali + prezzo live
-        const h24ago = Date.now() - 24 * 60 * 60 * 1000;
-        const usdToChf = state.exchangeRates.USD || 0.80;
-        const allPoints = []; // {ts, goldUsd, silverUsd}
-
-        // 1) Ancora iniziale: chiusura di ieri dal db storico
-        const today = now.toISOString().split('T')[0];
-        const prevEntries = filteredHistory.filter(h => h.date < today && h.goldUsd != null);
-        if (prevEntries.length > 0) {
-          const prevClose = prevEntries[prevEntries.length - 1];
-          const prevDate = new Date(prevClose.date);
-          prevDate.setHours(23, 59, 0, 0);
-          allPoints.push({ ts: prevDate.getTime(), goldUsd: prevClose.goldUsd, silverUsd: prevClose.silverUsd });
-        }
-
-        // 2) Punti intraday reali raccolti (ogni 5 min)
-        const intraday = state.intradayHistory
-          .filter(p => p.ts >= h24ago && p.goldUsd != null)
-          .sort((a, b) => a.ts - b.ts);
-        intraday.forEach(p => allPoints.push(p));
-
-        // 3) Prezzo live corrente come ultimo punto
-        if (state.currentPrices.gold > 0) {
-          const lastTs = allPoints.length > 0 ? allPoints[allPoints.length - 1].ts : 0;
-          if (Date.now() - lastTs > 30000) {
-            allPoints.push({
-              ts: Date.now(),
-              goldUsd: state.currentPrices.gold / usdToChf * OZ_TO_G,
-              silverUsd: state.currentPrices.silver / usdToChf * OZ_TO_G
-            });
-          }
-        }
-
-        // Deduplicazione: rimuovi punti troppo vicini (<30s)
-        const deduped = [];
-        allPoints.sort((a, b) => a.ts - b.ts);
-        allPoints.forEach(p => {
-          if (deduped.length === 0 || p.ts - deduped[deduped.length - 1].ts >= 30000) {
-            deduped.push(p);
-          }
-        });
-
-        if (deduped.length === 0) {
-          // Nessun dato disponibile
-          return { labels: ['Nessun dato'], data: [{ gold: 0, silver: 0 }] };
-        }
-
-        const labels = deduped.map(p => {
-          const d = new Date(p.ts);
-          return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-        });
-        // Etichetta speciale per l'ancora iniziale
-        if (prevEntries && prevEntries.length > 0 && deduped.length > 1) {
-          labels[0] = 'Ieri';
-        }
-        const converted = deduped.map(p => pointToChfPerG(p));
-        return { labels, data: converted };
-
-      } else if (period === 7) {
-        // 7 GIORNI: usa dati intraday aggregati ogni ora se disponibili
-        const h7dAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-        const intraday7 = state.intradayHistory
-          .filter(p => p.ts >= h7dAgo && p.goldUsd != null)
-          .sort((a, b) => a.ts - b.ts);
-
-        if (intraday7.length >= 10) {
-          // Aggrega: tieni l'ultimo punto di ogni ora
-          const hourly = {};
-          intraday7.forEach(p => {
-            const key = new Date(p.ts).toISOString().slice(0, 13);
-            if (!hourly[key] || p.ts > hourly[key].ts) hourly[key] = p;
-          });
-          const pts = Object.values(hourly).sort((a, b) => a.ts - b.ts);
-          // Usa intraday solo se produce almeno 6 punti orari, altrimenti fallback giornaliero
-          if (pts.length >= 6) {
-            const labels = pts.map(p => {
-              const d = new Date(p.ts);
-              return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) + ' ' +
-                     String(d.getHours()).padStart(2, '0') + ':00';
-            });
-            const converted = pts.map(pointToChfPerG);
-            return { labels, data: converted };
-          }
-        }
-
-        // Fallback: dati giornalieri
-        const cutoffDate7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        let hist7 = filteredHistory.filter(h => new Date(h.date) >= cutoffDate7);
-        if (hist7.length === 0) hist7 = filteredHistory.slice(-7);
-        const labels = hist7.map(h => {
-          const d = new Date(h.date);
-          return d.toLocaleDateString('it-IT', { month: 'short', day: 'numeric' });
-        });
-        const converted = hist7.map(pointToChfPerG);
-        return { labels, data: converted };
-
+      // Cutoff temporale
+      let cutoffTs;
+      if (period === 'all') {
+        cutoffTs = 0;
       } else {
-        // Periodi normali: 30, 90, 365, all
-        if (period !== 'all') {
-          const cutoffDate = new Date(now.getTime() - period * 24 * 60 * 60 * 1000);
-          filteredHistory = filteredHistory.filter(h => new Date(h.date) >= cutoffDate);
-        }
+        cutoffTs = Date.now() - period * 24 * 60 * 60 * 1000;
+      }
 
-        // Fallback: se il periodo scelto non ha punti, mostra gli ultimi disponibili
-        if (filteredHistory.length === 0) {
-          filteredHistory = state.priceHistory.slice().sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-2);
-        }
+      // --- Unisci dati giornalieri (SEED + accumulati) con dati intraday ---
+      const pointMap = new Map(); // ts -> {ts, goldUsd, silverUsd, ...}
 
-        const labels = filteredHistory.map(h => {
-          const d = new Date(h.date);
-          return d.toLocaleDateString('it-IT', { month: 'short', day: 'numeric' });
+      // 1) Dati giornalieri (1 punto per giorno, ore 12:00)
+      const dailyHistory = state.priceHistory
+        .filter(h => h.goldUsd != null || h.gold != null)
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+      dailyHistory.forEach(h => {
+        const d = new Date(h.date);
+        d.setHours(12, 0, 0, 0);
+        const ts = d.getTime();
+        if (ts >= cutoffTs) {
+          pointMap.set(ts, { ts, goldUsd: h.goldUsd, silverUsd: h.silverUsd, gold: h.gold, silver: h.silver });
+        }
+      });
+
+      // 2) Dati intraday (ogni 5 min) — sovrascrivono i punti giornalieri dove presenti
+      state.intradayHistory
+        .filter(p => p.ts >= cutoffTs && p.goldUsd != null)
+        .forEach(p => pointMap.set(p.ts, p));
+
+      // 3) Prezzo live come ultimo punto
+      if (state.currentPrices.gold > 0) {
+        const liveTs = Date.now();
+        pointMap.set(liveTs, {
+          ts: liveTs,
+          goldUsd: state.currentPrices.gold / usdToChf * OZ_TO_G,
+          silverUsd: state.currentPrices.silver / usdToChf * OZ_TO_G
         });
-
-        const converted = filteredHistory.map(pointToChfPerG);
-        return { labels, data: converted };
       }
+
+      // Ordina per timestamp
+      let allPoints = Array.from(pointMap.values()).sort((a, b) => a.ts - b.ts);
+
+      if (allPoints.length === 0) {
+        return { labels: ['Nessun dato'], data: [{ gold: 0, silver: 0 }] };
+      }
+
+      // --- Thinning: intervallo minimo tra punti in base al periodo ---
+      // 1G: nessun thinning (ogni 5 min)
+      // 7G: 1 punto/ora
+      // 30G: 1 punto/4 ore
+      // 90G: 1 punto/12 ore
+      // 1A e Tutto: 1 punto/giorno
+      function thinByInterval(pts, intervalMs) {
+        if (pts.length <= 2) return pts;
+        const result = [pts[0]];
+        for (let i = 1; i < pts.length - 1; i++) {
+          if (pts[i].ts - result[result.length - 1].ts >= intervalMs) {
+            result.push(pts[i]);
+          }
+        }
+        result.push(pts[pts.length - 1]);
+        return result;
+      }
+
+      let thinned = allPoints;
+      if (period === 'all' || period >= 365) {
+        thinned = thinByInterval(allPoints, 24 * 60 * 60 * 1000);
+      } else if (period >= 90) {
+        thinned = thinByInterval(allPoints, 12 * 60 * 60 * 1000);
+      } else if (period >= 30) {
+        thinned = thinByInterval(allPoints, 4 * 60 * 60 * 1000);
+      } else if (period === 7) {
+        thinned = thinByInterval(allPoints, 60 * 60 * 1000);
+      }
+      // period === 1: nessun thinning
+
+      // --- Etichette ---
+      const labels = thinned.map(p => {
+        const d = new Date(p.ts);
+        if (period === 1) {
+          return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        } else if (period === 7) {
+          return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) + ' ' +
+                 String(d.getHours()).padStart(2, '0') + ':00';
+        } else {
+          return d.toLocaleDateString('it-IT', { month: 'short', day: 'numeric' });
+        }
+      });
+
+      const converted = thinned.map(p => pointToChfPerG(p));
+      return { labels, data: converted };
     }
-
-    
-    // Plugin: pallino lampeggiante sull'ultimo punto
-    const lastPointPulsePlugin = {
-      id: 'lastPointPulse',
-      afterDatasetsDraw(chart) {
-        const ds = chart.data.datasets[0];
-        if (!ds || !ds.data.length) return;
-        const lastIdx = ds.data.length - 1;
-        const meta = chart.getDatasetMeta(0);
-        const pt = meta.data[lastIdx];
-        if (!pt) return;
-        const ctx = chart.ctx;
-        const x = pt.x, y = pt.y;
-        const time = Date.now();
-        // Pulsazione lenta e morbida (ciclo ~3.8 sec)
-        const pulse = 0.5 + 0.5 * Math.sin(time / 600);
-        // Colore bianco per entrambi i grafici
-        const color = '#ffffff';
-        const glowColor = 'rgba(255,255,255,';
-        // Alone esterno (glow)
-        const glowRadius = 7 + pulse * 4;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(x, y, glowRadius, 0, Math.PI * 2);
-        ctx.fillStyle = glowColor + (0.08 + pulse * 0.12) + ')';
-        ctx.fill();
-        // Cerchio medio
-        const midRadius = 4 + pulse * 2;
-        ctx.beginPath();
-        ctx.arc(x, y, midRadius, 0, Math.PI * 2);
-        ctx.fillStyle = glowColor + (0.2 + pulse * 0.2) + ')';
-        ctx.fill();
-        // Punto centrale solido
-        ctx.beginPath();
-        ctx.arc(x, y, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.globalAlpha = 0.85 + pulse * 0.15;
-        ctx.fill();
-        ctx.restore();
-      }
-    };
-    Chart.register(lastPointPulsePlugin);
 
     // Plugin: mirino interattivo (crosshair) al tocco/hover
     const crosshairPlugin = {
@@ -1891,14 +1795,14 @@
         const x = active.element.x;
         const y = active.element.y;
         const area = chart.chartArea;
-        const color = chart.data.datasets[0]?.borderColor || '#d4af37';
+        const color = chart.data.datasets[0]?.borderColor || '#4A90D9';
 
         ctx.save();
 
         // Linea verticale tratteggiata
         ctx.setLineDash([5, 4]);
         ctx.lineWidth = 1;
-        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.strokeStyle = color.replace(/[\d.]+\)$/, '0.35)');
         ctx.beginPath();
         ctx.moveTo(x, area.top);
         ctx.lineTo(x, area.bottom);
@@ -1913,7 +1817,7 @@
         // Cerchio pieno al punto di intersezione
         ctx.setLineDash([]);
         ctx.beginPath();
-        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
         ctx.fillStyle = color;
         ctx.globalAlpha = 0.9;
         ctx.fill();
@@ -1933,13 +1837,11 @@
           const pad = 6;
           const bw = tw + pad * 2;
           const bh = 22;
-          // Posiziona sopra il punto, centrato; se troppo in alto, metti sotto
           let lx = x - bw / 2;
           let ly = y - bh - 12;
           if (ly < area.top) ly = y + 14;
           if (lx < area.left) lx = area.left + 2;
           if (lx + bw > area.right) lx = area.right - bw - 2;
-          // Sfondo etichetta
           ctx.fillStyle = '#1a1f3a';
           ctx.globalAlpha = 0.92;
           ctx.fillRect(lx, ly, bw, bh);
@@ -1948,8 +1850,7 @@
           ctx.lineWidth = 1;
           ctx.setLineDash([]);
           ctx.strokeRect(lx, ly, bw, bh);
-          // Testo
-          ctx.fillStyle = color;
+          ctx.fillStyle = '#e0e6f0';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(label, lx + bw / 2, ly + bh / 2);
@@ -1960,181 +1861,106 @@
     };
     Chart.register(crosshairPlugin);
 
-    // Compute OHLC data for candlestick chart
-    function computeOHLC(chartData, currRate, metalKey, purityFactor) {
-      const dataArr = chartData.data.map(h => {
-        const val = h[metalKey];
-        return val == null ? null : (val / currRate) * purityFactor;
-      });
-      // Calcolo volatilita' media per stoppini realistici
-      const changes = [];
-      for (let i = 1; i < dataArr.length; i++) {
-        if (dataArr[i] != null && dataArr[i-1] != null) {
-          changes.push(Math.abs(dataArr[i] - dataArr[i-1]));
+    // Plugin: pallino lampeggiante sull'ultimo punto
+    const pulsingDotPlugin = {
+      id: 'pulsingDot',
+      afterDraw(chart) {
+        const ds = chart.data.datasets[0];
+        if (!ds || !ds.data || ds.data.length === 0) return;
+        // Trova ultimo punto valido
+        let lastIdx = -1;
+        for (let i = ds.data.length - 1; i >= 0; i--) {
+          if (ds.data[i] != null) { lastIdx = i; break; }
         }
-      }
-      const avgChange = changes.length > 0 ? changes.reduce((a,b) => a+b, 0) / changes.length : 0;
-
-      const ohlc = [];
-      // Seed deterministico basato su label per consistenza
-      function pseudoRand(seed) {
-        let x = Math.sin(seed) * 10000;
-        return x - Math.floor(x);
-      }
-      for (let i = 0; i < dataArr.length; i++) {
-        if (dataArr[i] == null) continue;
-        const close = dataArr[i];
-        const open = (i > 0 && dataArr[i - 1] != null) ? dataArr[i - 1] : close;
-        const body = Math.abs(close - open);
-        // Stoppini: estensione proporzionale al corpo + volatilita' media
-        const wickBase = Math.max(body * 0.35, avgChange * 0.25, close * 0.0003);
-        const highWick = wickBase * (0.4 + pseudoRand(i * 137 + 7) * 0.8);
-        const lowWick  = wickBase * (0.4 + pseudoRand(i * 251 + 13) * 0.8);
-        const high = Math.max(open, close) + highWick;
-        const low  = Math.min(open, close) - lowWick;
-        const isUp = close >= open;
-        ohlc.push({
-          label: chartData.labels[i],
-          open, high, low, close,
-          color: isUp ? '#26a69a' : '#ef5350',
-          bgColor: isUp ? 'rgba(38,166,154,0.85)' : 'rgba(239,83,80,0.85)'
-        });
-      }
-      return ohlc;
-    }
-
-    // Candlestick wick plugin — stoppini sopra e sotto il corpo
-    const candleWickPlugin = {
-      id: 'candleWick',
-      afterDatasetsDraw(chart) {
-        if (!chart.config._ohlcData) return;
-        const ctx = chart.ctx;
+        if (lastIdx < 0) return;
         const meta = chart.getDatasetMeta(0);
-        const ohlcData = chart.config._ohlcData;
-        meta.data.forEach((bar, i) => {
-          if (i >= ohlcData.length) return;
-          const d = ohlcData[i];
-          const xCenter = bar.x;
-          const yHigh = chart.scales.y.getPixelForValue(d.high);
-          const yLow = chart.scales.y.getPixelForValue(d.low);
-          const yOpen = chart.scales.y.getPixelForValue(d.open);
-          const yClose = chart.scales.y.getPixelForValue(d.close);
-          const yBodyTop = Math.min(yOpen, yClose);
-          const yBodyBottom = Math.max(yOpen, yClose);
-          ctx.save();
-          ctx.strokeStyle = d.color;
-          ctx.lineWidth = 1.5;
-          // Stoppino superiore (da corpo al massimo)
-          ctx.beginPath();
-          ctx.moveTo(xCenter, yBodyTop);
-          ctx.lineTo(xCenter, yHigh);
-          ctx.stroke();
-          // Stoppino inferiore (da corpo al minimo)
-          ctx.beginPath();
-          ctx.moveTo(xCenter, yBodyBottom);
-          ctx.lineTo(xCenter, yLow);
-          ctx.stroke();
-          ctx.restore();
-        });
+        const pt = meta.data[lastIdx];
+        if (!pt) return;
+        const x = pt.x, y = pt.y;
+        const ctx = chart.ctx;
+        const lineColor = ds.borderColor || '#4A90D9';
+        const t = (Date.now() % 4000) / 4000;
+        const pulse = 0.5 + 0.5 * Math.sin(t * Math.PI * 2);
+        ctx.save();
+        // Alone esterno
+        ctx.beginPath();
+        ctx.arc(x, y, 8 + pulse * 4, 0, Math.PI * 2);
+        ctx.fillStyle = lineColor;
+        ctx.globalAlpha = 0.10 + pulse * 0.08;
+        ctx.fill();
+        // Alone medio
+        ctx.beginPath();
+        ctx.arc(x, y, 5 + pulse * 2, 0, Math.PI * 2);
+        ctx.globalAlpha = 0.18 + pulse * 0.12;
+        ctx.fill();
+        // Punto centrale
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+        ctx.globalAlpha = 0.95;
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = lineColor;
+        ctx.stroke();
+        ctx.restore();
       }
     };
-    Chart.register(candleWickPlugin);
+    Chart.register(pulsingDotPlugin);
+
+    // Animazione continua pallino lampeggiante
+    let _pulseAnim;
+    function startPulseAnimation() {
+      function tick() {
+        if (goldChartInstance) goldChartInstance.draw();
+        if (silverChartInstance) silverChartInstance.draw();
+        _pulseAnim = requestAnimationFrame(tick);
+      }
+      if (_pulseAnim) cancelAnimationFrame(_pulseAnim);
+      tick();
+    }
+
+    // Helper: determina trend e colori
+    function getTrendColors(dataArr) {
+      const valid = dataArr.filter(v => v != null);
+      if (valid.length < 2) return { line: '#4A90D9', gradTop: 'rgba(74,144,217,0.40)', gradMid: 'rgba(74,144,217,0.10)', gradBot: 'rgba(74,144,217,0.02)' };
+      const first = valid[0], last = valid[valid.length - 1];
+      if (last >= first) {
+        return { line: '#4CAF50', gradTop: 'rgba(76,175,80,0.40)', gradMid: 'rgba(76,175,80,0.10)', gradBot: 'rgba(76,175,80,0.02)' };
+      } else {
+        return { line: '#e53935', gradTop: 'rgba(229,57,53,0.40)', gradMid: 'rgba(229,57,53,0.10)', gradBot: 'rgba(229,57,53,0.02)' };
+      }
+    }
 
     function updateChart() {
       const chartData = getChartData();
       const currSym = state.currentCurrency === 'EUR' ? '\u20AC' : state.currentCurrency === 'USD' ? '$' : 'CHF';
       const currRate = (state.currentCurrency === 'CHF') ? 1 : (state.exchangeRates[state.currentCurrency] || 1);
 
-      // Oro Chart
-      // Helper: determina trend e colori
-      function trendColors(dataArr, ctx2d, defaultColor) {
-        const valid = dataArr.filter(v => v != null);
-        if (valid.length < 2) return { line: defaultColor, fill: defaultColor.replace(')', ',0.1)').replace('rgb(','rgba('), point: defaultColor, up: true };
-        const isUp = valid[valid.length - 1] >= valid[0];
-        const green = { line: '#00c853', fillTop: 'rgba(0,200,83,0.28)', fillBot: 'rgba(0,200,83,0.02)', point: '#00c853' };
-        const red   = { line: '#ff1744', fillTop: 'rgba(255,23,68,0.28)', fillBot: 'rgba(255,23,68,0.02)', point: '#ff1744' };
-        const c = isUp ? green : red;
-        const grad = ctx2d.createLinearGradient(0, 0, 0, ctx2d.canvas.height);
-        grad.addColorStop(0, c.fillTop);
-        grad.addColorStop(1, c.fillBot);
-        return { line: c.line, fill: grad, point: c.point, up: isUp };
-      }
-
+      // Oro Chart — area GoldAvenue + colori trend + pallino pulsante
       const goldCtx = document.getElementById('goldChart')?.getContext('2d');
       if (goldCtx) {
         if (goldChartInstance) goldChartInstance.destroy();
         const goldDataArr = chartData.data.map(h => h.gold == null ? null : (h.gold / currRate) * (state.goldKarat / 24));
-        const goldTrend = trendColors(goldDataArr, goldCtx, '#d4af37');
+        const tc = getTrendColors(goldDataArr);
+        const goldGrad = goldCtx.createLinearGradient(0, 0, 0, goldCtx.canvas.height);
+        goldGrad.addColorStop(0, tc.gradTop);
+        goldGrad.addColorStop(0.7, tc.gradMid);
+        goldGrad.addColorStop(1, tc.gradBot);
 
-        if (state.chartType === 'candle') {
-          const ohlc = computeOHLC(chartData, currRate, 'gold', state.goldKarat / 24);
-          const cfg = {
-            type: 'bar',
-            data: {
-              labels: ohlc.map(d => d.label),
-              datasets: [{
-                label: `Oro ${state.goldKarat}k (${currSym}/g)`,
-                data: ohlc.map(d => [Math.min(d.open, d.close), Math.max(d.open, d.close)]),
-                backgroundColor: ohlc.map(d => d.bgColor),
-                borderColor: ohlc.map(d => d.color),
-                borderWidth: 1.5,
-                barPercentage: 0.85,
-                categoryPercentage: 0.9
-              }]
-            },
-            options: {
-              responsive: true, maintainAspectRatio: false,
-              animation: { duration: 600 },
-              interaction: { mode: 'index', intersect: false },
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  backgroundColor: '#1a1f3a', borderColor: '#d4af37', borderWidth: 1,
-                  titleColor: '#d4af37', bodyColor: '#e0e0e0', padding: 12, cornerRadius: 8, displayColors: false,
-                  callbacks: {
-                    label: function(ctx2) {
-                      const i = ctx2.dataIndex;
-                      if (i >= ohlc.length) return '';
-                      const d = ohlc[i];
-                      const sym = state.currentCurrency === 'EUR' ? '\u20AC' : state.currentCurrency === 'USD' ? '$' : 'CHF';
-                      return ['Apertura: ' + sym + ' ' + d.open.toFixed(2) + '/g',
-                              'Chiusura: ' + sym + ' ' + d.close.toFixed(2) + '/g',
-                              'Max: ' + sym + ' ' + d.high.toFixed(2) + '/g',
-                              'Min: ' + sym + ' ' + d.low.toFixed(2) + '/g',
-                              'Var: ' + (d.close >= d.open ? '+' : '') + ((d.close - d.open) / d.open * 100).toFixed(2) + '%'];
-                    }
-                  }
-                }
-              },
-              scales: {
-                y: { ticks: { color: '#aaa', font: { size: 11 }, padding: 6 }, grid: { color: 'rgba(180,170,140,0.18)', lineWidth: 1 }, border: { color: 'rgba(180,170,140,0.3)', width: 1 } },
-                x: { ticks: { color: '#aaa', maxRotation: 45, font: { size: 11 }, padding: 4 }, grid: { color: 'rgba(180,170,140,0.12)', lineWidth: 1 }, border: { color: 'rgba(180,170,140,0.3)', width: 1 } }
-              }
-            }
-          };
-          cfg._ohlcData = ohlc;
-          goldChartInstance = new Chart(goldCtx, cfg);
-        } else {
-          goldChartInstance = new Chart(goldCtx, {
+        goldChartInstance = new Chart(goldCtx, {
             type: 'line',
             data: {
               labels: chartData.labels,
               datasets: [{
                 label: `Oro ${state.goldKarat}k (${currSym}/g)`,
                 data: goldDataArr,
-                borderColor: goldTrend.line,
-                backgroundColor: goldTrend.fill,
+                borderColor: tc.line,
+                backgroundColor: goldGrad,
                 borderWidth: 1.5,
-                tension: 0.4,
-                cubicInterpolationMode: 'monotone',
+                tension: 0.1,
                 fill: true,
-                pointRadius: goldDataArr.map((_, i) => i === goldDataArr.length - 1 ? 3 : 0),
-                pointBackgroundColor: goldDataArr.map((_, i) => i === goldDataArr.length - 1 ? '#fff' : 'transparent'),
-                pointBorderColor: goldDataArr.map((_, i) => i === goldDataArr.length - 1 ? '#fff' : 'transparent'),
-                pointBorderWidth: goldDataArr.map((_, i) => i === goldDataArr.length - 1 ? 2 : 0),
-                pointHoverRadius: 5,
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: '#fff'
+                pointRadius: 0,
+                pointHoverRadius: 0
               }]
             },
             options: {
@@ -2144,8 +1970,8 @@
               plugins: {
                 legend: { display: false },
                 tooltip: {
-                  backgroundColor: '#1a1f3a', borderColor: goldTrend.line, borderWidth: 1,
-                  titleColor: goldTrend.line, bodyColor: '#e0e0e0', padding: 12, cornerRadius: 8, displayColors: false,
+                  backgroundColor: '#1a1f3a', borderColor: tc.line, borderWidth: 1,
+                  titleColor: '#e0e6f0', bodyColor: '#e0e6f0', padding: 12, cornerRadius: 8, displayColors: false,
                   callbacks: {
                     label: function(ctx) {
                       const v = ctx.parsed.y;
@@ -2158,90 +1984,38 @@
                 }
               },
               scales: {
-                y: { ticks: { color: '#aaa', font: { size: 11 }, padding: 6 }, grid: { color: 'rgba(180,170,140,0.18)', lineWidth: 1 }, border: { color: 'rgba(180,170,140,0.3)', width: 1 } },
-                x: { ticks: { color: '#aaa', maxRotation: 45, font: { size: 11 }, padding: 4 }, grid: { color: 'rgba(180,170,140,0.12)', lineWidth: 1 }, border: { color: 'rgba(180,170,140,0.3)', width: 1 } }
+                y: { ticks: { color: '#9aa5b4', font: { size: 11 }, padding: 8 }, grid: { color: 'rgba(160,175,195,0.2)', lineWidth: 1, drawTicks: false }, border: { display: false } },
+                x: { ticks: { color: '#9aa5b4', maxRotation: 0, font: { size: 11 }, padding: 6 }, grid: { display: false }, border: { display: false } }
               }
             }
           });
-        }
       }
 
-      // Argento Chart
+      // Argento Chart — area GoldAvenue + colori trend + pallino pulsante
       const silverCtx = document.getElementById('silverChart')?.getContext('2d');
       if (silverCtx) {
         if (silverChartInstance) silverChartInstance.destroy();
         const silverDataArr = chartData.data.map(h => h.silver == null ? null : (h.silver / currRate) * (state.silverPurity / 1000));
-        const silverTrend = trendColors(silverDataArr, silverCtx, '#c0c0c0');
+        const stc = getTrendColors(silverDataArr);
+        const silverGrad = silverCtx.createLinearGradient(0, 0, 0, silverCtx.canvas.height);
+        silverGrad.addColorStop(0, stc.gradTop);
+        silverGrad.addColorStop(0.7, stc.gradMid);
+        silverGrad.addColorStop(1, stc.gradBot);
 
-        if (state.chartType === 'candle') {
-          const ohlc = computeOHLC(chartData, currRate, 'silver', state.silverPurity / 1000);
-          const cfg = {
-            type: 'bar',
-            data: {
-              labels: ohlc.map(d => d.label),
-              datasets: [{
-                label: state.silverPurity === 999 ? `Argento (${currSym}/g)` : `Argento ${state.silverPurity}\u2030 (${currSym}/g)`,
-                data: ohlc.map(d => [Math.min(d.open, d.close), Math.max(d.open, d.close)]),
-                backgroundColor: ohlc.map(d => d.bgColor),
-                borderColor: ohlc.map(d => d.color),
-                borderWidth: 1.5,
-                barPercentage: 0.85,
-                categoryPercentage: 0.9
-              }]
-            },
-            options: {
-              responsive: true, maintainAspectRatio: false,
-              animation: { duration: 600 },
-              interaction: { mode: 'index', intersect: false },
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  backgroundColor: '#1a1f3a', borderColor: '#c0c0c0', borderWidth: 1,
-                  titleColor: '#c0c0c0', bodyColor: '#e0e0e0', padding: 12, cornerRadius: 8, displayColors: false,
-                  callbacks: {
-                    label: function(ctx2) {
-                      const i = ctx2.dataIndex;
-                      if (i >= ohlc.length) return '';
-                      const d = ohlc[i];
-                      const sym = state.currentCurrency === 'EUR' ? '\u20AC' : state.currentCurrency === 'USD' ? '$' : 'CHF';
-                      return ['Apertura: ' + sym + ' ' + d.open.toFixed(2) + '/g',
-                              'Chiusura: ' + sym + ' ' + d.close.toFixed(2) + '/g',
-                              'Max: ' + sym + ' ' + d.high.toFixed(2) + '/g',
-                              'Min: ' + sym + ' ' + d.low.toFixed(2) + '/g',
-                              'Var: ' + (d.close >= d.open ? '+' : '') + ((d.close - d.open) / d.open * 100).toFixed(2) + '%'];
-                    }
-                  }
-                }
-              },
-              scales: {
-                y: { ticks: { color: '#aaa', font: { size: 11 }, padding: 6 }, grid: { color: 'rgba(180,190,210,0.18)', lineWidth: 1 }, border: { color: 'rgba(180,190,210,0.3)', width: 1 } },
-                x: { ticks: { color: '#aaa', maxRotation: 45, font: { size: 11 }, padding: 4 }, grid: { color: 'rgba(180,190,210,0.12)', lineWidth: 1 }, border: { color: 'rgba(180,190,210,0.3)', width: 1 } }
-              }
-            }
-          };
-          cfg._ohlcData = ohlc;
-          silverChartInstance = new Chart(silverCtx, cfg);
-        } else {
-          silverChartInstance = new Chart(silverCtx, {
+        silverChartInstance = new Chart(silverCtx, {
             type: 'line',
             data: {
               labels: chartData.labels,
               datasets: [{
                 label: state.silverPurity === 999 ? `Argento (${currSym}/g)` : `Argento ${state.silverPurity}\u2030 (${currSym}/g)`,
                 data: silverDataArr,
-                borderColor: silverTrend.line,
-                backgroundColor: silverTrend.fill,
+                borderColor: stc.line,
+                backgroundColor: silverGrad,
                 borderWidth: 1.5,
-                tension: 0.4,
-                cubicInterpolationMode: 'monotone',
+                tension: 0.1,
                 fill: true,
-                pointRadius: silverDataArr.map((_, i) => i === silverDataArr.length - 1 ? 3 : 0),
-                pointBackgroundColor: silverDataArr.map((_, i) => i === silverDataArr.length - 1 ? '#fff' : 'transparent'),
-                pointBorderColor: silverDataArr.map((_, i) => i === silverDataArr.length - 1 ? '#fff' : 'transparent'),
-                pointBorderWidth: silverDataArr.map((_, i) => i === silverDataArr.length - 1 ? 2 : 0),
-                pointHoverRadius: 5,
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: '#fff'
+                pointRadius: 0,
+                pointHoverRadius: 0
               }]
             },
             options: {
@@ -2251,8 +2025,8 @@
               plugins: {
                 legend: { display: false },
                 tooltip: {
-                  backgroundColor: '#1a1f3a', borderColor: silverTrend.line, borderWidth: 1,
-                  titleColor: silverTrend.line, bodyColor: '#e0e0e0', padding: 12, cornerRadius: 8, displayColors: false,
+                  backgroundColor: '#1a1f3a', borderColor: stc.line, borderWidth: 1,
+                  titleColor: '#e0e6f0', bodyColor: '#e0e6f0', padding: 12, cornerRadius: 8, displayColors: false,
                   callbacks: {
                     label: function(ctx) {
                       const v = ctx.parsed.y;
@@ -2265,25 +2039,18 @@
                 }
               },
               scales: {
-                y: { ticks: { color: '#aaa', font: { size: 11 }, padding: 6 }, grid: { color: 'rgba(180,190,210,0.18)', lineWidth: 1 }, border: { color: 'rgba(180,190,210,0.3)', width: 1 } },
-                x: { ticks: { color: '#aaa', maxRotation: 45, font: { size: 11 }, padding: 4 }, grid: { color: 'rgba(180,190,210,0.12)', lineWidth: 1 }, border: { color: 'rgba(180,190,210,0.3)', width: 1 } }
+                y: { ticks: { color: '#9aa5b4', font: { size: 11 }, padding: 8 }, grid: { color: 'rgba(160,175,195,0.2)', lineWidth: 1, drawTicks: false }, border: { display: false } },
+                x: { ticks: { color: '#9aa5b4', maxRotation: 0, font: { size: 11 }, padding: 6 }, grid: { display: false }, border: { display: false } }
               }
             }
           });
-        }
       }
+
+      // Avvia animazione pallino
+      startPulseAnimation();
     }
 
-    
-    // Animazione continua pallino lampeggiante
-    let _pulseAnimFrame;
-    function pulseRedraw() {
-      if (goldChartInstance) goldChartInstance.draw();
-      if (silverChartInstance) silverChartInstance.draw();
-      _pulseAnimFrame = requestAnimationFrame(pulseRedraw);
-    }
-    // Avvia il loop di animazione dopo il primo render
-    setTimeout(() => { pulseRedraw(); }, 1000);
+
 
 // ===== Foto articoli =====
     let pendingPhotos = [];
@@ -3056,16 +2823,6 @@
         state.currentCurrency = e.target.dataset.currency;
         saveMeta();
         updateUI();
-      });
-    });
-
-    // Chart type switching
-    document.querySelectorAll('.chart-type-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        state.chartType = e.target.dataset.ctype;
-        updateChart();
       });
     });
 
