@@ -143,6 +143,9 @@
       flex-wrap: wrap;
       margin-bottom: 0.6rem;
       align-items: center;
+      background: var(--green-tint);
+      padding: 0.4rem;
+      border-radius: 10px;
     }
     .karat-selector .karat-label {
       color: #1B3A2D;
@@ -156,11 +159,10 @@
       color: var(--green-muted);
       padding: 0.3rem 0.6rem;
       cursor: pointer;
-      border-radius: 8px;
+      border-radius: 6px;
       font-weight: 700;
       transition: all 0.2s;
       font-size: 0.8rem;
-      background: var(--green-tint);
     }
     .karat-btn.active {
       background: #1B3A2D;
@@ -228,27 +230,33 @@
 
     .tabs {
       display: flex;
-      gap: 0.5rem;
-      border-bottom: 1px solid var(--green-tint);
+      gap: 0.4rem;
+      background: var(--card-bg);
+      padding: 0.4rem;
+      border-radius: 12px;
+      border: none;
+      box-shadow: var(--shadow);
       margin-bottom: 1rem;
       flex-wrap: wrap;
     }
 
     .tab-btn {
-      background: none;
+      flex: 1;
+      background: transparent;
       border: none;
       color: var(--green-muted);
-      padding: 0.85rem 1.25rem;
-      font-size: 0.95rem;
+      padding: 0.6rem 0.5rem;
+      font-size: 0.82rem;
       cursor: pointer;
-      border-bottom: 3px solid transparent;
+      border-radius: 8px;
       transition: all 0.2s;
       font-weight: 700;
+      white-space: nowrap;
     }
 
     .tab-btn.active {
-      color: #1B3A2D;
-      border-bottom-color: #1B3A2D;
+      background: #1B3A2D;
+      color: #ffffff;
     }
 
     .tab-content {
@@ -554,7 +562,7 @@
     }
     .refresh-btn:disabled { opacity: 0.5; cursor: default; }
       .history-hint { color:#8a9990; font-size:0.85rem; margin:0 0 0.75rem; }
-    #historyTable tr { cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+
     #pressClock { position:fixed; width:40px; height:40px; border-radius:50%; z-index:1500; pointer-events:none; display:none; box-shadow:0 2px 10px rgba(0,0,0,0.45); background:conic-gradient(#1B3A2D 0deg, rgba(27,58,45,0.18) 0deg); }
     #pressClock::after { content:''; position:absolute; inset:5px; border-radius:50%; background:#eef0ec; }
     #pressClock.on { display:block; }
@@ -637,6 +645,52 @@
     }
     .chrono24-btn:hover { background: rgba(27,58,45,0.12); }
     .add-watch-btn { margin-top: 1.5rem; margin-bottom: 1rem; }
+    /* --- History cards (stile identico a watch-card) --- */
+    .history-card {
+      background: linear-gradient(135deg, #f5f6f3 0%, #eef0ec 100%);
+      border: 1px solid rgba(27,58,45,0.25);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .history-metal-circle {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .history-metal-circle.gold {
+      background: rgba(212,168,67,0.15);
+      border: 1px solid #D4A843;
+      color: #B8922A;
+    }
+    .history-metal-circle.silver {
+      background: rgba(168,169,173,0.15);
+      border: 1px solid #A8A9AD;
+      color: #777;
+    }
+    .history-metal-circle.other {
+      background: rgba(27,58,45,0.08);
+      border: 1px solid #1B3A2D;
+      color: #1B3A2D;
+    }
+    .history-card-body { flex: 1; min-width: 0; }
+    .history-card-title { font-weight: 700; color: #2c3e36; font-size: 1.05rem; }
+    .history-card-sub { color: #7a8a80; font-size: 0.85rem; margin-bottom: 0.4rem; }
+    .history-card-cols { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; font-size: 0.9rem; margin-bottom: 0.3rem; }
+    .history-card-footer { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+    .history-card-photos { margin-top: 0.5rem; }
+
     #watchDetailModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1000; align-items:flex-start; justify-content:center; overflow-y:auto; padding:2rem 1rem; }
     #watchDetailModal.open { display:flex; }
 
@@ -644,20 +698,21 @@
     /* ===== Notizie ===== */
     .news-container { display: flex; flex-direction: column; gap: 0.75rem; }
     .news-item {
-      background: rgba(26,31,58,0.6);
-      border: 1px solid rgba(27,58,45,0.15);
+      background: var(--card-bg);
+      border: 1px solid var(--green-tint);
       border-radius: 10px;
       padding: 0.9rem 1rem;
       text-decoration: none;
-      color: #2c3e36;
+      color: var(--text-primary);
       display: block;
-      transition: border-color 0.3s, background 0.3s;
+      transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+      box-shadow: var(--shadow);
     }
     .news-item:hover, .news-item:active {
-      border-color: rgba(27,58,45,0.4);
-      background: rgba(26,31,58,0.9);
+      border-color: rgba(27,58,45,0.3);
+      background: var(--green-tint);
     }
-    .news-title { font-size: 0.92rem; font-weight: 600; line-height: 1.35; margin-bottom: 0.35rem; color: #f0f0f0; }
+    .news-title { font-size: 0.92rem; font-weight: 600; line-height: 1.35; margin-bottom: 0.35rem; color: var(--text-primary); }
     .news-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #7a8a80; }
     .news-source { color: #1B3A2D; font-weight: 600; }
     .news-loading { text-align: center; color: #7a8a80; padding: 2rem; font-size: 0.9rem; }
@@ -675,6 +730,64 @@
     /* Silver section colors */
     .silver-section .chart-metal-name { color: #808080; }
     .silver-section .chart-live-price { color: #6b6b6b; }
+
+
+    /* Breakdown posizioni */
+    .position-breakdown {
+      margin-top: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.3rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+    }
+    .breakdown-row.gold-row { background: rgba(197,149,42,0.10); }
+    .breakdown-row.silver-row { background: rgba(128,128,128,0.10); }
+    .breakdown-row.other-row { background: var(--green-tint); }
+    .breakdown-row.watch-row { background: rgba(27,58,45,0.08); }
+    .breakdown-label { font-weight: 600; color: var(--text-primary); }
+    .breakdown-detail { color: var(--text-secondary); font-weight: 500; }
+    .breakdown-bar {
+      height: 6px;
+      border-radius: 3px;
+      margin-top: 0.6rem;
+      display: flex;
+      overflow: hidden;
+      background: var(--green-tint);
+    }
+    .breakdown-bar-segment { height: 100%; transition: width 0.5s; }
+
+    /* ===== Tablet portrait (Samsung A9+ ~800px) ===== */
+    @media (min-width: 601px) and (max-width: 900px) {
+      .content { padding: 1rem 1.5rem; }
+      .summary { grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+      .card { padding: 1rem; }
+      .card .value { font-size: 1.5rem; }
+      .chart-card { padding: 1rem; }
+      .chart-canvas-wrap { height: 240px; }
+      header { padding: 0.8rem 1.25rem; }
+      header h1 { font-size: 1.3rem; }
+      .tabs { gap: 0.3rem; }
+      .tab-btn { padding: 0.55rem 0.4rem; font-size: 0.78rem; }
+      .period-btn { padding: 0.45rem 0.25rem; font-size: 0.75rem; }
+      .summary.summary-watches { grid-template-columns: 1fr 1fr; }
+      table { font-size: 0.82rem; }
+      th, td { padding: 0.6rem 0.5rem; }
+    }
+
+    /* ===== Small phone ===== */
+    @media (max-width: 600px) {
+      .content { padding: 0.75rem; }
+      .tab-btn { font-size: 0.75rem; padding: 0.5rem 0.3rem; }
+      .period-btn { font-size: 0.72rem; }
+      .card .value { font-size: 1.4rem; }
+    }
 
     </style>
 
@@ -723,6 +836,8 @@
         <div class="card">
           <h3>Posizioni Attive</h3>
           <div class="value" id="positionCount">0</div>
+          <div class="position-breakdown" id="positionBreakdown"></div>
+          <div class="breakdown-bar" id="breakdownBar"></div>
         </div>
       </div>
 
@@ -873,22 +988,7 @@
 
       <div class="tab-content" id="history">
 
-        <table>
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Metallo</th>
-              <th>Descrizione</th>
-              <th>Titolo</th>
-              <th>Peso</th>
-              <th>Prezzo Tot.</th>
-              <th>Valuta</th>
-              <th>Costo/g (CHF)</th>
-              <th>Valore att. (CHF)</th>
-            </tr>
-          </thead>
-          <tbody id="historyTable"></tbody>
-        </table>
+        <div id="historyListContainer"></div>
       </div>
 
       <div class="tab-content" id="watches">
@@ -1654,10 +1754,18 @@
     }
 
     function updateHistoryTable() {
-      const tbody = document.getElementById('historyTable');
-      tbody.innerHTML = '';
+      const container = document.getElementById('historyListContainer');
+      if (!container) return;
       const rows = state.positions.map((pos, i) => ({ pos: pos, idx: i }));
-      rows.sort((a, b) => new Date(a.pos.date || 0) - new Date(b.pos.date || 0));
+      rows.sort((a, b) => new Date(b.pos.date || 0) - new Date(a.pos.date || 0));
+      if (!rows.length) {
+        container.innerHTML = '<div class="empty-state">Nessun articolo nello storico. Aggiungi un acquisto dal tab "Nuovo Acquisto".</div>';
+        setupHistoryLongPress();
+        return;
+      }
+      const cur = state.currentCurrency;
+      const rate = state.exchangeRates[cur] || 1;
+      let html = '';
       rows.forEach(({ pos, idx: i }) => {
         const currency = pos.priceCurrency || 'CHF';
         const w = pos.quantity || 0;
@@ -1665,33 +1773,53 @@
         const sold = soldGrams(pos);
         const cChf = costChf(pos);
         const costPerG = w > 0 ? (cChf / w) : 0;
+        const valChf = currentValueChf(pos);
+        const gainChf = valChf - costChfRemaining(pos);
+        const costRem = costChfRemaining(pos);
+        const gainPct = costRem > 0 ? (gainChf / costRem * 100) : 0;
+        const up = gainChf >= 0;
         const metalLabel = pos.metal === 'gold' ? 'Oro' : (pos.metal === 'silver' ? 'Argento' : 'Altro');
-        let titolo = '&ndash;';
+        const metalClass = pos.metal === 'gold' ? 'gold' : (pos.metal === 'silver' ? 'silver' : 'other');
+        const metalSymbol = pos.metal === 'gold' ? 'Au' : (pos.metal === 'silver' ? 'Ag' : '+');
+        let titolo = '';
         if (pos.metal === 'gold') {
           const pur = pos.purity || 24;
-          if (pos.itemType === 'moneta' && pur > 24) titolo = pur + '/1000';
-          else titolo = pur + 'k';
-        }
-        else if (pos.metal === 'silver') titolo = String(pos.purity || 999);
-        const descSafe = pos.description ? pos.description.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '&ndash;';
+          titolo = (pos.itemType === 'moneta' && pur > 24) ? pur + '/1000' : pur + 'k';
+        } else if (pos.metal === 'silver') titolo = (pos.purity || 999) + '/1000';
+        const descSafe = pos.description ? pos.description.replace(/</g, '&lt;').replace(/>/g, '&gt;') : metalLabel;
+        const subtitle = [metalLabel, titolo, formatDate(pos.date)].filter(Boolean).join(' \u00b7 ');
+        const soldBadge = (wRem <= 0 && w > 0) ? '<span class="sold-badge">VENDUTO</span>' : '';
+        const strike = (wRem <= 0 && w > 0) ? 'watch-sold-strike' : '';
+        // Photos
         const photos = pos.photos || [];
-        let photoHtml = '<div class="photo-cell">';
-        photos.forEach((src, pi) => {
-          photoHtml += `<span class="photo-thumb"><img src="${src}" onclick="openLightbox(${i},${pi})"><button class="photo-del" onclick="removePhoto(${i},${pi})" title="Rimuovi foto">&times;</button></span>`;
-        });
-        photoHtml += `<button class="add-photo-btn" onclick="triggerAddPhotos(${i})" title="Aggiungi foto">+</button></div>`;
-        tbody.innerHTML += `<tr data-idx="${i}">
-          <td>${formatDate(pos.date)}</td>
-          <td>${metalLabel}</td>
-          <td>${descSafe}</td>
-          <td>${titolo}</td>
-          <td>${w > 0 ? (sold > 0 ? wRem.toFixed(2) + 'g <span style="color:#8a90a8;font-size:0.8em">/' + w.toFixed(2) + '</span>' : w.toFixed(2) + 'g') : '&ndash;'}${wRem <= 0 && w > 0 ? ' <span class="sold-badge">venduto</span>' : ''}</td>
-          <td>${(pos.price || 0).toFixed(2)}</td>
-          <td>${currency}</td>
-          <td>${w > 0 ? costPerG.toFixed(2) : '&ndash;'}</td>
-          <td>${currentValueChf(pos).toFixed(2)}</td>
-        </tr>`;
+        let photoHtml = '';
+        if (photos.length > 0 || true) {
+          photoHtml = '<div class="photo-cell history-card-photos">';
+          photos.forEach((src, pi) => {
+            photoHtml += '<span class="photo-thumb"><img src="' + src + '" onclick="event.stopPropagation();openLightbox(' + i + ',' + pi + ')"><button class="photo-del" onclick="event.stopPropagation();removePhoto(' + i + ',' + pi + ')" title="Rimuovi foto">&times;</button></span>';
+          });
+          photoHtml += '<button class="add-photo-btn" onclick="event.stopPropagation();triggerAddPhotos(' + i + ')" title="Aggiungi foto">+</button></div>';
+        }
+        html += '<div class="history-card" data-idx="' + i + '">' +
+          '<div class="history-metal-circle ' + metalClass + '">' + metalSymbol + '</div>' +
+          '<div class="history-card-body">' +
+            '<div class="history-card-title">' + descSafe + '</div>' +
+            '<div class="history-card-sub">' + subtitle + '</div>' +
+            '<div class="history-card-cols ' + strike + '">' +
+              '<span>Peso: ' + (w > 0 ? (sold > 0 ? wRem.toFixed(2) + '/' + w.toFixed(2) + 'g' : w.toFixed(2) + 'g') : '\u2013') + '</span>' +
+              '<span>Acquisto: ' + currency + ' ' + (pos.price || 0).toFixed(2) + '</span>' +
+              '<span>Valore: ' + cur + ' ' + (valChf / rate).toFixed(2) + '</span>' +
+            '</div>' +
+            '<div class="history-card-footer">' +
+              (pos.metal !== 'other' ? '<span class="andamento-badge" style="margin:0; color:' + (up ? '#4ade80' : '#f87171') + '; background:' + (up ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)') + ';">' + (up ? '\u25b2 +' : '\u25bc ') + gainPct.toFixed(2) + '%</span>' : '') +
+              soldBadge +
+            '</div>' +
+            photoHtml +
+          '</div>' +
+        '</div>';
       });
+      container.innerHTML = html;
+      setupHistoryLongPress();
     }
 
     function updateSummary() {
@@ -1719,6 +1847,41 @@
       glBadge.style.color = glUp ? '#4ade80' : '#f87171';
       glBadge.style.background = glUp ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
       document.getElementById('positionCount').textContent = state.positions.length;
+
+      // Breakdown per categoria
+      const goldPos = state.positions.filter(p => p.metal === 'gold');
+      const silverPos = state.positions.filter(p => p.metal === 'silver');
+      const otherPos = state.positions.filter(p => p.metal === 'other');
+      const watchCount = (state.watches || []).length;
+      const goldWeight = goldPos.reduce((s,p) => s + (p.remainingQuantity != null ? p.remainingQuantity : p.quantity), 0);
+      const silverWeight = silverPos.reduce((s,p) => s + (p.remainingQuantity != null ? p.remainingQuantity : p.quantity), 0);
+      const breakdownEl = document.getElementById('positionBreakdown');
+      const barEl = document.getElementById('breakdownBar');
+      let rows = '';
+      if (goldPos.length > 0) rows += '<div class="breakdown-row gold-row"><span class="breakdown-label">Oro</span><span class="breakdown-detail">' + goldPos.length + ' pos. \u2014 ' + goldWeight.toFixed(1) + ' g</span></div>';
+      if (silverPos.length > 0) rows += '<div class="breakdown-row silver-row"><span class="breakdown-label">Argento</span><span class="breakdown-detail">' + silverPos.length + ' pos. \u2014 ' + silverWeight.toFixed(1) + ' g</span></div>';
+      if (otherPos.length > 0) rows += '<div class="breakdown-row other-row"><span class="breakdown-label">Altro</span><span class="breakdown-detail">' + otherPos.length + ' pos.</span></div>';
+      if (watchCount > 0) rows += '<div class="breakdown-row watch-row"><span class="breakdown-label">Orologi</span><span class="breakdown-detail">' + watchCount + ' pz.</span></div>';
+      if (rows === '') rows = '<div class="breakdown-row" style="justify-content:center;color:var(--text-secondary);">Nessuna posizione</div>';
+      breakdownEl.innerHTML = rows;
+
+      // Barra distribuzione
+      const goldVal = goldPos.reduce((s,p) => s + currentValueChf(p), 0);
+      const silverVal = silverPos.reduce((s,p) => s + currentValueChf(p), 0);
+      const otherVal = otherPos.reduce((s,p) => s + currentValueChf(p), 0);
+      const watchVal = (state.watches || []).reduce((s,w) => s + (w.currentValue || w.purchasePrice || 0), 0);
+      const totalBar = goldVal + silverVal + otherVal + watchVal;
+      if (totalBar > 0) {
+        const gP = (goldVal/totalBar*100).toFixed(1);
+        const sP = (silverVal/totalBar*100).toFixed(1);
+        const oP = (otherVal/totalBar*100).toFixed(1);
+        const wP = (watchVal/totalBar*100).toFixed(1);
+        barEl.innerHTML = '<div class="breakdown-bar-segment" style="width:'+gP+'%;background:#C5952A;"></div>'
+          + '<div class="breakdown-bar-segment" style="width:'+sP+'%;background:#A8A9AD;"></div>'
+          + '<div class="breakdown-bar-segment" style="width:'+oP+'%;background:#1B3A2D;"></div>'
+          + '<div class="breakdown-bar-segment" style="width:'+wP+'%;background:#4C6558;"></div>';
+        barEl.style.display = 'flex';
+      } else { barEl.style.display = 'none'; }
     }
 
     let goldChartInstance = null;
@@ -2805,9 +2968,9 @@
       editState = null;
     }
 
-    // Pressione prolungata (2 secondi) su una riga per aprirne il dettaglio
-    (function setupLongPress() {
-      const body = document.getElementById('historyTable');
+    // Long press + tap per aprire dettaglio posizione (ora su card)
+    function setupHistoryLongPress() {
+      const body = document.getElementById('historyListContainer');
       if (!body) return;
       const clock = document.getElementById('pressClock');
       const DURATION = 1000;
@@ -2825,8 +2988,8 @@
         if (frac < 1) raf = requestAnimationFrame(tick);
       }
       function start(e) {
-        const tr = e.target.closest('tr[data-idx]');
-        if (!tr) return;
+        const card = e.target.closest('.history-card[data-idx]');
+        if (!card) return;
         place(e);
         clock.classList.add('on');
         startT = performance.now();
@@ -2834,7 +2997,7 @@
         raf = requestAnimationFrame(tick);
         timer = setTimeout(function () {
           cancel();
-          openDetail(parseInt(tr.dataset.idx, 10));
+          openDetail(parseInt(card.dataset.idx, 10));
         }, DURATION);
       }
       function cancel() {
@@ -2848,7 +3011,8 @@
       body.addEventListener('pointerleave', cancel);
       body.addEventListener('pointercancel', cancel);
       body.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-    })();
+    }
+    setupHistoryLongPress();
 
 
     // Tab switching
