@@ -1835,7 +1835,7 @@
         var sparkHtml = '';
         if (pos.metal === 'gold' || pos.metal === 'silver') {
           var purFrac = pos.metal === 'gold' ? ((pos.itemType === 'moneta' && (pos.purity || 24) > 24) ? (pos.purity || 24) / 1000 : (pos.purity || 24) / 24) : ((pos.purity || 999) / 1000);
-          sparkHtml = '<div class="history-card-spark"><canvas id="histSparkline_' + i + '" data-metal="' + pos.metal + '" data-date="' + (pos.date || '') + '" data-qty="' + wRem + '" data-purfrac="' + purFrac + '"></canvas></div>';
+          sparkHtml = '<div class="history-card-spark"><canvas id="histSparkline_' + i + '" data-metal="' + pos.metal + '" data-date="' + (pos.date || '') + '" data-qty="' + wRem + '" data-purfrac="' + purFrac + '" data-up="' + (up ? '1' : '0') + '"></canvas></div>';
         }
         html += '<div class="history-card" data-idx="' + i + '">' +
           '<div class="history-metal-circle ' + metalClass + '">' + metalSymbol + '</div>' +
@@ -1873,6 +1873,7 @@
         var purchaseDate = canvas.getAttribute('data-date');
         var qty = parseFloat(canvas.getAttribute('data-qty')) || 0;
         var purFrac = parseFloat(canvas.getAttribute('data-purfrac')) || 1;
+        var isUp = canvas.getAttribute('data-up') === '1';
         var key = metal === 'gold' ? 'gold' : 'silver';
         // Filtra dalla data di acquisto
         var pts = hist.filter(function(h) {
@@ -1903,9 +1904,9 @@
         var minV = Math.min.apply(null, sampled);
         var maxV = Math.max.apply(null, sampled);
         var range = maxV - minV || 1;
-        // Padding generoso — onda fluttua nel vuoto
+        // Padding — onda fluttua nel vuoto
         var padX = w * 0.06;
-        var padY = h2 * 0.2;
+        var padY = h2 * 0.15;
         var drawW = w - padX * 2;
         var drawH = h2 - padY * 2;
         var points = sampled.map(function(v, i) {
@@ -1914,9 +1915,9 @@
             y: padY + drawH - ((v - minV) / range) * drawH
           };
         });
-        // Trend color
-        var isUp = sampled[sampled.length - 1] >= sampled[0];
-        var baseColor = isUp ? '34,197,94' : '239,68,68';
+        // Colore trend: dal data-up calcolato sulla base del prezzo di acquisto reale
+        var lineColor = isUp ? '#22c55e' : '#ef4444';
+        var fillRgb = isUp ? '34,197,94' : '239,68,68';
         // Catmull-Rom smooth curve
         function drawCR(tension) {
           ctx.beginPath();
@@ -1933,32 +1934,29 @@
             ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
           }
         }
-        // Glow effect — alone morbido dietro la linea
-        drawCR(0.4);
-        ctx.strokeStyle = 'rgba(' + baseColor + ',0.15)';
-        ctx.lineWidth = 8;
-        ctx.stroke();
-        // Fill — sfumatura delicata verso il basso
+        // Fill — sfumatura vivace
         drawCR(0.4);
         ctx.lineTo(points[points.length - 1].x, h2);
         ctx.lineTo(points[0].x, h2);
         ctx.closePath();
         var grad = ctx.createLinearGradient(0, 0, 0, h2);
-        grad.addColorStop(0, 'rgba(' + baseColor + ',0.18)');
-        grad.addColorStop(0.5, 'rgba(' + baseColor + ',0.06)');
-        grad.addColorStop(1, 'rgba(' + baseColor + ',0)');
+        grad.addColorStop(0, 'rgba(' + fillRgb + ',0.35)');
+        grad.addColorStop(0.6, 'rgba(' + fillRgb + ',0.1)');
+        grad.addColorStop(1, 'rgba(' + fillRgb + ',0)');
         ctx.fillStyle = grad;
         ctx.fill();
-        // Stroke principale — linea elegante
+        // Stroke — linea decisa e nitida
         drawCR(0.4);
-        ctx.strokeStyle = 'rgba(' + baseColor + ',0.5)';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = 2.5;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
         ctx.stroke();
-        // Pallino finale — valore attuale
+        // Pallino finale
         var last = points[points.length - 1];
         ctx.beginPath();
-        ctx.arc(last.x, last.y, 3, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(' + baseColor + ',0.7)';
+        ctx.arc(last.x, last.y, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = lineColor;
         ctx.fill();
       });
     }
