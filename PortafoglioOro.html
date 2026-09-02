@@ -690,6 +690,17 @@
     .history-card-cols { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; font-size: 0.9rem; margin-bottom: 0.3rem; }
     .history-card-footer { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
     .history-card-photos { margin-top: 0.5rem; }
+    .history-card-spark {
+      flex-shrink: 0;
+      width: 30%;
+      max-width: 120px;
+      align-self: center;
+    }
+    .history-card-spark canvas {
+      width: 100%;
+      height: 50px;
+      display: block;
+    }
 
     #watchDetailModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1000; align-items:flex-start; justify-content:center; overflow-y:auto; padding:2rem 1rem; }
     #watchDetailModal.open { display:flex; }
@@ -880,6 +891,7 @@
           <span class="chart-metal-name" id="goldMetalName">Oro</span>
           <span class="chart-live-price" id="goldLivePrice">&ndash;</span>
           <span class="chart-live-change" id="goldLiveChange"></span>
+          <span class="chart-live-change" id="goldWeekChange" style="margin-left:0.3rem;"></span>
           <span class="chart-live-sub" id="goldLiveSub"></span>
         </div>
         <div class="karat-selector" id="karatSelector">
@@ -902,6 +914,7 @@
           <span class="chart-metal-name" id="silverMetalName">Argento</span>
           <span class="chart-live-price" id="silverLivePrice">&ndash;</span>
           <span class="chart-live-change" id="silverLiveChange"></span>
+          <span class="chart-live-change" id="silverWeekChange" style="margin-left:0.3rem;"></span>
           <span class="chart-live-sub" id="silverLiveSub"></span>
         </div>
         <div class="karat-selector" id="silverPuritySelector">
@@ -1813,6 +1826,10 @@
         const strike = (wRem <= 0 && w > 0) ? 'watch-sold-strike' : '';
         // Photos only visible in detail modal
         const photoHtml = '';
+        var sparkHtml = '';
+        if (pos.metal === 'gold' || pos.metal === 'silver') {
+          sparkHtml = '<div class="history-card-spark"><canvas id="histSparkline_' + i + '" data-metal="' + pos.metal + '" data-date="' + (pos.date || '') + '"></canvas></div>';
+        }
         html += '<div class="history-card" data-idx="' + i + '">' +
           '<div class="history-metal-circle ' + metalClass + '">' + metalSymbol + '</div>' +
           '<div class="history-card-body">' +
@@ -1829,12 +1846,88 @@
             '</div>' +
             photoHtml +
           '</div>' +
+          sparkHtml +
         '</div>';
       });
       container.innerHTML = html;
+      drawHistorySparklines();
       setupHistoryLongPress();
     }
 
+    // ===== Mini Sparkline per card Storico =====
+    function drawHistorySparklines() {
+      var canvases = document.querySelectorAll('[id^="histSparkline_"]');
+      if (!canvases.length) return;
+      var hist = (state.priceHistory || []).slice()
+        .sort(function(a, b) { return new Date(a.date) - new Date(b.date); })
+        .map(pointToChfPerG);
+      canvases.forEach(function(canvas) {
+        var metal = canvas.getAttribute('data-metal');
+        var purchaseDate = canvas.getAttribute('data-date');
+        var key = metal === 'gold' ? 'gold' : 'silver';
+        // Filtra dati dalla data di acquisto
+        var pts = hist.filter(function(h) {
+          if (h[key] == null) return false;
+          if (purchaseDate && h.date < purchaseDate) return false;
+          return true;
+        });
+        if (pts.length < 2) return;
+        var values = pts.map(function(h) { return h[key]; });
+        // Retina
+        var rect = canvas.getBoundingClientRect();
+        var w = rect.width * 2 || 200;
+        var h2 = rect.height * 2 || 100;
+        canvas.width = w;
+        canvas.height = h2;
+        var ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, w, h2);
+        var minV = Math.min.apply(null, values);
+        var maxV = Math.max.apply(null, values);
+        var range = maxV - minV || 1;
+        var pad = 6;
+        var drawH = h2 - pad * 2;
+        var points = values.map(function(v, i) {
+          return {
+            x: (i / (values.length - 1)) * w,
+            y: pad + drawH - ((v - minV) / range) * drawH
+          };
+        });
+        // Trend color
+        var isUp = values[values.length - 1] >= values[0];
+        var rgb = isUp ? '76,175,80' : '244,67,54';
+        // Catmull-Rom smooth curve
+        function drawCR(tension) {
+          ctx.beginPath();
+          ctx.moveTo(points[0].x, points[0].y);
+          for (var i = 0; i < points.length - 1; i++) {
+            var p0 = points[i === 0 ? 0 : i - 1];
+            var p1 = points[i];
+            var p2 = points[i + 1];
+            var p3 = points[i + 2 >= points.length ? points.length - 1 : i + 2];
+            var cp1x = p1.x + (p2.x - p0.x) * tension;
+            var cp1y = p1.y + (p2.y - p0.y) * tension;
+            var cp2x = p2.x - (p3.x - p1.x) * tension;
+            var cp2y = p2.y - (p3.y - p1.y) * tension;
+            ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+          }
+        }
+        // Fill
+        drawCR(0.35);
+        ctx.lineTo(w, h2);
+        ctx.lineTo(0, h2);
+        ctx.closePath();
+        var grad = ctx.createLinearGradient(0, 0, 0, h2);
+        grad.addColorStop(0, 'rgba(' + rgb + ',0.18)');
+        grad.addColorStop(1, 'rgba(' + rgb + ',0.01)');
+        ctx.fillStyle = grad;
+        ctx.fill();
+        // Stroke
+        drawCR(0.35);
+        ctx.strokeStyle = 'rgba(' + rgb + ',0.55)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+    }
 
     // ===== Mini Sparkline per card Andamento =====
     function drawAndamentoSparkline() {
@@ -1947,16 +2040,16 @@
       glBadge.style.color = glUp ? '#4ade80' : '#f87171';
       glBadge.style.background = glUp ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
 
-      // Andamento Metalli (in valuta)
+      // Andamento Metalli (in valuta) — colore fisso come Patrimonio
       const metalsGainLoss = totalValue - totalCost;
       const mUp = metalsGainLoss >= 0;
       const mValEl = document.getElementById('metalsGainVal');
       if (mValEl) {
         mValEl.textContent = (mUp ? '+' : '') + metalsGainLoss.toFixed(2);
-        mValEl.style.color = mUp ? '#4ade80' : '#f87171';
+        mValEl.style.color = '#1B3A2D';
       }
 
-      // Andamento Orologi (in valuta)
+      // Andamento Orologi (in valuta) — colore fisso come Patrimonio
       const watchesCostConverted = watchesCostChf / rate;
       const watchesValueConverted = watchesTotalChf / rate;
       const watchesGainLoss = watchesValueConverted - watchesCostConverted;
@@ -1964,7 +2057,7 @@
       const wValEl = document.getElementById('watchesGainVal');
       if (wValEl) {
         wValEl.textContent = (wUp ? '+' : '') + watchesGainLoss.toFixed(2);
-        wValEl.style.color = wUp ? '#4ade80' : '#f87171';
+        wValEl.style.color = '#1B3A2D';
       }
 
       document.getElementById('positionCount').textContent = state.positions.length;
@@ -2495,15 +2588,41 @@
         if (prev == null || last == null || prev === 0) return null;
         return ((last - prev) / prev) * 100;
       }
-      function setBadge(priceId, changeId, subId, perG, pct) {
+      function weekChangePct(key) {
+        const pts = hist.filter(h => h[key] != null);
+        if (pts.length < 2) return null;
+        const last = pts[pts.length - 1];
+        var targetDate = new Date(last.date || Date.now());
+        targetDate.setDate(targetDate.getDate() - 7);
+        var best = null;
+        pts.forEach(function(p) {
+          var d = new Date(p.date);
+          if (d <= targetDate) {
+            if (!best || d > new Date(best.date)) best = p;
+          }
+        });
+        if (!best) best = pts[0];
+        if (best[key] == null || best[key] === 0) return null;
+        return ((last[key] - best[key]) / best[key]) * 100;
+      }
+      function setBadge(priceId, changeId, weekId, subId, perG, pct, wPct) {
         document.getElementById(priceId).textContent = perG.toFixed(2) + ' ' + cur + '/g';
         document.getElementById(subId).textContent = '\u00b7 ' + (perG * OZ_TO_G).toFixed(0) + ' ' + cur + '/oncia';
-        const el = document.getElementById(changeId);
-        if (pct == null) { el.textContent = ''; el.style.background = 'transparent'; return; }
-        const up = pct >= 0;
-        el.textContent = (up ? '\u25b2 +' : '\u25bc ') + pct.toFixed(2) + '% oggi';
-        el.style.color = up ? '#4ade80' : '#f87171';
-        el.style.background = up ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
+        var el = document.getElementById(changeId);
+        if (pct == null) { el.textContent = ''; el.style.background = 'transparent'; }
+        else {
+          var up = pct >= 0;
+          el.textContent = (up ? '\u25b2 +' : '\u25bc ') + pct.toFixed(2) + '% oggi';
+          el.style.color = up ? '#4ade80' : '#f87171';
+          el.style.background = up ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
+        }
+        var wEl = document.getElementById(weekId);
+        if (!wEl) return;
+        if (wPct == null) { wEl.textContent = ''; wEl.style.background = 'transparent'; return; }
+        var wUp = wPct >= 0;
+        wEl.textContent = (wUp ? '\u25b2 +' : '\u25bc ') + wPct.toFixed(2) + '% sett.';
+        wEl.style.color = wUp ? '#4ade80' : '#f87171';
+        wEl.style.background = wUp ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
       }
       const kf = state.goldKarat / 24;
       const gmn = document.getElementById('goldMetalName');
@@ -2511,8 +2630,8 @@
       const sf = state.silverPurity / 1000;
       const smn = document.getElementById('silverMetalName');
       if (smn) smn.textContent = state.silverPurity === 999 ? 'Argento' : 'Argento ' + state.silverPurity + '\u2030';
-      setBadge('goldLivePrice', 'goldLiveChange', 'goldLiveSub', goldG * kf, changePct('gold'));
-      setBadge('silverLivePrice', 'silverLiveChange', 'silverLiveSub', silverG * sf, changePct('silver'));
+      setBadge('goldLivePrice', 'goldLiveChange', 'goldWeekChange', 'goldLiveSub', goldG * kf, changePct('gold'), weekChangePct('gold'));
+      setBadge('silverLivePrice', 'silverLiveChange', 'silverWeekChange', 'silverLiveSub', silverG * sf, changePct('silver'), weekChangePct('silver'));
     }
 
 
