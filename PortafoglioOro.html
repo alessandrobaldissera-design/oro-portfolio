@@ -693,20 +693,7 @@
     .history-card-cols { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; font-size: 0.9rem; margin-bottom: 0.3rem; }
     .history-card-footer { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
     .history-card-photos { margin-top: 0.5rem; }
-    .history-card-spark {
-      position: absolute;
-      right: 0;
-      top: 0;
-      bottom: 0;
-      width: 45%;
-      pointer-events: none;
-      opacity: 0.55;
-    }
-    .history-card-spark canvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
+
 
     #watchDetailModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1000; align-items:flex-start; justify-content:center; overflow-y:auto; padding:2rem 1rem; }
     #watchDetailModal.open { display:flex; }
@@ -1797,7 +1784,24 @@
       const container = document.getElementById('historyListContainer');
       if (!container) return;
       const rows = state.positions.map((pos, i) => ({ pos: pos, idx: i }));
-      rows.sort((a, b) => new Date(b.pos.date || 0) - new Date(a.pos.date || 0));
+      // Ordine per categoria, poi per data decrescente
+      const catOrder = {
+        'gold_moneta': 0, 'silver_moneta': 1,
+        'gold_lingotto': 2, 'silver_lingotto': 3,
+        'gold_lavorato': 4, 'silver_lavorato': 5,
+        'gold_oro_virtuale': 6, 'silver_oro_virtuale': 7,
+        'other': 8
+      };
+      function getCatKey(p) {
+        if (p.metal === 'other') return 'other';
+        return p.metal + '_' + (p.itemType || 'lingotto');
+      }
+      rows.sort(function(a, b) {
+        var ca = catOrder[getCatKey(a.pos)] != null ? catOrder[getCatKey(a.pos)] : 99;
+        var cb = catOrder[getCatKey(b.pos)] != null ? catOrder[getCatKey(b.pos)] : 99;
+        if (ca !== cb) return ca - cb;
+        return new Date(b.pos.date || 0) - new Date(a.pos.date || 0);
+      });
       if (!rows.length) {
         container.innerHTML = '<div class="empty-state">Nessun articolo nello storico. Aggiungi un acquisto dal tab "Nuovo Acquisto".</div>';
         setupHistoryLongPress();
@@ -1832,11 +1836,7 @@
         const strike = (wRem <= 0 && w > 0) ? 'watch-sold-strike' : '';
         // Photos only visible in detail modal
         const photoHtml = '';
-        var sparkHtml = '';
-        if (pos.metal === 'gold' || pos.metal === 'silver') {
-          var purFrac = pos.metal === 'gold' ? ((pos.itemType === 'moneta' && (pos.purity || 24) > 24) ? (pos.purity || 24) / 1000 : (pos.purity || 24) / 24) : ((pos.purity || 999) / 1000);
-          sparkHtml = '<div class="history-card-spark"><canvas id="histSparkline_' + i + '" data-metal="' + pos.metal + '" data-date="' + (pos.date || '') + '" data-qty="' + wRem + '" data-purfrac="' + purFrac + '" data-up="' + (up ? '1' : '0') + '"></canvas></div>';
-        }
+
         html += '<div class="history-card" data-idx="' + i + '">' +
           '<div class="history-metal-circle ' + metalClass + '">' + metalSymbol + '</div>' +
           '<div class="history-card-body">' +
@@ -1853,112 +1853,10 @@
             '</div>' +
             photoHtml +
           '</div>' +
-          sparkHtml +
         '</div>';
       });
       container.innerHTML = html;
-      drawHistorySparklines();
       setupHistoryLongPress();
-    }
-
-    // ===== Mini Sparkline per card Storico =====
-    function drawHistorySparklines() {
-      var canvases = document.querySelectorAll('[id^="histSparkline_"]');
-      if (!canvases.length) return;
-      var hist = (state.priceHistory || []).slice()
-        .sort(function(a, b) { return new Date(a.date) - new Date(b.date); })
-        .map(pointToChfPerG);
-      canvases.forEach(function(canvas) {
-        var metal = canvas.getAttribute('data-metal');
-        var purchaseDate = canvas.getAttribute('data-date');
-        var qty = parseFloat(canvas.getAttribute('data-qty')) || 0;
-        var purFrac = parseFloat(canvas.getAttribute('data-purfrac')) || 1;
-        var isUp = canvas.getAttribute('data-up') === '1';
-        var key = metal === 'gold' ? 'gold' : 'silver';
-        // Filtra dalla data di acquisto
-        var pts = hist.filter(function(h) {
-          if (h[key] == null) return false;
-          if (purchaseDate && h.date < purchaseDate) return false;
-          return true;
-        });
-        if (pts.length < 2) return;
-        // Valore REALE dell'oggetto nel tempo: quantita' x purezza x prezzo/g
-        var values = pts.map(function(h) { return qty * purFrac * h[key]; });
-        // Campiona max 60 punti per curva fluida
-        var sampled = values;
-        if (values.length > 60) {
-          sampled = [];
-          var step = (values.length - 1) / 59;
-          for (var s = 0; s < 60; s++) {
-            sampled.push(values[Math.round(s * step)]);
-          }
-        }
-        // Retina
-        var rect = canvas.getBoundingClientRect();
-        var w = rect.width * 2 || 300;
-        var h2 = rect.height * 2 || 160;
-        canvas.width = w;
-        canvas.height = h2;
-        var ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, w, h2);
-        var minV = Math.min.apply(null, sampled);
-        var maxV = Math.max.apply(null, sampled);
-        var range = maxV - minV || 1;
-        // Padding — onda fluttua nel vuoto
-        var padX = w * 0.06;
-        var padY = h2 * 0.15;
-        var drawW = w - padX * 2;
-        var drawH = h2 - padY * 2;
-        var points = sampled.map(function(v, i) {
-          return {
-            x: padX + (i / (sampled.length - 1)) * drawW,
-            y: padY + drawH - ((v - minV) / range) * drawH
-          };
-        });
-        // Colore trend: dal data-up calcolato sulla base del prezzo di acquisto reale
-        var lineColor = isUp ? '#22c55e' : '#ef4444';
-        var fillRgb = isUp ? '34,197,94' : '239,68,68';
-        // Catmull-Rom smooth curve
-        function drawCR(tension) {
-          ctx.beginPath();
-          ctx.moveTo(points[0].x, points[0].y);
-          for (var i = 0; i < points.length - 1; i++) {
-            var p0 = points[i === 0 ? 0 : i - 1];
-            var p1 = points[i];
-            var p2 = points[i + 1];
-            var p3 = points[i + 2 >= points.length ? points.length - 1 : i + 2];
-            var cp1x = p1.x + (p2.x - p0.x) * tension;
-            var cp1y = p1.y + (p2.y - p0.y) * tension;
-            var cp2x = p2.x - (p3.x - p1.x) * tension;
-            var cp2y = p2.y - (p3.y - p1.y) * tension;
-            ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
-          }
-        }
-        // Fill — sfumatura vivace
-        drawCR(0.4);
-        ctx.lineTo(points[points.length - 1].x, h2);
-        ctx.lineTo(points[0].x, h2);
-        ctx.closePath();
-        var grad = ctx.createLinearGradient(0, 0, 0, h2);
-        grad.addColorStop(0, 'rgba(' + fillRgb + ',0.35)');
-        grad.addColorStop(0.6, 'rgba(' + fillRgb + ',0.1)');
-        grad.addColorStop(1, 'rgba(' + fillRgb + ',0)');
-        ctx.fillStyle = grad;
-        ctx.fill();
-        // Stroke — linea decisa e nitida
-        drawCR(0.4);
-        ctx.strokeStyle = lineColor;
-        ctx.lineWidth = 2.5;
-        ctx.lineJoin = 'round';
-        ctx.lineCap = 'round';
-        ctx.stroke();
-        // Pallino finale
-        var last = points[points.length - 1];
-        ctx.beginPath();
-        ctx.arc(last.x, last.y, 3.5, 0, Math.PI * 2);
-        ctx.fillStyle = lineColor;
-        ctx.fill();
-      });
     }
 
     // ===== Mini Sparkline per card Andamento =====
