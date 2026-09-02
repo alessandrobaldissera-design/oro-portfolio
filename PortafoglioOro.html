@@ -1834,7 +1834,8 @@
         const photoHtml = '';
         var sparkHtml = '';
         if (pos.metal === 'gold' || pos.metal === 'silver') {
-          sparkHtml = '<div class="history-card-spark"><canvas id="histSparkline_' + i + '" data-metal="' + pos.metal + '" data-date="' + (pos.date || '') + '"></canvas></div>';
+          var purFrac = pos.metal === 'gold' ? ((pos.itemType === 'moneta' && (pos.purity || 24) > 24) ? (pos.purity || 24) / 1000 : (pos.purity || 24) / 24) : ((pos.purity || 999) / 1000);
+          sparkHtml = '<div class="history-card-spark"><canvas id="histSparkline_' + i + '" data-metal="' + pos.metal + '" data-date="' + (pos.date || '') + '" data-qty="' + wRem + '" data-purfrac="' + purFrac + '"></canvas></div>';
         }
         html += '<div class="history-card" data-idx="' + i + '">' +
           '<div class="history-metal-circle ' + metalClass + '">' + metalSymbol + '</div>' +
@@ -1870,15 +1871,27 @@
       canvases.forEach(function(canvas) {
         var metal = canvas.getAttribute('data-metal');
         var purchaseDate = canvas.getAttribute('data-date');
+        var qty = parseFloat(canvas.getAttribute('data-qty')) || 0;
+        var purFrac = parseFloat(canvas.getAttribute('data-purfrac')) || 1;
         var key = metal === 'gold' ? 'gold' : 'silver';
-        // Filtra dati dalla data di acquisto
+        // Filtra dalla data di acquisto
         var pts = hist.filter(function(h) {
           if (h[key] == null) return false;
           if (purchaseDate && h.date < purchaseDate) return false;
           return true;
         });
         if (pts.length < 2) return;
-        var values = pts.map(function(h) { return h[key]; });
+        // Valore REALE dell'oggetto nel tempo: quantita' x purezza x prezzo/g
+        var values = pts.map(function(h) { return qty * purFrac * h[key]; });
+        // Campiona max 60 punti per curva fluida
+        var sampled = values;
+        if (values.length > 60) {
+          sampled = [];
+          var step = (values.length - 1) / 59;
+          for (var s = 0; s < 60; s++) {
+            sampled.push(values[Math.round(s * step)]);
+          }
+        }
         // Retina
         var rect = canvas.getBoundingClientRect();
         var w = rect.width * 2 || 300;
@@ -1887,23 +1900,23 @@
         canvas.height = h2;
         var ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, w, h2);
-        var minV = Math.min.apply(null, values);
-        var maxV = Math.max.apply(null, values);
+        var minV = Math.min.apply(null, sampled);
+        var maxV = Math.max.apply(null, sampled);
         var range = maxV - minV || 1;
-        // Padding generoso per l'effetto "fluttua nel vuoto"
-        var padX = w * 0.08;
-        var padY = h2 * 0.18;
+        // Padding generoso — onda fluttua nel vuoto
+        var padX = w * 0.06;
+        var padY = h2 * 0.2;
         var drawW = w - padX * 2;
         var drawH = h2 - padY * 2;
-        var points = values.map(function(v, i) {
+        var points = sampled.map(function(v, i) {
           return {
-            x: padX + (i / (values.length - 1)) * drawW,
+            x: padX + (i / (sampled.length - 1)) * drawW,
             y: padY + drawH - ((v - minV) / range) * drawH
           };
         });
         // Trend color
-        var isUp = values[values.length - 1] >= values[0];
-        var rgb = isUp ? '76,175,80' : '244,67,54';
+        var isUp = sampled[sampled.length - 1] >= sampled[0];
+        var baseColor = isUp ? '34,197,94' : '239,68,68';
         // Catmull-Rom smooth curve
         function drawCR(tension) {
           ctx.beginPath();
@@ -1920,22 +1933,33 @@
             ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
           }
         }
-        // Fill — sfumatura morbida verso il basso
+        // Glow effect — alone morbido dietro la linea
+        drawCR(0.4);
+        ctx.strokeStyle = 'rgba(' + baseColor + ',0.15)';
+        ctx.lineWidth = 8;
+        ctx.stroke();
+        // Fill — sfumatura delicata verso il basso
         drawCR(0.4);
         ctx.lineTo(points[points.length - 1].x, h2);
         ctx.lineTo(points[0].x, h2);
         ctx.closePath();
         var grad = ctx.createLinearGradient(0, 0, 0, h2);
-        grad.addColorStop(0, 'rgba(' + rgb + ',0.22)');
-        grad.addColorStop(0.7, 'rgba(' + rgb + ',0.05)');
-        grad.addColorStop(1, 'rgba(' + rgb + ',0)');
+        grad.addColorStop(0, 'rgba(' + baseColor + ',0.18)');
+        grad.addColorStop(0.5, 'rgba(' + baseColor + ',0.06)');
+        grad.addColorStop(1, 'rgba(' + baseColor + ',0)');
         ctx.fillStyle = grad;
         ctx.fill();
-        // Stroke — linea onda morbida
+        // Stroke principale — linea elegante
         drawCR(0.4);
-        ctx.strokeStyle = 'rgba(' + rgb + ',0.6)';
-        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = 'rgba(' + baseColor + ',0.5)';
+        ctx.lineWidth = 2;
         ctx.stroke();
+        // Pallino finale — valore attuale
+        var last = points[points.length - 1];
+        ctx.beginPath();
+        ctx.arc(last.x, last.y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(' + baseColor + ',0.7)';
+        ctx.fill();
       });
     }
 
