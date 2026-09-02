@@ -658,6 +658,8 @@
       cursor: pointer;
       user-select: none;
       -webkit-user-select: none;
+      position: relative;
+      overflow: hidden;
     }
     .history-metal-circle {
       width: 48px; height: 48px;
@@ -684,21 +686,25 @@
       border: 1px solid #1B3A2D;
       color: #1B3A2D;
     }
-    .history-card-body { flex: 1; min-width: 0; }
+    .history-card-body { flex: 1; min-width: 0; position: relative; z-index: 1; }
+    .history-metal-circle { position: relative; z-index: 1; }
     .history-card-title { font-weight: 700; color: #2c3e36; font-size: 1.05rem; }
     .history-card-sub { color: #7a8a80; font-size: 0.85rem; margin-bottom: 0.4rem; }
     .history-card-cols { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; font-size: 0.9rem; margin-bottom: 0.3rem; }
     .history-card-footer { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
     .history-card-photos { margin-top: 0.5rem; }
     .history-card-spark {
-      flex-shrink: 0;
-      width: 30%;
-      max-width: 120px;
-      align-self: center;
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 45%;
+      pointer-events: none;
+      opacity: 0.55;
     }
     .history-card-spark canvas {
       width: 100%;
-      height: 50px;
+      height: 100%;
       display: block;
     }
 
@@ -1875,8 +1881,8 @@
         var values = pts.map(function(h) { return h[key]; });
         // Retina
         var rect = canvas.getBoundingClientRect();
-        var w = rect.width * 2 || 200;
-        var h2 = rect.height * 2 || 100;
+        var w = rect.width * 2 || 300;
+        var h2 = rect.height * 2 || 160;
         canvas.width = w;
         canvas.height = h2;
         var ctx = canvas.getContext('2d');
@@ -1884,12 +1890,15 @@
         var minV = Math.min.apply(null, values);
         var maxV = Math.max.apply(null, values);
         var range = maxV - minV || 1;
-        var pad = 6;
-        var drawH = h2 - pad * 2;
+        // Padding generoso per l'effetto "fluttua nel vuoto"
+        var padX = w * 0.08;
+        var padY = h2 * 0.18;
+        var drawW = w - padX * 2;
+        var drawH = h2 - padY * 2;
         var points = values.map(function(v, i) {
           return {
-            x: (i / (values.length - 1)) * w,
-            y: pad + drawH - ((v - minV) / range) * drawH
+            x: padX + (i / (values.length - 1)) * drawW,
+            y: padY + drawH - ((v - minV) / range) * drawH
           };
         });
         // Trend color
@@ -1911,20 +1920,21 @@
             ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
           }
         }
-        // Fill
-        drawCR(0.35);
-        ctx.lineTo(w, h2);
-        ctx.lineTo(0, h2);
+        // Fill — sfumatura morbida verso il basso
+        drawCR(0.4);
+        ctx.lineTo(points[points.length - 1].x, h2);
+        ctx.lineTo(points[0].x, h2);
         ctx.closePath();
         var grad = ctx.createLinearGradient(0, 0, 0, h2);
-        grad.addColorStop(0, 'rgba(' + rgb + ',0.18)');
-        grad.addColorStop(1, 'rgba(' + rgb + ',0.01)');
+        grad.addColorStop(0, 'rgba(' + rgb + ',0.22)');
+        grad.addColorStop(0.7, 'rgba(' + rgb + ',0.05)');
+        grad.addColorStop(1, 'rgba(' + rgb + ',0)');
         ctx.fillStyle = grad;
         ctx.fill();
-        // Stroke
-        drawCR(0.35);
-        ctx.strokeStyle = 'rgba(' + rgb + ',0.55)';
-        ctx.lineWidth = 2;
+        // Stroke — linea onda morbida
+        drawCR(0.4);
+        ctx.strokeStyle = 'rgba(' + rgb + ',0.6)';
+        ctx.lineWidth = 2.5;
         ctx.stroke();
       });
     }
@@ -2108,6 +2118,8 @@
     function pointToChfPerG(h) {
       const usdToChf = state.exchangeRates.USD || 0.80;
       return {
+        date: h.date || null,
+        ts: h.ts || null,
         gold: (h.goldUsd != null) ? (h.goldUsd * usdToChf / OZ_TO_G) : (h.gold != null ? h.gold : null),
         silver: (h.silverUsd != null) ? (h.silverUsd * usdToChf / OZ_TO_G) : (h.silver != null ? h.silver : null)
       };
@@ -2580,30 +2592,40 @@
       const hist = state.priceHistory.slice()
         .sort((a, b) => new Date(a.date) - new Date(b.date))
         .map(pointToChfPerG);
-      function changePct(key) {
-        const pts = hist.filter(h => h[key] != null);
+      // Trova il punto piu' vicino a N giorni fa (cercando all'indietro)
+      function findPointDaysAgo(pts, daysAgo) {
         if (pts.length < 2) return null;
-        const last = pts[pts.length - 1][key];
-        const prev = pts[pts.length - 2][key];
-        if (prev == null || last == null || prev === 0) return null;
-        return ((last - prev) / prev) * 100;
+        var last = pts[pts.length - 1];
+        var lastDate = last.date ? new Date(last.date) : new Date();
+        var target = new Date(lastDate);
+        target.setDate(target.getDate() - daysAgo);
+        var best = null;
+        var bestDiff = Infinity;
+        for (var i = 0; i < pts.length - 1; i++) {
+          if (!pts[i].date) continue;
+          var d = new Date(pts[i].date);
+          var diff = Math.abs(d.getTime() - target.getTime());
+          if (diff < bestDiff) { bestDiff = diff; best = pts[i]; }
+        }
+        return best;
+      }
+      function changePct(key) {
+        var pts = hist.filter(function(h) { return h[key] != null && h.date; });
+        if (pts.length < 2) return null;
+        var last = pts[pts.length - 1];
+        // Cerca il punto piu' vicino a 1 giorno fa
+        var prev = findPointDaysAgo(pts, 1);
+        if (!prev || prev[key] == null || prev[key] === 0) return null;
+        return ((last[key] - prev[key]) / prev[key]) * 100;
       }
       function weekChangePct(key) {
-        const pts = hist.filter(h => h[key] != null);
+        var pts = hist.filter(function(h) { return h[key] != null && h.date; });
         if (pts.length < 2) return null;
-        const last = pts[pts.length - 1];
-        var targetDate = new Date(last.date || Date.now());
-        targetDate.setDate(targetDate.getDate() - 7);
-        var best = null;
-        pts.forEach(function(p) {
-          var d = new Date(p.date);
-          if (d <= targetDate) {
-            if (!best || d > new Date(best.date)) best = p;
-          }
-        });
-        if (!best) best = pts[0];
-        if (best[key] == null || best[key] === 0) return null;
-        return ((last[key] - best[key]) / best[key]) * 100;
+        var last = pts[pts.length - 1];
+        // Cerca il punto piu' vicino a 7 giorni fa
+        var prev = findPointDaysAgo(pts, 7);
+        if (!prev || prev[key] == null || prev[key] === 0) return null;
+        return ((last[key] - prev[key]) / prev[key]) * 100;
       }
       function setBadge(priceId, changeId, weekId, subId, perG, pct, wPct) {
         document.getElementById(priceId).textContent = perG.toFixed(2) + ' ' + cur + '/g';
