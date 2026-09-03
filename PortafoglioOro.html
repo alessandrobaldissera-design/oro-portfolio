@@ -524,7 +524,8 @@
     @keyframes syncpulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; }
     @keyframes pulseDot { 0%,100% { opacity: 1; box-shadow: 0 0 6px 2px rgba(27,58,45,0.5); } 50% { opacity: 0.4; box-shadow: 0 0 2px 1px rgba(27,58,45,0.2); } }
     .chart-live-dot { animation: pulseDot 1.5s ease-in-out infinite; } }
-    .rate-info { color: #7a8a80; }
+    .rate-info { color: #7a8a80; display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .rate-box { background: rgba(27,58,45,0.06); border: 1px solid rgba(27,58,45,0.12); border-radius: 8px; padding: 0.25rem 0.6rem; font-size: 0.82rem; font-weight: 600; color: #1B3A2D; white-space: nowrap; }
     .refresh-btn {
       margin-left: auto;
       background: var(--green-tint);
@@ -794,32 +795,23 @@
       display: inline-block;
     }
     .shop-scroll {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       gap: 0.85rem;
-      overflow-x: auto;
       padding-bottom: 0.75rem;
-      -webkit-overflow-scrolling: touch;
-      scroll-snap-type: x mandatory;
-      flex-wrap: nowrap;
-    }
-    .shop-scroll::-webkit-scrollbar {
-      height: 4px;
-    }
-    .shop-scroll::-webkit-scrollbar-thumb {
-      background: #D4A843;
-      border-radius: 2px;
     }
     .shop-card {
-      flex: 0 0 220px;
+      width: 100%;
       background: #fff;
       border-radius: 12px;
       padding: 1rem 1rem 0.85rem;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      border-left: 3px solid #D4A843;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       scroll-snap-align: start;
+      text-align: center;
+      align-items: center;
     }
     .shop-card-name {
       font-weight: 600;
@@ -858,7 +850,6 @@
     }
     @media (max-width: 600px) {
       .shop-card {
-        flex: 0 0 180px;
         padding: 0.85rem 0.85rem 0.75rem;
       }
     }
@@ -874,7 +865,7 @@
       justify-content: space-around;
       align-items: center;
       background: #1B3A2D;
-      padding: 0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom, 0px)) 0;
+      padding: 0.2rem 0 calc(0.2rem + env(safe-area-inset-bottom, 0px)) 0;
       box-shadow: 0 -2px 12px rgba(0,0,0,0.15);
       z-index: 9999;
     }
@@ -888,20 +879,20 @@
       border: none;
       color: rgba(255,255,255,0.5);
       cursor: pointer;
-      padding: 0.25rem 0.5rem;
-      gap: 0.2rem;
+      padding: 0.15rem 0.5rem;
+      gap: 0.1rem;
       transition: color 0.2s;
       -webkit-tap-highlight-color: transparent;
       min-width: 3rem;
     }
 
     .bottom-nav-btn svg {
-      width: 22px;
-      height: 22px;
+      width: 18px;
+      height: 18px;
     }
 
     .bottom-nav-btn span {
-      font-size: 0.65rem;
+      font-size: 0.58rem;
       font-weight: 600;
       letter-spacing: 0.02em;
     }
@@ -1717,7 +1708,7 @@
       if (rateEl) {
         const usd = state.exchangeRates.USD || 0;
         const eur = state.exchangeRates.EUR || 0;
-        rateEl.textContent = '1 USD = ' + usd.toFixed(4) + ' CHF \u00b7 1 EUR = ' + eur.toFixed(4) + ' CHF';
+        rateEl.innerHTML = '<span class="rate-box">1 USD = ' + usd.toFixed(4) + ' CHF</span><span class="rate-box">1 EUR = ' + eur.toFixed(4) + ' CHF</span>';
       }
     }
 
@@ -2467,35 +2458,6 @@
         ctx.strokeStyle = '#fff';
         ctx.stroke();
 
-        // Etichetta valore sopra il punto di intersezione
-        const val = chart.data.datasets[0].data[active.index];
-        if (val != null) {
-          const curr = state.currentCurrency;
-          const sym = curr === 'EUR' ? '\u20AC' : curr === 'USD' ? '$' : 'CHF';
-          const label = sym + ' ' + val.toFixed(2) + '/g';
-          ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
-          const tw = ctx.measureText(label).width;
-          const pad = 6;
-          const bw = tw + pad * 2;
-          const bh = 22;
-          let lx = x - bw / 2;
-          let ly = y - bh - 12;
-          if (ly < area.top) ly = y + 14;
-          if (lx < area.left) lx = area.left + 2;
-          if (lx + bw > area.right) lx = area.right - bw - 2;
-          ctx.fillStyle = '#ffffff';
-          ctx.globalAlpha = 0.92;
-          ctx.fillRect(lx, ly, bw, bh);
-          ctx.globalAlpha = 1;
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 1;
-          ctx.setLineDash([]);
-          ctx.strokeRect(lx, ly, bw, bh);
-          ctx.fillStyle = '#1B3A2D';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(label, lx + bw / 2, ly + bh / 2);
-        }
 
         ctx.restore();
       }
@@ -3497,7 +3459,7 @@
         var el = document.getElementById(tab);
         if (el) el.classList.add('active');
         if (tab === 'news') loadNews();
-        window.scrollTo(0, 0);
+        setTimeout(function() { if (el) el.scrollIntoView({ block: 'start' }); }, 50);
       });
     });
 
