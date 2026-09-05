@@ -937,6 +937,125 @@
     .bottom-nav-btn:active {
       transform: scale(0.92);
     }
+
+    /* ── Shop Category List (sub-page system) ──────── */
+    .shop-cat-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      padding: 0.75rem 0;
+    }
+    .shop-cat-card {
+      background: #FFFFFF;
+      border: 1.5px solid rgba(212,168,67,0.25);
+      border-radius: 14px;
+      padding: 1.3rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 2px 10px rgba(27,58,45,0.06);
+      position: relative;
+      overflow: hidden;
+    }
+    .shop-cat-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 20%;
+      right: 20%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #D4A843, transparent);
+      border-radius: 2px;
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .shop-cat-card:hover,
+    .shop-cat-card:active {
+      border-color: #D4A843;
+      box-shadow: 0 4px 18px rgba(212,168,67,0.18);
+      transform: translateY(-2px);
+    }
+    .shop-cat-card:hover::after,
+    .shop-cat-card:active::after {
+      opacity: 1;
+    }
+    .shop-cat-card-icon {
+      font-size: 1.6rem;
+      margin-bottom: 0.4rem;
+    }
+    .shop-cat-card-name {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: #1B3A2D;
+      letter-spacing: 0.02em;
+    }
+    .shop-cat-card-arrow {
+      position: absolute;
+      right: 1.1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #D4A843;
+      font-size: 1.1rem;
+      opacity: 0.7;
+    }
+    .shop-detail-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1B3A2D;
+      text-align: center;
+      margin: 0.75rem 0 0.25rem;
+      padding-bottom: 0.5rem;
+      position: relative;
+    }
+    .shop-detail-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, #D4A843, #C5952A);
+      border-radius: 2px;
+    }
+
+    /* ── Search Bars (Storico & Orologi) ───────────── */
+    .app-search-wrap {
+      position: relative;
+      margin: 0.5rem 0 1rem;
+    }
+    .app-search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: #999;
+      pointer-events: none;
+    }
+    .app-search-input {
+      width: 100%;
+      padding: 0.7rem 1rem 0.7rem 2.6rem;
+      border-radius: 25px;
+      border: 1px solid #ddd;
+      background: #F5F5F5;
+      font-size: 0.95rem;
+      color: #1B3A2D;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+      font-family: inherit;
+    }
+    .app-search-input::placeholder {
+      color: #aaa;
+    }
+    .app-search-input:focus {
+      border-color: #D4A843;
+      box-shadow: 0 0 0 3px rgba(212,168,67,0.12);
+      background: #fff;
+    }
     </style>
 
 </head>
@@ -1154,7 +1273,10 @@
       </div>
 
       <div class="tab-content" id="history">
-
+        <div class="app-search-wrap">
+          <svg class="app-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="app-search-input" id="historySearch" placeholder="Cerca nei tuoi asset...">
+        </div>
         <div id="historyListContainer"></div>
       </div>
 
@@ -1170,6 +1292,12 @@
             <div class="value" id="watchGainLoss">0.00</div>
             <span class="andamento-badge" id="watchGainLossPct"></span>
           </div>
+        </div>
+
+
+        <div class="app-search-wrap">
+          <svg class="app-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="app-search-input" id="watchesSearch" placeholder="Cerca nei tuoi orologi...">
         </div>
 
         <button class="btn add-watch-btn" type="button" onclick="toggleWatchForm()">Aggiungi Orologio</button>
@@ -1401,10 +1529,38 @@
       </div>
 
       <div class="tab-content" id="shop">
-        <div class="shop-section">
-
-          <div class="shop-category">
-            <h3>Capsule Protettive</h3>
+        <!-- Shop Category List -->
+        <div id="shopCategoryList" class="shop-cat-list">
+          <div class="shop-cat-card" data-shop-cat="0" onclick="showShopCategory(0)">
+            <div class="shop-cat-card-icon">🛡️</div>
+            <div class="shop-cat-card-name">Capsule Protettive</div>
+            <span class="shop-cat-card-arrow">›</span>
+          </div>
+          <div class="shop-cat-card" data-shop-cat="1" onclick="showShopCategory(1)">
+            <div class="shop-cat-card-icon">📦</div>
+            <div class="shop-cat-card-name">Cofanetti e Custodie</div>
+            <span class="shop-cat-card-arrow">›</span>
+          </div>
+          <div class="shop-cat-card" data-shop-cat="2" onclick="showShopCategory(2)">
+            <div class="shop-cat-card-icon">📒</div>
+            <div class="shop-cat-card-name">Raccoglitori e Vassoi</div>
+            <span class="shop-cat-card-arrow">›</span>
+          </div>
+          <div class="shop-cat-card" data-shop-cat="3" onclick="showShopCategory(3)">
+            <div class="shop-cat-card-icon">🧤</div>
+            <div class="shop-cat-card-name">Conservazione e Cura</div>
+            <span class="shop-cat-card-arrow">›</span>
+          </div>
+          <div class="shop-cat-card" data-shop-cat="4" onclick="showShopCategory(4)">
+            <div class="shop-cat-card-icon">⚙️</div>
+            <div class="shop-cat-card-name">Strumenti</div>
+            <span class="shop-cat-card-arrow">›</span>
+          </div>
+        </div>
+        <!-- Shop Category Detail (hidden initially) -->
+        <div id="shopCategoryDetail" style="display:none;">
+          <div class="shop-cat-detail-section" data-shop-detail="0" style="display:none;">
+            <div class="shop-detail-title">Capsule Protettive</div>
             <div class="shop-scroll">
               <div class="shop-card">
                 <div class="shop-card-name">Capsule per monete 1 oz oro (31mm)</div>
@@ -1426,9 +1582,8 @@
               </div>
             </div>
           </div>
-
-          <div class="shop-category">
-            <h3>Cofanetti e Custodie</h3>
+          <div class="shop-cat-detail-section" data-shop-detail="1" style="display:none;">
+            <div class="shop-detail-title">Cofanetti e Custodie</div>
             <div class="shop-scroll">
               <div class="shop-card">
                 <div class="shop-card-name">Cofanetto in legno di noce per 20 monete</div>
@@ -1450,9 +1605,8 @@
               </div>
             </div>
           </div>
-
-          <div class="shop-category">
-            <h3>Raccoglitori e Vassoi</h3>
+          <div class="shop-cat-detail-section" data-shop-detail="2" style="display:none;">
+            <div class="shop-detail-title">Raccoglitori e Vassoi</div>
             <div class="shop-scroll">
               <div class="shop-card">
                 <div class="shop-card-name">Album raccoglitore per 60 capsule</div>
@@ -1474,9 +1628,8 @@
               </div>
             </div>
           </div>
-
-          <div class="shop-category">
-            <h3>Conservazione e Cura</h3>
+          <div class="shop-cat-detail-section" data-shop-detail="3" style="display:none;">
+            <div class="shop-detail-title">Conservazione e Cura</div>
             <div class="shop-scroll">
               <div class="shop-card">
                 <div class="shop-card-name">Guanti in cotone bianco</div>
@@ -1504,9 +1657,8 @@
               </div>
             </div>
           </div>
-
-          <div class="shop-category">
-            <h3>Strumenti</h3>
+          <div class="shop-cat-detail-section" data-shop-detail="4" style="display:none;">
+            <div class="shop-detail-title">Strumenti</div>
             <div class="shop-scroll">
               <div class="shop-card">
                 <div class="shop-card-name">Bilancia di precisione 0.01g</div>
@@ -1528,7 +1680,6 @@
               </div>
             </div>
           </div>
-
         </div>
       </div>
 
@@ -3531,6 +3682,7 @@
       document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
       var shopEl = document.getElementById('shop');
       if (shopEl) shopEl.classList.add('active');
+      resetShopToCategories();
       requestAnimationFrame(function() {
         if (!shopEl) return;
         var navH = document.getElementById('bottomNav').offsetHeight;
@@ -3834,6 +3986,70 @@
     fetchPrices();
     setInterval(fetchPrices, 5 * 60 * 1000); // Aggiorna ogni 5 minuti
     updateUI();
+
+    // ── Shop Category Sub-page System ──────────────────
+    function showShopCategory(idx) {
+      var catList = document.getElementById('shopCategoryList');
+      var catDetail = document.getElementById('shopCategoryDetail');
+      if (!catList || !catDetail) return;
+      catList.style.display = 'none';
+      catDetail.style.display = '';
+      // Hide all detail sections, show the selected one
+      var sections = catDetail.querySelectorAll('.shop-cat-detail-section');
+      for (var i = 0; i < sections.length; i++) {
+        sections[i].style.display = (i === idx) ? '' : 'none';
+      }
+      // Scroll to top of shop
+      var shopEl = document.getElementById('shop');
+      if (shopEl) {
+        requestAnimationFrame(function() {
+          window.scrollTo(0, shopEl.offsetTop);
+        });
+      }
+    }
+
+    function resetShopToCategories() {
+      var catList = document.getElementById('shopCategoryList');
+      var catDetail = document.getElementById('shopCategoryDetail');
+      if (catList) catList.style.display = '';
+      if (catDetail) {
+        catDetail.style.display = 'none';
+        var sections = catDetail.querySelectorAll('.shop-cat-detail-section');
+        for (var i = 0; i < sections.length; i++) {
+          sections[i].style.display = 'none';
+        }
+      }
+    }
+
+    // ── Search bar: Storico ────────────────────────────
+    document.getElementById('historySearch').addEventListener('input', function() {
+      var query = this.value.toLowerCase();
+      var container = document.getElementById('historyListContainer');
+      if (!container) return;
+      var items = container.children;
+      for (var i = 0; i < items.length; i++) {
+        if (!query) {
+          items[i].style.display = '';
+        } else {
+          items[i].style.display = items[i].textContent.toLowerCase().indexOf(query) !== -1 ? '' : 'none';
+        }
+      }
+    });
+
+    // ── Search bar: Orologi ────────────────────────────
+    document.getElementById('watchesSearch').addEventListener('input', function() {
+      var query = this.value.toLowerCase();
+      var watchTab = document.getElementById('watches');
+      if (!watchTab) return;
+      var cards = watchTab.querySelectorAll('.watch-card');
+      for (var i = 0; i < cards.length; i++) {
+        if (!query) {
+          cards[i].style.display = '';
+        } else {
+          cards[i].style.display = cards[i].textContent.toLowerCase().indexOf(query) !== -1 ? '' : 'none';
+        }
+      }
+    });
   </script>
 </body>
 </html>
