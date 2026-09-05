@@ -786,24 +786,26 @@
       margin-bottom: 2rem;
     }
     .shop-category h3 {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       font-weight: 700;
       color: #1B3A2D;
-      margin-bottom: 0.75rem;
-      padding-bottom: 0.4rem;
+      margin-bottom: 0.85rem;
+      padding: 0.5rem 0;
       border-bottom: 2px solid #D4A843;
-      display: inline-block;
+      display: block;
+      text-align: center;
+      background: rgba(212,168,67,0.08);
+      border-radius: 8px;
+      letter-spacing: 0.03em;
     }
     .shop-scroll {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 0.85rem;
       padding-bottom: 0.75rem;
-      max-width: 540px;
-      margin: 0 auto;
-      justify-items: center;
+      width: 100%;
     }
-    @media (max-width: 480px) {
+    @media (max-width: 420px) {
       .shop-scroll {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -3467,13 +3469,12 @@
         var tab = button.dataset.tab;
         if (!tab) return;
 
-        // Home: torna a Panoramica e scrolla in cima
+        // Home: torna a Panoramica e scrolla in cima, evidenzia Home
         if (tab === 'home') {
           document.querySelectorAll('.bottom-nav-btn').forEach(function(b) { b.classList.remove('active'); });
           document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
-          // Attiva bottone Panoramica
-          var overviewBtn = document.querySelector('.bottom-nav-btn[data-tab="overview"]');
-          if (overviewBtn) overviewBtn.classList.add('active');
+          // Evidenzia il bottone Home
+          button.classList.add('active');
           var overviewEl = document.getElementById('overview');
           if (overviewEl) overviewEl.classList.add('active');
           window.scrollTo(0, 0);
@@ -3486,15 +3487,19 @@
         var el = document.getElementById(tab);
         if (el) el.classList.add('active');
         if (tab === 'news') loadNews();
-        // Smart scroll: se il contenuto e' piu' corto dello schermo, allinea l'ultima voce con la base
+        // Smart scroll: allinea la sezione in cima; se piu' corta dello schermo, allinea l'ultima voce con la base
         requestAnimationFrame(function() {
+          if (!el) return;
           var navH = document.getElementById('bottomNav').offsetHeight;
           var viewH = window.innerHeight - navH;
-          if (el && el.offsetHeight < viewH) {
-            var targetScroll = el.offsetTop + el.offsetHeight - viewH;
-            window.scrollTo(0, Math.max(0, targetScroll));
+          var sectionH = el.offsetHeight;
+          if (sectionH >= viewH) {
+            // Sezione lunga: allinea il suo inizio in cima al display
+            window.scrollTo(0, el.offsetTop);
           } else {
-            window.scrollTo(0, 0);
+            // Sezione corta: allinea l'ultima voce con la base del display
+            var targetScroll = el.offsetTop + sectionH - viewH;
+            window.scrollTo(0, Math.max(0, targetScroll));
           }
         });
       });
