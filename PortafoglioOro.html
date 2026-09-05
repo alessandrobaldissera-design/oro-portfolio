@@ -73,6 +73,28 @@
       flex-wrap: wrap;
     }
 
+    .shop-header-btn {
+      background: linear-gradient(135deg, #D4A843, #C5952A);
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 0.5rem 1.2rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      animation: shopPulse 2.5s ease-in-out infinite;
+      box-shadow: 0 2px 8px rgba(212,168,67,0.3);
+      transition: transform 0.2s;
+    }
+    .shop-header-btn:active {
+      transform: scale(0.95);
+    }
+    @keyframes shopPulse {
+      0%, 100% { box-shadow: 0 2px 8px rgba(212,168,67,0.3); }
+      50% { box-shadow: 0 2px 16px rgba(212,168,67,0.6); }
+    }
+
     .currency-selector {
       display: flex;
       gap: 0.4rem;
@@ -928,6 +950,7 @@
           <button class="currency-btn" data-currency="USD">USD</button>
           <button class="currency-btn" data-currency="CHF">CHF</button>
         </div>
+        <button id="shopBtn" class="shop-header-btn">Shop</button>
         <div id="googleLoginContainer" style="display: none;">
           <button id="googleSignIn" class="sync-btn" style="min-width: 100px; margin: 0;">Google Drive</button>
         </div>
@@ -945,6 +968,7 @@
       </div>
       <span class="rate-info" id="rateInfo"></span>
       <button class="refresh-btn" id="refreshBtn">Aggiorna ora</button>
+      <button class="refresh-btn" id="newsBtn" style="margin-left:0;">Notizie</button>
     </div>
 
     <div class="content">
@@ -1530,14 +1554,8 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
     <span>Nuovo</span>
   </button>
-  <button class="bottom-nav-btn" data-tab="news">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><line x1="10" y1="6" x2="18" y2="6"/><line x1="10" y1="10" x2="18" y2="10"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
-    <span>Notizie</span>
-  </button>
-  <button class="bottom-nav-btn" data-tab="shop">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-    <span>Shop</span>
-  </button>
+
+
 </nav>
 
   <script>
@@ -3502,6 +3520,51 @@
             window.scrollTo(0, Math.max(0, targetScroll));
           }
         });
+      });
+    });
+
+    // Shop button in header
+    document.getElementById('shopBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.querySelectorAll('.bottom-nav-btn').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+      var shopEl = document.getElementById('shop');
+      if (shopEl) shopEl.classList.add('active');
+      requestAnimationFrame(function() {
+        if (!shopEl) return;
+        var navH = document.getElementById('bottomNav').offsetHeight;
+        var viewH = window.innerHeight - navH;
+        var sectionH = shopEl.offsetHeight;
+        if (sectionH >= viewH) {
+          window.scrollTo(0, shopEl.offsetTop);
+        } else {
+          var targetScroll = shopEl.offsetTop + sectionH - viewH;
+          window.scrollTo(0, Math.max(0, targetScroll));
+        }
+      });
+    });
+
+    // Notizie button in sync-bar
+    document.getElementById('newsBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.querySelectorAll('.bottom-nav-btn').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+      var newsEl = document.getElementById('news');
+      if (newsEl) newsEl.classList.add('active');
+      loadNews();
+      requestAnimationFrame(function() {
+        if (!newsEl) return;
+        var navH = document.getElementById('bottomNav').offsetHeight;
+        var viewH = window.innerHeight - navH;
+        var sectionH = newsEl.offsetHeight;
+        if (sectionH >= viewH) {
+          window.scrollTo(0, newsEl.offsetTop);
+        } else {
+          var targetScroll = newsEl.offsetTop + sectionH - viewH;
+          window.scrollTo(0, Math.max(0, targetScroll));
+        }
       });
     });
 
