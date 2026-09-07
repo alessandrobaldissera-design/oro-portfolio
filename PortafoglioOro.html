@@ -821,6 +821,73 @@
       .card .value { font-size: 1.4rem; }
     }
 
+    /* ===== Header compatto su smartphone: Shop e Google Drive sulla stessa riga ===== */
+    @media (max-width: 700px) {
+      header {
+        padding: 0.75rem 0.85rem 0.7rem;
+        gap: 0.5rem;
+        justify-content: center;
+      }
+      header h1 {
+        font-size: 1.22rem;
+        width: 100%;
+        text-align: center;
+      }
+      .header-controls {
+        width: 100%;
+        flex-wrap: nowrap;
+        justify-content: center;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .currency-selector {
+        padding: 0.25rem;
+        gap: 0.15rem;
+        flex: 0 0 auto;
+      }
+      .currency-btn {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.72rem;
+      }
+      .shop-header-btn {
+        padding: 0.45rem 0.85rem;
+        font-size: 0.75rem;
+        flex: 0 0 auto;
+      }
+      #googleLoginContainer,
+      #googleLoggedIn {
+        flex: 0 1 auto;
+        min-width: 0;
+      }
+      #googleSignIn,
+      #googleSignOut {
+        min-width: 0 !important;
+        padding: 0.45rem 0.75rem !important;
+        font-size: 0.75rem;
+        border-radius: 20px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+      }
+      #userEmail {
+        max-width: 88px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.72rem !important;
+      }
+    }
+
+    @media (max-width: 360px) {
+      header h1 { font-size: 1.12rem; }
+      .header-controls { gap: 0.3rem; }
+      .currency-btn { padding: 0.32rem 0.38rem; font-size: 0.68rem; }
+      .shop-header-btn { padding: 0.42rem 0.6rem; font-size: 0.72rem; }
+      #googleSignIn,
+      #googleSignOut { padding: 0.42rem 0.55rem !important; font-size: 0.7rem; }
+    }
+
 
     /* ── Shop tab ───────────────────────────────────────── */
     .shop-section {
@@ -1002,8 +1069,19 @@
       opacity: 1;
     }
     .shop-cat-card-icon {
-      font-size: 1.6rem;
-      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 38px;
+      margin-bottom: 0.5rem;
+    }
+    .shop-cat-card-icon svg {
+      width: 38px;
+      height: 38px;
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
     .shop-cat-card-name {
       font-size: 1.08rem;
@@ -1252,8 +1330,8 @@
         </div>
         <button class="export-btn" onclick="exportCSV()">Esporta CSV</button>
         <div class="sync-container" id="syncControls" style="display: none;">
-          <button class="sync-btn" onclick="syncToGoogleDrive()">💾 Sincronizza su Drive</button>
-          <button class="sync-btn" onclick="loadFromGoogleDrive()">📥 Carica da Drive</button>
+          <button class="sync-btn" onclick="syncToGoogleDrive()">Sincronizza su Drive</button>
+          <button class="sync-btn" onclick="loadFromGoogleDrive()">Carica da Drive</button>
           <span id="syncStatus" class="sync-status"></span>
         </div>
       </div>
@@ -1423,27 +1501,27 @@
         <!-- Shop Category List -->
         <div id="shopCategoryList" class="shop-cat-list">
           <div class="shop-cat-card" data-shop-cat="0" onclick="showShopCategory(0)">
-            <div class="shop-cat-card-icon">🛡️</div>
+            <div class="shop-cat-card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.9" y="2.9" width="18.2" height="18.2" rx="4.6" stroke="#D4A843"/><circle cx="12" cy="12" r="5.9" stroke="#1B3A2D"/><path d="M9.7 9.7a3.3 3.3 0 0 0-1 1.8" stroke="#1B3A2D" opacity="0.45"/></svg></div>
             <div class="shop-cat-card-name">Capsule Protettive</div>
             <span class="shop-cat-card-arrow">›</span>
           </div>
           <div class="shop-cat-card" data-shop-cat="1" onclick="showShopCategory(1)">
-            <div class="shop-cat-card-icon">📦</div>
+            <div class="shop-cat-card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.2 11.6h17.6v6.6a1.6 1.6 0 0 1-1.6 1.6H4.8a1.6 1.6 0 0 1-1.6-1.6z" stroke="#1B3A2D"/><path d="M4.7 11.6V8.3a2 2 0 0 1 2-2h10.6a2 2 0 0 1 2 2v3.3" stroke="#1B3A2D"/><rect x="10.5" y="13.2" width="3" height="2.4" rx="0.7" stroke="#D4A843"/></svg></div>
             <div class="shop-cat-card-name">Cofanetti e Custodie</div>
             <span class="shop-cat-card-arrow">›</span>
           </div>
           <div class="shop-cat-card" data-shop-cat="2" onclick="showShopCategory(2)">
-            <div class="shop-cat-card-icon">📒</div>
+            <div class="shop-cat-card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="6" width="18.8" height="12" rx="2.2" stroke="#1B3A2D"/><circle cx="7.2" cy="12" r="2.4" stroke="#D4A843"/><circle cx="12" cy="12" r="2.4" stroke="#D4A843"/><circle cx="16.8" cy="12" r="2.4" stroke="#D4A843"/></svg></div>
             <div class="shop-cat-card-name">Raccoglitori e Vassoi</div>
             <span class="shop-cat-card-arrow">›</span>
           </div>
           <div class="shop-cat-card" data-shop-cat="3" onclick="showShopCategory(3)">
-            <div class="shop-cat-card-icon">🧤</div>
+            <div class="shop-cat-card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2c3.5 4.1 5.4 6.9 5.4 9.3a5.4 5.4 0 0 1-10.8 0c0-2.4 1.9-5.2 5.4-9.3Z" stroke="#1B3A2D"/><path d="M5.2 19.2 18.8 5.2" stroke="#D4A843"/></svg></div>
             <div class="shop-cat-card-name">Conservazione e Cura</div>
             <span class="shop-cat-card-arrow">›</span>
           </div>
           <div class="shop-cat-card" data-shop-cat="4" onclick="showShopCategory(4)">
-            <div class="shop-cat-card-icon">⚙️</div>
+            <div class="shop-cat-card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.4h16" stroke="#1B3A2D"/><path d="M12 8.4V19.2" stroke="#1B3A2D"/><circle cx="12" cy="6.6" r="1.3" stroke="#1B3A2D"/><path d="M7.8 19.4h8.4" stroke="#1B3A2D"/><path d="M4 8.4v1.9M1.7 10.3h4.6a2.3 2.3 0 0 1-4.6 0Z" stroke="#D4A843"/><path d="M20 8.4v1.9M17.7 10.3h4.6a2.3 2.3 0 0 1-4.6 0Z" stroke="#D4A843"/></svg></div>
             <div class="shop-cat-card-name">Strumenti</div>
             <span class="shop-cat-card-arrow">›</span>
           </div>
@@ -3880,10 +3958,10 @@
           if (!createResponse.ok) throw new Error('Creazione fallita');
         }
 
-        statusEl.textContent = '✅ Sincronizzato con Google Drive!';
+        statusEl.textContent = 'Sincronizzato con Google Drive';
         setTimeout(() => { statusEl.textContent = ''; }, 3000);
       } catch (error) {
-        statusEl.textContent = '❌ Errore: ' + error.message;
+        statusEl.textContent = 'Errore: ' + error.message;
         statusEl.className = 'sync-status sync-error';
         console.error('Sync error:', error);
       }
@@ -3926,10 +4004,10 @@
         saveWatches();
         updateUI();
 
-        statusEl.textContent = '✅ Dati caricati da Google Drive!';
+        statusEl.textContent = 'Dati caricati da Google Drive';
         setTimeout(() => { statusEl.textContent = ''; }, 3000);
       } catch (error) {
-        statusEl.textContent = '❌ Errore: ' + error.message;
+        statusEl.textContent = 'Errore: ' + error.message;
         statusEl.className = 'sync-status sync-error';
         console.error('Load error:', error);
       }
