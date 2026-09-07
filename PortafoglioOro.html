@@ -266,6 +266,61 @@
 
 
 
+
+    /* ── Home dedicata ─────────────────────────────── */
+    .home-page {
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+    }
+    .home-intro {
+      background: linear-gradient(145deg, #FFFFFF 0%, #F5F8F6 100%);
+      border: 1px solid rgba(27,58,45,0.10);
+      border-radius: 18px;
+      padding: 1.35rem;
+      box-shadow: var(--shadow);
+    }
+    .home-intro h2 {
+      color: #1B3A2D;
+      font-size: 1.35rem;
+      margin-bottom: 0.35rem;
+    }
+    .home-intro p {
+      color: #4C6558;
+      font-size: 0.92rem;
+    }
+    .home-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.85rem;
+    }
+    .home-action {
+      min-height: 105px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.7rem;
+      background: #FFFFFF;
+      color: #1B3A2D;
+      border: 1px solid rgba(212,168,67,0.32);
+      border-radius: 14px;
+      padding: 1rem;
+      box-shadow: 0 3px 12px rgba(27,58,45,0.06);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-align: left;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .home-action svg {
+      width: 24px;
+      height: 24px;
+      color: #C5952A;
+    }
+    .home-action:active { transform: scale(0.98); }
+
     .tab-content {
       display: none;
     }
@@ -1215,7 +1270,34 @@
 
   <div class="container">
     <div class="content">
-      <div class="tab-content active" id="overview">
+      <div class="tab-content active" id="home">
+        <div class="home-page">
+          <section class="home-intro">
+            <h2>Il tuo patrimonio, in un solo luogo</h2>
+            <p>Accedi rapidamente alla panoramica, allo storico delle operazioni e ai tuoi orologi.</p>
+          </section>
+          <div class="home-actions">
+            <button class="home-action" type="button" onclick="showAppTab('overview')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.21 15.89A10 10 0 1 1 8.11 2.79"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+              <span>Panoramica</span>
+            </button>
+            <button class="home-action" type="button" onclick="showAppTab('history')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+              <span>Storico</span>
+            </button>
+            <button class="home-action" type="button" onclick="showAppTab('watches')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7"/><polyline points="12 9 12 12 13.5 13.5"/><path d="M16.51 17.35l-.35 3.83a2 2 0 0 1-2 1.82H9.83a2 2 0 0 1-2-1.82l-.35-3.83m.01-10.7.35-3.83A2 2 0 0 1 9.83 1h4.35a2 2 0 0 1 2 1.82l.35 3.83"/></svg>
+              <span>Orologi</span>
+            </button>
+            <button class="home-action" type="button" onclick="showAppTab('new')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              <span>Nuovo acquisto</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="overview">
         <div class="summary">
           <div class="card" style="display:flex;flex-direction:column;">
             <h3>Patrimonio</h3>
@@ -1809,11 +1891,11 @@
   </div>
 
 <nav class="bottom-nav" id="bottomNav">
-  <button class="bottom-nav-btn" data-tab="home">
+  <button class="bottom-nav-btn active" data-tab="home">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 001 1h3a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3a1 1 0 001-1V10"/></svg>
     <span>Home</span>
   </button>
-  <button class="bottom-nav-btn active" data-tab="overview">
+  <button class="bottom-nav-btn" data-tab="overview">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8.11 2.79"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
     <span>Panoramica</span>
   </button>
@@ -3756,37 +3838,25 @@
     setupHistoryLongPress();
 
 
-    // Tab switching
-    document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
+    // Navigazione fra pagine dedicate
+    function showAppTab(tab) {
+      var el = document.getElementById(tab);
+      if (!el) return;
+      document.querySelectorAll('.bottom-nav-btn').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.tab === tab);
+      });
+      document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+      el.classList.add('active');
+      if (tab === 'news') loadNews();
+      if (tab === 'overview') updateUI();
+      window.scrollTo(0, 0);
+    }
+
+    document.querySelectorAll('.bottom-nav-btn').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        var button = this;
-        var tab = button.dataset.tab;
-        if (!tab) return;
-
-        // Home: torna a Panoramica e scrolla in cima, evidenzia Home
-        if (tab === 'home') {
-          document.querySelectorAll('.bottom-nav-btn').forEach(function(b) { b.classList.remove('active'); });
-          document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
-          // Evidenzia il bottone Home
-          button.classList.add('active');
-          var overviewEl = document.getElementById('overview');
-          if (overviewEl) overviewEl.classList.add('active');
-          updateUI();
-          window.scrollTo(0, 0);
-          return;
-        }
-
-        document.querySelectorAll('.bottom-nav-btn').forEach(function(b) { b.classList.remove('active'); });
-        document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
-        button.classList.add('active');
-        var el = document.getElementById(tab);
-        if (el) el.classList.add('active');
-        if (tab === 'news') loadNews();
-        if (tab === 'overview') updateUI();
-        // Header e sync-bar sono fissi: basta tornare in cima alla pagina
-        window.scrollTo(0, 0);
+        if (this.dataset.tab) showAppTab(this.dataset.tab);
       });
     });
 
