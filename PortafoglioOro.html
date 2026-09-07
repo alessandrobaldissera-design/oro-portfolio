@@ -267,59 +267,75 @@
 
 
 
-    /* ── Home dedicata ─────────────────────────────── */
-    .home-page {
-      display: flex;
-      flex-direction: column;
-      gap: 1.1rem;
+    /* ── Analisi patrimonio ────────────────────────── */
+    .portfolio-analysis {
+      margin-bottom: 1.1rem;
     }
-    .home-intro {
-      background: linear-gradient(145deg, #FFFFFF 0%, #F5F8F6 100%);
-      border: 1px solid rgba(27,58,45,0.10);
-      border-radius: 18px;
-      padding: 1.35rem;
-      box-shadow: var(--shadow);
-    }
-    .home-intro h2 {
+    .section-heading {
       color: #1B3A2D;
-      font-size: 1.35rem;
-      margin-bottom: 0.35rem;
+      font-size: 1.2rem;
+      margin-bottom: 0.75rem;
     }
-    .home-intro p {
-      color: #4C6558;
-      font-size: 0.92rem;
-    }
-    .home-actions {
+    .portfolio-pies {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.85rem;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
     }
-    .home-action {
-      min-height: 105px;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 0.7rem;
-      background: #FFFFFF;
-      color: #1B3A2D;
-      border: 1px solid rgba(212,168,67,0.32);
-      border-radius: 14px;
+    .portfolio-pie-card {
+      background: var(--card-bg);
+      border-radius: 16px;
       padding: 1rem;
-      box-shadow: 0 3px 12px rgba(27,58,45,0.06);
-      cursor: pointer;
-      font: inherit;
-      font-size: 0.9rem;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+    .portfolio-pie-card h3 {
+      color: #1B3A2D;
+      font-size: 0.95rem;
+      text-align: center;
+      margin-bottom: 0.7rem;
+    }
+    .portfolio-pie-wrap {
+      position: relative;
+      height: 230px;
+    }
+    .portfolio-pie-legend {
+      display: grid;
+      gap: 0.45rem;
+      margin-top: 0.7rem;
+    }
+    .portfolio-legend-row {
+      display: grid;
+      grid-template-columns: 10px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 0.5rem;
+      color: #4C6558;
+      font-size: 0.8rem;
+    }
+    .portfolio-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .portfolio-legend-value {
+      color: #1B3A2D;
       font-weight: 700;
-      text-align: left;
-      -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
     }
-    .home-action svg {
-      width: 24px;
-      height: 24px;
-      color: #C5952A;
+    .portfolio-empty {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #7a8a80;
+      font-size: 0.85rem;
+      text-align: center;
+      padding: 1rem;
     }
-    .home-action:active { transform: scale(0.98); }
+    @media (max-width: 768px) {
+      .portfolio-pies { grid-template-columns: 1fr; }
+      .portfolio-pie-wrap { height: 210px; }
+    }
 
     .tab-content {
       display: none;
@@ -1271,33 +1287,6 @@
   <div class="container">
     <div class="content">
       <div class="tab-content active" id="home">
-        <div class="home-page">
-          <section class="home-intro">
-            <h2>Il tuo patrimonio, in un solo luogo</h2>
-            <p>Accedi rapidamente alla panoramica, allo storico delle operazioni e ai tuoi orologi.</p>
-          </section>
-          <div class="home-actions">
-            <button class="home-action" type="button" onclick="showAppTab('overview')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.21 15.89A10 10 0 1 1 8.11 2.79"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
-              <span>Panoramica</span>
-            </button>
-            <button class="home-action" type="button" onclick="showAppTab('history')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
-              <span>Storico</span>
-            </button>
-            <button class="home-action" type="button" onclick="showAppTab('watches')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7"/><polyline points="12 9 12 12 13.5 13.5"/><path d="M16.51 17.35l-.35 3.83a2 2 0 0 1-2 1.82H9.83a2 2 0 0 1-2-1.82l-.35-3.83m.01-10.7.35-3.83A2 2 0 0 1 9.83 1h4.35a2 2 0 0 1 2 1.82l.35 3.83"/></svg>
-              <span>Orologi</span>
-            </button>
-            <button class="home-action" type="button" onclick="showAppTab('new')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-              <span>Nuovo acquisto</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="tab-content" id="overview">
         <div class="summary">
           <div class="card" style="display:flex;flex-direction:column;">
             <h3>Patrimonio</h3>
@@ -1348,7 +1337,6 @@
             <button class="period-btn" data-period="365">1 anno</button>
             <button class="period-btn" data-period="all">Tutto</button>
           </div>
-
         </div>
 
         <div class="chart-card gold-section">
@@ -1369,9 +1357,7 @@
             <button class="karat-btn" data-karat="10">10k</button>
             <button class="karat-btn" data-karat="9">9k</button>
           </div>
-          <div class="chart-canvas-wrap">
-            <canvas id="goldChart"></canvas>
-          </div>
+          <div class="chart-canvas-wrap"><canvas id="goldChart"></canvas></div>
         </div>
 
         <div class="chart-card silver-section">
@@ -1390,11 +1376,28 @@
             <button class="karat-btn" data-purity="835">835</button>
             <button class="karat-btn" data-purity="800">800</button>
           </div>
-          <div class="chart-canvas-wrap">
-            <canvas id="silverChart"></canvas>
-          </div>
+          <div class="chart-canvas-wrap"><canvas id="silverChart"></canvas></div>
         </div>
+      </div>
 
+      <div class="tab-content" id="overview">
+        <section class="portfolio-analysis">
+          <h2 class="section-heading">Composizione del patrimonio</h2>
+          <div class="portfolio-pies">
+            <article class="portfolio-pie-card">
+              <h3>Patrimonio per categoria</h3>
+              <div class="portfolio-pie-wrap" id="assetPieWrap"><canvas id="assetPieChart"></canvas></div>
+              <div class="portfolio-pie-legend" id="assetPieLegend"></div>
+            </article>
+            <article class="portfolio-pie-card">
+              <h3>Metalli per tipologia</h3>
+              <div class="portfolio-pie-wrap" id="metalTypePieWrap"><canvas id="metalTypePieChart"></canvas></div>
+              <div class="portfolio-pie-legend" id="metalTypePieLegend"></div>
+            </article>
+          </div>
+        </section>
+
+        <h2 class="section-heading">Posizioni in portafoglio</h2>
         <div id="positionsContainer">
           <table id="positionsTable">
             <thead>
@@ -1414,7 +1417,7 @@
         <div class="sync-container" id="syncControls" style="display: none;">
           <button class="sync-btn" onclick="syncToGoogleDrive()">Sincronizza su Drive</button>
           <button class="sync-btn" onclick="loadFromGoogleDrive()">Carica da Drive</button>
-          <span id="syncStatus" class="sync-status"></span>
+          <span id="driveSyncStatus" class="sync-status"></span>
         </div>
       </div>
 
@@ -2373,6 +2376,7 @@
       updatePositionsTable();
       updateHistoryTable();
       updateSummary();
+      updatePortfolioCharts();
       updateChart();
       updateLivePrices();
       updateStatusIndicator();
@@ -2432,6 +2436,106 @@
       if (!any) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#888;">Nessuna posizione. Aggiungi un nuovo acquisto dal tab "Nuovo Acquisto".</td></tr>';
       }
+    }
+
+    let assetPieChartInstance = null;
+    let metalTypePieChartInstance = null;
+
+    function portfolioLegend(items, total) {
+      if (total <= 0) return '';
+      return items.filter(function(item) { return item.value > 0; }).map(function(item) {
+        const pct = (item.value / total * 100).toFixed(1);
+        return '<div class="portfolio-legend-row">' +
+          '<span class="portfolio-legend-dot" style="background:' + item.color + ';"></span>' +
+          '<span>' + item.label + ' · ' + pct + '%</span>' +
+          '<span class="portfolio-legend-value">' + item.value.toFixed(2) + ' ' + state.currentCurrency + '</span>' +
+        '</div>';
+      }).join('');
+    }
+
+    function renderPortfolioPie(canvasId, wrapId, legendId, items, instance) {
+      const canvas = document.getElementById(canvasId);
+      const wrap = document.getElementById(wrapId);
+      const legend = document.getElementById(legendId);
+      if (!canvas || !wrap || !legend) return instance;
+      if (instance) { instance.destroy(); instance = null; }
+
+      const activeItems = items.filter(function(item) { return item.value > 0; });
+      const total = activeItems.reduce(function(sum, item) { return sum + item.value; }, 0);
+      legend.innerHTML = portfolioLegend(activeItems, total);
+      const oldEmpty = wrap.querySelector('.portfolio-empty');
+      if (oldEmpty) oldEmpty.remove();
+
+      if (total <= 0) {
+        canvas.style.display = 'none';
+        wrap.insertAdjacentHTML('beforeend', '<div class="portfolio-empty">Nessun dato disponibile</div>');
+        return null;
+      }
+
+      canvas.style.display = 'block';
+      const ctx = canvas.getContext('2d');
+      return new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: activeItems.map(function(item) { return item.label; }),
+          datasets: [{
+            data: activeItems.map(function(item) { return item.value; }),
+            backgroundColor: activeItems.map(function(item) { return item.color; }),
+            borderColor: '#FFFFFF',
+            borderWidth: 3,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '62%',
+          animation: { duration: 500, easing: 'easeOutQuart' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#FFFFFF',
+              borderColor: 'rgba(27,58,45,0.18)',
+              borderWidth: 1,
+              titleColor: '#1B3A2D',
+              bodyColor: '#1B3A2D',
+              padding: 10,
+              callbacks: {
+                label: function(context) {
+                  const value = Number(context.raw || 0);
+                  const pct = total > 0 ? (value / total * 100).toFixed(1) : '0.0';
+                  return context.label + ': ' + value.toFixed(2) + ' ' + state.currentCurrency + ' (' + pct + '%)';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updatePortfolioCharts() {
+      const overview = document.getElementById('overview');
+      if (!overview || !overview.classList.contains('active')) return;
+      const rate = state.exchangeRates[state.currentCurrency] || 1;
+      const convertedValue = function(position) { return currentValueChf(position) / rate; };
+      const assetItems = [
+        { label: 'Oro', value: state.positions.filter(function(p) { return p.metal === 'gold'; }).reduce(function(s, p) { return s + convertedValue(p); }, 0), color: '#C5952A' },
+        { label: 'Argento', value: state.positions.filter(function(p) { return p.metal === 'silver'; }).reduce(function(s, p) { return s + convertedValue(p); }, 0), color: '#A8A9AD' },
+        { label: 'Altri metalli', value: state.positions.filter(function(p) { return p.metal === 'other'; }).reduce(function(s, p) { return s + convertedValue(p); }, 0), color: '#1B3A2D' },
+        { label: 'Orologi', value: (state.watches || []).reduce(function(s, w) { return s + marketValueChfWatch(w) / rate; }, 0), color: '#4C6558' }
+      ];
+      const metalPositions = state.positions.filter(function(p) { return p.metal !== 'other'; });
+      const typeItems = [
+        { label: 'Monete', type: 'moneta', color: '#C5952A' },
+        { label: 'Lingotti', type: 'lingotto', color: '#1B3A2D' },
+        { label: 'Lavorato', type: 'lavorato', color: '#A8A9AD' },
+        { label: 'Oro virtuale', type: 'oro_virtuale', color: '#5A7A68' }
+      ].map(function(item) {
+        item.value = metalPositions.filter(function(p) { return (p.itemType || 'lingotto') === item.type; }).reduce(function(s, p) { return s + convertedValue(p); }, 0);
+        return item;
+      });
+      assetPieChartInstance = renderPortfolioPie('assetPieChart', 'assetPieWrap', 'assetPieLegend', assetItems, assetPieChartInstance);
+      metalTypePieChartInstance = renderPortfolioPie('metalTypePieChart', 'metalTypePieWrap', 'metalTypePieLegend', typeItems, metalTypePieChartInstance);
     }
 
     function formatDate(d) {
@@ -3848,7 +3952,7 @@
       document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
       el.classList.add('active');
       if (tab === 'news') loadNews();
-      if (tab === 'overview') updateUI();
+      if (tab === 'home' || tab === 'overview') updateUI();
       window.scrollTo(0, 0);
     }
 
@@ -3984,8 +4088,8 @@
         return;
       }
 
-      const statusEl = document.getElementById('syncStatus');
-      statusEl.textContent = '⏳ Sincronizzazione...';
+      const statusEl = document.getElementById('driveSyncStatus');
+      statusEl.textContent = 'Sincronizzazione...';
       statusEl.className = 'sync-status';
 
       try {
@@ -4043,8 +4147,8 @@
         return;
       }
 
-      const statusEl = document.getElementById('syncStatus');
-      statusEl.textContent = '⏳ Caricamento...';
+      const statusEl = document.getElementById('driveSyncStatus');
+      statusEl.textContent = 'Caricamento...';
       statusEl.className = 'sync-status';
 
       try {
