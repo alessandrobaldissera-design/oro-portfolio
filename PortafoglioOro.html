@@ -98,6 +98,30 @@
     .shop-header-btn:active {
       transform: scale(0.95);
     }
+    .google-drive-slot {
+      flex: 0 0 138px;
+      width: 138px;
+      min-width: 138px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+    }
+
+    .google-drive-button {
+      width: 100%;
+      height: 38px;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 0.75rem !important;
+      min-width: 0 !important;
+      margin: 0 !important;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     @keyframes shopPulse {
       0%, 100% { box-shadow: 0 2px 8px rgba(212,168,67,0.3); }
       50% { box-shadow: 0 2px 16px rgba(212,168,67,0.6); }
@@ -927,26 +951,28 @@
       }
       #googleLoginContainer,
       #googleLoggedIn {
-        flex: 0 1 auto;
-        min-width: 0;
+        flex: 0 0 120px;
+        width: 120px;
+        min-width: 120px;
+        height: 38px;
+        display: flex;
+        align-items: center;
       }
-      #googleSignIn,
-      #googleSignOut {
+      #googleLoginContainer .google-drive-button,
+      #googleLoggedIn .google-drive-button {
+        width: 100%;
         min-width: 0 !important;
-        padding: 0.45rem 0.75rem !important;
+        height: 38px;
+        box-sizing: border-box;
+        padding: 0.45rem 0.5rem !important;
         font-size: 0.75rem;
         border-radius: 20px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 100%;
-      }
-      #userEmail {
-        max-width: 88px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        font-size: 0.72rem !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
     }
 
@@ -1263,12 +1289,11 @@
           <button class="currency-btn" data-currency="CHF">CHF</button>
         </div>
         <button id="shopBtn" class="shop-header-btn">Shop</button>
-        <div id="googleLoginContainer" style="display: none;">
-          <button id="googleSignIn" class="sync-btn" style="min-width: 100px; margin: 0;">Google Drive</button>
+        <div id="googleLoginContainer" class="google-drive-slot" style="display: none;">
+          <button id="googleSignIn" class="sync-btn google-drive-button" type="button">Google Drive</button>
         </div>
-        <div id="googleLoggedIn" style="display: none; gap: 0.5rem;">
-          <span id="userEmail" style="color: #1B3A2D; font-size: 0.9rem;"></span>
-          <button id="googleSignOut" class="sync-btn" style="min-width: 100px; margin: 0; padding: 0.5rem 1rem;">Esci</button>
+        <div id="googleLoggedIn" class="google-drive-slot" style="display: none;">
+          <span class="sync-btn google-drive-button" role="status" aria-label="Google Drive collegato">Google Drive</span>
         </div>
       </div>
     </header>
@@ -1475,7 +1500,7 @@
             </label>
             <div class="photo-preview" id="photoPreview"></div>
           </div>
-          <button class="btn" type="submit">Aggiungi Posizione</button>
+          <button class="btn" type="submit">Aggiungi a storico</button>
         </form>
       </div>
 
@@ -2634,19 +2659,30 @@
       const canvas = document.getElementById('sparklineCanvas');
       if (!canvas) return;
       const parentRect = canvas.parentElement.getBoundingClientRect();
-      canvas.width = parentRect.width * 2;  // retina
-      canvas.height = Math.max(parentRect.height * 0.55, 90) * 2; // almeno 55% del riquadro, retina
+      canvas.width = Math.max(parentRect.width, 1) * 2;  // retina
+      canvas.height = Math.max(parentRect.height * 0.55, 90) * 2;
       canvas.style.height = Math.max(parentRect.height * 0.55, 90) + 'px';
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Raccoglie ultimi 30 punti di storico prezzo oro
-      const history = (state.priceHistory || []).filter(h => h.goldUsd != null || h.gold != null);
-      if (history.length < 2) return;
+      // La mini-linea segue gli stessi dati e lo stesso periodo dei grafici Oro/Argento.
+      const chartData = getChartData();
+      const rows = chartData.data || [];
+      if (rows.length < 2) return;
 
-      const sorted = history.sort((a, b) => new Date(a.date) - new Date(b.date));
-      const last30 = sorted.slice(-30);
-      const values = last30.map(h => h.goldUsd != null ? h.goldUsd : h.gold);
+      // Indice composto normalizzato: media dei rendimenti di oro e argento.
+      // La normalizzazione evita che il diverso prezzo assoluto dei due metalli alteri la linea.
+      const firstGold = rows.find(p => p.gold != null && Number.isFinite(p.gold));
+      const firstSilver = rows.find(p => p.silver != null && Number.isFinite(p.silver));
+      const goldBase = firstGold ? firstGold.gold : null;
+      const silverBase = firstSilver ? firstSilver.silver : null;
+      const values = rows.map(p => {
+        const components = [];
+        if (goldBase != null && p.gold != null && Number.isFinite(p.gold)) components.push(p.gold / goldBase);
+        if (silverBase != null && p.silver != null && Number.isFinite(p.silver)) components.push(p.silver / silverBase);
+        return components.length ? components.reduce((a, b) => a + b, 0) / components.length : null;
+      }).filter(v => v != null && Number.isFinite(v));
+      if (values.length < 2) return;
 
       const minV = Math.min(...values);
       const maxV = Math.max(...values);
@@ -2656,48 +2692,40 @@
       const paddingTop = 15;
       const paddingBottom = 5;
       const drawH = h - paddingTop - paddingBottom;
-
-      // Trend: confronta primo e ultimo
       const isUp = values[values.length - 1] >= values[0];
       const trendColor = isUp ? '76, 175, 80' : '244, 67, 54';
 
-      // Draw smooth Catmull-Rom spline
       const points = values.map((v, i) => ({
         x: (i / (values.length - 1)) * w,
         y: paddingTop + drawH - ((v - minV) / range) * drawH
       }));
 
-      // Catmull-Rom helper: genera punti di controllo cubici dolci
       function catmullRomPath(pts, tension) {
         tension = tension || 0.35;
         ctx.beginPath();
         ctx.moveTo(pts[0].x, pts[0].y);
         for (let i = 0; i < pts.length - 1; i++) {
-          var p0 = pts[i === 0 ? 0 : i - 1];
-          var p1 = pts[i];
-          var p2 = pts[i + 1];
-          var p3 = pts[i + 2 >= pts.length ? pts.length - 1 : i + 2];
-          var cp1x = p1.x + (p2.x - p0.x) * tension;
-          var cp1y = p1.y + (p2.y - p0.y) * tension;
-          var cp2x = p2.x - (p3.x - p1.x) * tension;
-          var cp2y = p2.y - (p3.y - p1.y) * tension;
+          const p0 = pts[i === 0 ? 0 : i - 1];
+          const p1 = pts[i];
+          const p2 = pts[i + 1];
+          const p3 = pts[i + 2 >= pts.length ? pts.length - 1 : i + 2];
+          const cp1x = p1.x + (p2.x - p0.x) * tension;
+          const cp1y = p1.y + (p2.y - p0.y) * tension;
+          const cp2x = p2.x - (p3.x - p1.x) * tension;
+          const cp2y = p2.y - (p3.y - p1.y) * tension;
           ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
         }
       }
 
-      // Fill area
       catmullRomPath(points, 0.35);
       ctx.lineTo(w, h);
       ctx.lineTo(0, h);
       ctx.closePath();
-
       const gradient = ctx.createLinearGradient(0, 0, 0, h);
       gradient.addColorStop(0, 'rgba(' + trendColor + ', 0.20)');
       gradient.addColorStop(1, 'rgba(' + trendColor + ', 0.02)');
       ctx.fillStyle = gradient;
       ctx.fill();
-
-      // Stroke the line
       catmullRomPath(points, 0.35);
       ctx.strokeStyle = 'rgba(' + trendColor + ', 0.45)';
       ctx.lineWidth = 2;
@@ -2815,102 +2843,96 @@
       };
     }
 
+    function localNoonFromDate(dateValue) {
+      const raw = String(dateValue || '').slice(0, 10);
+      const parts = raw.split('-').map(Number);
+      if (parts.length === 3 && parts.every(Number.isFinite)) {
+        return new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0, 0);
+      }
+      const fallback = new Date(dateValue);
+      fallback.setHours(12, 0, 0, 0);
+      return fallback;
+    }
+
+    function calendarPeriodStart(period, now) {
+      if (period === 'all') return new Date(0);
+      const start = new Date(now);
+      start.setHours(0, 0, 0, 0);
+      // 1 giorno = oggi; 7 giorni = oggi più i sei giorni precedenti.
+      start.setDate(start.getDate() - Math.max(Number(period) - 1, 0));
+      return start;
+    }
+
     function getChartData() {
       const period = state.selectedPeriod;
       const now = new Date();
       const usdToChf = state.exchangeRates.USD || 0.80;
+      const cutoffTs = calendarPeriodStart(period, now).getTime();
+      const pointMap = new Map();
 
-      // Cutoff temporale
-      let cutoffTs;
-      if (period === 'all') {
-        cutoffTs = 0;
-      } else {
-        cutoffTs = Date.now() - period * 24 * 60 * 60 * 1000;
-      }
-
-      // --- Unisci dati giornalieri (SEED + accumulati) con dati intraday ---
-      const pointMap = new Map(); // ts -> {ts, goldUsd, silverUsd, ...}
-
-      // 1) Dati giornalieri (1 punto per giorno, ore 12:00)
+      // Dati giornalieri: sempre a mezzogiorno locale, evitando lo slittamento UTC.
       const dailyHistory = state.priceHistory
-        .filter(h => h.goldUsd != null || h.gold != null)
-        .sort((a, b) => new Date(a.date) - new Date(b.date));
+        .filter(h => h.goldUsd != null || h.gold != null || h.silverUsd != null || h.silver != null)
+        .slice()
+        .sort((a, b) => localNoonFromDate(a.date) - localNoonFromDate(b.date));
       dailyHistory.forEach(h => {
-        const d = new Date(h.date);
-        d.setHours(12, 0, 0, 0);
+        const d = localNoonFromDate(h.date);
         const ts = d.getTime();
         if (ts >= cutoffTs) {
           pointMap.set(ts, { ts, goldUsd: h.goldUsd, silverUsd: h.silverUsd, gold: h.gold, silver: h.silver });
         }
       });
 
-      // 2) Dati intraday (ogni 5 min) — sovrascrivono i punti giornalieri dove presenti
+      // Intraday: mantiene i punti raccolti mentre l'app era aperta.
       state.intradayHistory
-        .filter(p => p.ts >= cutoffTs && p.goldUsd != null)
+        .filter(p => p.ts >= cutoffTs && (p.goldUsd != null || p.silverUsd != null))
         .forEach(p => pointMap.set(p.ts, p));
 
-      // 3) Prezzo live come ultimo punto
-      if (state.currentPrices.gold > 0) {
+      // Prezzo live: ultimo punto del periodo.
+      if (state.currentPrices.gold > 0 || state.currentPrices.silver > 0) {
         const liveTs = Date.now();
-        pointMap.set(liveTs, {
-          ts: liveTs,
-          goldUsd: state.currentPrices.gold / usdToChf * OZ_TO_G,
-          silverUsd: state.currentPrices.silver / usdToChf * OZ_TO_G
-        });
+        if (liveTs >= cutoffTs) {
+          pointMap.set(liveTs, {
+            ts: liveTs,
+            goldUsd: state.currentPrices.gold > 0 ? state.currentPrices.gold / usdToChf * OZ_TO_G : null,
+            silverUsd: state.currentPrices.silver > 0 ? state.currentPrices.silver / usdToChf * OZ_TO_G : null
+          });
+        }
       }
 
-      // Ordina per timestamp
-      let allPoints = Array.from(pointMap.values()).sort((a, b) => a.ts - b.ts);
-
+      const allPoints = Array.from(pointMap.values()).sort((a, b) => a.ts - b.ts);
       if (allPoints.length === 0) {
-        return { labels: ['Nessun dato'], data: [{ gold: 0, silver: 0 }] };
+        return { labels: ['Nessun dato'], data: [{ gold: null, silver: null }] };
       }
 
-      // --- Thinning: intervallo minimo tra punti in base al periodo ---
-      // 1G: nessun thinning (ogni 5 min)
-      // 7G: 1 punto/ora
-      // 30G: 1 punto/4 ore
-      // 90G: 1 punto/12 ore
-      // 1A e Tutto: 1 punto/giorno
       function thinByInterval(pts, intervalMs) {
         if (pts.length <= 2) return pts;
         const result = [pts[0]];
         for (let i = 1; i < pts.length - 1; i++) {
-          if (pts[i].ts - result[result.length - 1].ts >= intervalMs) {
-            result.push(pts[i]);
-          }
+          if (pts[i].ts - result[result.length - 1].ts >= intervalMs) result.push(pts[i]);
         }
         result.push(pts[pts.length - 1]);
         return result;
       }
 
       let thinned = allPoints;
-      if (period === 'all' || period >= 365) {
-        thinned = thinByInterval(allPoints, 24 * 60 * 60 * 1000);
-      } else if (period >= 90) {
-        thinned = thinByInterval(allPoints, 12 * 60 * 60 * 1000);
-      } else if (period >= 30) {
-        thinned = thinByInterval(allPoints, 4 * 60 * 60 * 1000);
-      } else if (period === 7) {
-        thinned = thinByInterval(allPoints, 60 * 60 * 1000);
-      }
-      // period === 1: nessun thinning
+      if (period === 'all' || period >= 365) thinned = thinByInterval(allPoints, 24 * 60 * 60 * 1000);
+      else if (period >= 90) thinned = thinByInterval(allPoints, 12 * 60 * 60 * 1000);
+      else if (period >= 30) thinned = thinByInterval(allPoints, 4 * 60 * 60 * 1000);
+      else if (period === 7) thinned = thinByInterval(allPoints, 60 * 60 * 1000);
 
-      // --- Etichette ---
       const labels = thinned.map(p => {
         const d = new Date(p.ts);
         if (period === 1) {
           return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-        } else if (period === 7) {
+        }
+        if (period === 7) {
           return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) + ' ' +
                  String(d.getHours()).padStart(2, '0') + ':00';
-        } else {
-          return d.toLocaleDateString('it-IT', { month: 'short', day: 'numeric' });
         }
+        return d.toLocaleDateString('it-IT', { month: 'short', day: 'numeric' });
       });
-
-      const converted = thinned.map(p => pointToChfPerG(p));
-      return { labels, data: converted };
+      return { labels, data: thinned.map(pointToChfPerG) };
     }
 
     // Plugin: mirino interattivo (crosshair) al tocco/hover
@@ -4032,54 +4054,80 @@
     });
 
     // Google Drive Sync Functions
-    function initializeGoogleAuth() {
-      window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleCredentialResponse,
-        ux_mode: 'popup'
-      });
+    const GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+    let googleTokenClient = null;
 
-      document.getElementById('googleSignIn')?.addEventListener('click', () => {
-        window.google.accounts.id.renderButton(
-          document.getElementById('googleSignIn'),
-          { theme: 'filled_blue', size: 'large' }
-        );
-        window.google.accounts.id.prompt();
-      });
-
-      document.getElementById('googleSignOut')?.addEventListener('click', () => {
-        window.google.accounts.id.disableAutoSelect();
-        googleAccessToken = null;
-        document.getElementById('googleLoggedIn').style.display = 'none';
-        document.getElementById('googleLoginContainer').style.display = 'block';
-        document.getElementById('syncControls').style.display = 'none';
-        localStorage.removeItem('googleAccessToken');
-      });
-
-      // Carica token salvato
-      const savedToken = localStorage.getItem('googleAccessToken');
-      if (savedToken) {
-        googleAccessToken = savedToken;
-        document.getElementById('googleLoginContainer').style.display = 'none';
-        document.getElementById('googleLoggedIn').style.display = 'flex';
-        document.getElementById('syncControls').style.display = 'flex';
-        document.getElementById('userEmail').textContent = localStorage.getItem('userEmail') || 'Google Drive';
-      } else {
-        document.getElementById('googleLoginContainer').style.display = 'block';
-        document.getElementById('googleLoggedIn').style.display = 'none';
-        document.getElementById('syncControls').style.display = 'none';
-      }
+    function setDriveConnected(connected) {
+      const loginEl = document.getElementById('googleLoginContainer');
+      const loggedEl = document.getElementById('googleLoggedIn');
+      const controlsEl = document.getElementById('syncControls');
+      if (loginEl) loginEl.style.display = connected ? 'none' : 'flex';
+      if (loggedEl) loggedEl.style.display = connected ? 'flex' : 'none';
+      if (controlsEl) controlsEl.style.display = connected ? 'flex' : 'none';
     }
 
-    function handleCredentialResponse(response) {
-      googleAccessToken = response.credential;
-      const payload = JSON.parse(atob(response.credential.split('.')[1]));
-      localStorage.setItem('googleAccessToken', response.credential);
-      localStorage.setItem('userEmail', payload.email);
-      document.getElementById('userEmail').textContent = payload.email;
-      document.getElementById('googleLoginContainer').style.display = 'none';
-      document.getElementById('googleLoggedIn').style.display = 'flex';
-      document.getElementById('syncControls').style.display = 'flex';
+    function requestGoogleDriveAccess() {
+      if (!googleTokenClient) {
+        alert('Accesso Google Drive non disponibile. Controlla la connessione e riprova.');
+        return;
+      }
+      googleTokenClient.callback = function(response) {
+        if (response.error) {
+          console.error('Google Drive OAuth error:', response);
+          alert('Accesso a Google Drive non completato.');
+          return;
+        }
+        googleAccessToken = response.access_token;
+        setDriveConnected(true);
+      };
+      googleTokenClient.requestAccessToken({ prompt: '' });
+    }
+
+    function initializeGoogleAuth() {
+      if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+        setDriveConnected(false);
+        return;
+      }
+      googleTokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: GOOGLE_DRIVE_SCOPE,
+        callback: function() {}
+      });
+      document.getElementById('googleSignIn')?.addEventListener('click', requestGoogleDriveAccess);
+      // Elimina eventuali vecchi token ID salvati da una versione non compatibile con Drive.
+      localStorage.removeItem('googleAccessToken');
+      localStorage.removeItem('userEmail');
+      setDriveConnected(false);
+    }
+
+    async function driveFetch(url, options) {
+      const response = await fetch(url, options || {});
+      if (!response.ok) {
+        let detail = 'HTTP ' + response.status;
+        try {
+          const payload = await response.json();
+          detail = payload?.error?.message || detail;
+        } catch (_) {}
+        if (response.status === 401) {
+          googleAccessToken = null;
+          setDriveConnected(false);
+        }
+        throw new Error(detail);
+      }
+      return response;
+    }
+
+    function driveFileQuery() {
+      return encodeURIComponent("name='portafoglio-oro.json' and trashed=false");
+    }
+
+    async function findDriveFile() {
+      const response = await driveFetch(
+        'https://www.googleapis.com/drive/v3/files?q=' + driveFileQuery() + '&spaces=drive&fields=files(id,name,modifiedTime)&pageSize=10',
+        { headers: { 'Authorization': 'Bearer ' + googleAccessToken } }
+      );
+      const data = await response.json();
+      return data.files?.[0]?.id || null;
     }
 
     async function syncToGoogleDrive() {
@@ -4087,51 +4135,51 @@
         alert('Per favore, accedi a Google Drive');
         return;
       }
-
       const statusEl = document.getElementById('driveSyncStatus');
       statusEl.textContent = 'Sincronizzazione...';
       statusEl.className = 'sync-status';
-
       try {
-        // Crea o aggiorna il file su Drive
         const fileData = JSON.stringify({ positions: state.positions, priceHistory: state.priceHistory, watches: state.watches }, null, 2);
-        const metadata = {
-          name: 'portafoglio-oro.json',
-          mimeType: 'application/json'
-        };
-
-        // Cerca se il file esiste già
-        const searchResponse = await fetch(
-          `https://www.googleapis.com/drive/v3/files?q=name='portafoglio-oro.json'&fields=files(id)`,
-          { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
-        );
-        const searchData = await searchResponse.json();
-        let fileId = searchData.files?.[0]?.id;
-
+        const fileId = await findDriveFile();
         if (fileId) {
-          // Aggiorna file esistente
-          const updateResponse = await fetch(
-            `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+          await driveFetch(
+            'https://www.googleapis.com/upload/drive/v3/files/' + fileId + '?uploadType=media',
             {
               method: 'PATCH',
-              headers: { 'Authorization': `Bearer ${googleAccessToken}` },
+              headers: {
+                'Authorization': 'Bearer ' + googleAccessToken,
+                'Content-Type': 'application/json; charset=UTF-8'
+              },
               body: fileData
             }
           );
-          if (!updateResponse.ok) throw new Error('Aggiornamento fallito');
         } else {
-          // Crea nuovo file
-          const createResponse = await fetch(
-            `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`,
+          const boundary = 'portafoglio-assets-boundary';
+          const metadata = JSON.stringify({ name: 'portafoglio-oro.json', mimeType: 'application/json' });
+          const multipartBody = [
+            '--' + boundary,
+            'Content-Type: application/json; charset=UTF-8',
+            '',
+            metadata,
+            '--' + boundary,
+            'Content-Type: application/json',
+            '',
+            fileData,
+            '--' + boundary + '--',
+            ''
+          ].join('\r\n');
+          await driveFetch(
+            'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
             {
               method: 'POST',
-              headers: { 'Authorization': `Bearer ${googleAccessToken}` },
-              body: `--boundary\nContent-Type: application/json\n\n${JSON.stringify(metadata)}\n--boundary\nContent-Type: application/json\n\n${fileData}\n--boundary--`
+              headers: {
+                'Authorization': 'Bearer ' + googleAccessToken,
+                'Content-Type': 'multipart/related; boundary=' + boundary
+              },
+              body: multipartBody
             }
           );
-          if (!createResponse.ok) throw new Error('Creazione fallita');
         }
-
         statusEl.textContent = 'Sincronizzato con Google Drive';
         setTimeout(() => { statusEl.textContent = ''; }, 3000);
       } catch (error) {
@@ -4146,28 +4194,15 @@
         alert('Per favore, accedi a Google Drive');
         return;
       }
-
       const statusEl = document.getElementById('driveSyncStatus');
       statusEl.textContent = 'Caricamento...';
       statusEl.className = 'sync-status';
-
       try {
-        // Cerca il file
-        const searchResponse = await fetch(
-          `https://www.googleapis.com/drive/v3/files?q=name='portafoglio-oro.json'&fields=files(id)`,
-          { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
-        );
-        const searchData = await searchResponse.json();
-        const fileId = searchData.files?.[0]?.id;
-
-        if (!fileId) {
-          throw new Error('File non trovato su Google Drive');
-        }
-
-        // Scarica il file
-        const downloadResponse = await fetch(
-          `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-          { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
+        const fileId = await findDriveFile();
+        if (!fileId) throw new Error('File non trovato su Google Drive');
+        const downloadResponse = await driveFetch(
+          'https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media',
+          { headers: { 'Authorization': 'Bearer ' + googleAccessToken } }
         );
         const data = await downloadResponse.json();
         state.positions = migratePositions(data.positions || []);
@@ -4177,7 +4212,6 @@
         savePriceHistory();
         saveWatches();
         updateUI();
-
         statusEl.textContent = 'Dati caricati da Google Drive';
         setTimeout(() => { statusEl.textContent = ''; }, 3000);
       } catch (error) {
