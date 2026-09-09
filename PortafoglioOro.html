@@ -369,6 +369,13 @@
       display: block;
     }
 
+    /* Home: mantieni separati i riquadri di riepilogo, periodo e grafici */
+    #home.tab-content.active {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
     .form-group {
       margin-bottom: 1rem;
     }
@@ -1289,12 +1296,16 @@
           <button class="currency-btn" data-currency="CHF">CHF</button>
         </div>
         <button id="shopBtn" class="shop-header-btn">Shop</button>
-        <div id="googleLoginContainer" class="google-drive-slot" style="display: none;">
+        <div id="googleLoginContainer" class="google-drive-slot" style="display: flex;">
           <button id="googleSignIn" class="sync-btn google-drive-button" type="button">Google Drive</button>
         </div>
         <div id="googleLoggedIn" class="google-drive-slot" style="display: none;">
-          <span class="sync-btn google-drive-button" role="status" aria-label="Google Drive collegato">Google Drive</span>
+          <button id="googleSignOut" class="sync-btn google-drive-button" type="button" aria-label="Google Drive collegato: tocca per scollegare" title="Google Drive collegato: tocca per scollegare">Google Drive</button>
         </div>
+        <div class="google-drive-slot" id="localBackupSlot">
+          <button id="localBackupBtn" class="sync-btn google-drive-button" type="button">Backup locale</button>
+        </div>
+        <input id="localBackupInput" type="file" accept="application/json,.json" style="display:none">
       </div>
     </header>
 
@@ -1352,9 +1363,7 @@
           </div>
         </div>
 
-        <div>
-          <h3 style="color: #1B3A2D; margin-bottom: 0.75rem;">Periodo Grafico</h3>
-          <div class="period-selector" id="periodSelector">
+        <div class="period-selector" id="periodSelector">
             <button class="period-btn" data-period="1">1 giorno</button>
             <button class="period-btn active" data-period="7">7 giorni</button>
             <button class="period-btn" data-period="30">30 giorni</button>
@@ -1362,7 +1371,6 @@
             <button class="period-btn" data-period="365">1 anno</button>
             <button class="period-btn" data-period="all">Tutto</button>
           </div>
-        </div>
 
         <div class="chart-card gold-section">
           <div class="chart-live-header">
@@ -1442,6 +1450,7 @@
         <div class="sync-container" id="syncControls" style="display: none;">
           <button class="sync-btn" onclick="syncToGoogleDrive()">Sincronizza su Drive</button>
           <button class="sync-btn" onclick="loadFromGoogleDrive()">Carica da Drive</button>
+          <button class="sync-btn" onclick="disconnectGoogleDrive()">Scollega Drive</button>
           <span id="driveSyncStatus" class="sync-status"></span>
         </div>
       </div>
@@ -2043,7 +2052,7 @@
 
           if (metalOk) {
             // Aggiorna o aggiungi il punto storico di oggi (in USD/oncia troy)
-            const today = new Date().toISOString().split('T')[0];
+            const today = localDateKey(new Date());
             const existing = state.priceHistory.find(h => h.date === today);
             if (existing) {
               if (goldUsd != null) existing.goldUsd = goldUsd;
@@ -2157,6 +2166,55 @@
       localStorage.setItem('priceHistory', JSON.stringify(state.priceHistory));
     }
 
+    // Storico ufficiale giornaliero LBMA (fixing oro PM e argento, USD/oncia).
+    // Completa i giorni mancanti dello storico, anche se l'app non era aperta.
+    const LBMA_GOLD_URL = 'https://prices.lbma.org.uk/json/gold_pm.json';
+    const LBMA_SILVER_URL = 'https://prices.lbma.org.uk/json/silver.json';
+    const LBMA_REFRESH_MS = 6 * 60 * 60 * 1000;
+    const LBMA_KEEP_DAYS = 400;
+
+    async function syncLbmaHistory(force) {
+      try {
+        const last = Number(localStorage.getItem('lbmaLastFetch') || 0);
+        if (!force && Date.now() - last < LBMA_REFRESH_MS) return false;
+        const minDate = new Date();
+        minDate.setDate(minDate.getDate() - LBMA_KEEP_DAYS);
+        const minKey = localDateKey(minDate);
+        const todayKey = localDateKey(new Date());
+
+        const [goldRes, silverRes] = await Promise.all([fetch(LBMA_GOLD_URL), fetch(LBMA_SILVER_URL)]);
+        if (!goldRes.ok || !silverRes.ok) throw new Error('LBMA HTTP ' + goldRes.status + '/' + silverRes.status);
+        const goldRows = await goldRes.json();
+        const silverRows = await silverRes.json();
+
+        const byDate = {};
+        state.priceHistory.forEach(function (h) { if (h && h.date) byDate[String(h.date).slice(0, 10)] = h; });
+        let changed = 0;
+        function apply(rows, key) {
+          if (!Array.isArray(rows)) return;
+          rows.forEach(function (r) {
+            if (!r || !r.d || !Array.isArray(r.v)) return;
+            const d = String(r.d).slice(0, 10);
+            const usd = Number(r.v[0]);
+            if (d < minKey || d >= todayKey || !Number.isFinite(usd) || usd <= 0) return;
+            const entry = byDate[d] || (byDate[d] = { date: d, goldUsd: null, silverUsd: null });
+            if (entry[key] !== usd) { entry[key] = usd; changed++; }
+          });
+        }
+        apply(goldRows, 'goldUsd');
+        apply(silverRows, 'silverUsd');
+
+        state.priceHistory = Object.keys(byDate).sort().map(function (k) { return byDate[k]; });
+        savePriceHistory();
+        localStorage.setItem('lbmaLastFetch', String(Date.now()));
+        if (changed) updateUI();
+        return true;
+      } catch (e) {
+        console.log('Storico LBMA non disponibile:', e);
+        return false;
+      }
+    }
+
     // Storico intraday (ogni 5 min) con timestamp per grafici dettagliati
     function loadIntradayHistory() {
       try {
@@ -2197,10 +2255,51 @@
     function saveData() {
       try {
         localStorage.setItem('goldPortfolio', JSON.stringify(state.positions));
+        saveLocalBackupSilently();
       } catch (err) {
         console.log('save err', err);
         alert('Spazio di archiviazione pieno: alcune foto potrebbero non essere state salvate. Rimuovi qualche foto o usa immagini piu piccole.');
       }
+    }
+
+    // Backup locale portabile: il salvataggio automatico resta interno al browser/app.
+    function buildLocalBackup() {
+      return { format: 'PortafoglioAssets-Backup', formatVersion: 1, exportedAt: new Date().toISOString(),
+        positions: state.positions || [], watches: state.watches || [], priceHistory: state.priceHistory || [],
+        intradayHistory: state.intradayHistory || [], settings: { currentCurrency: state.currentCurrency, selectedPeriod: state.selectedPeriod } };
+    }
+    function saveLocalBackupSilently() {
+      try { localStorage.setItem('portafoglioAssetsLocalBackup', JSON.stringify(buildLocalBackup())); } catch (err) { console.log('local backup err', err); }
+    }
+    function openLocalBackupMenu() {
+      const choice = prompt('Backup locale: digita ESPORTA per scaricare il file oppure IMPORTA per caricarne uno.');
+      if (!choice) return;
+      if (choice.trim().toLowerCase() === 'esporta') exportLocalBackup();
+      else if (choice.trim().toLowerCase() === 'importa') document.getElementById('localBackupInput')?.click();
+      else alert('Operazione non riconosciuta. Usa ESPORTA oppure IMPORTA.');
+    }
+    function exportLocalBackup() {
+      const data = JSON.stringify(buildLocalBackup(), null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob); const a = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0, 10); a.href = url; a.download = 'PortafoglioAssets_Backup_' + stamp + '.json';
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    }
+    async function importLocalBackup(file) {
+      if (!file) return;
+      try {
+        const data = JSON.parse(await file.text());
+        if (!data || data.format !== 'PortafoglioAssets-Backup' || !Array.isArray(data.positions) || !Array.isArray(data.watches)) throw new Error('Formato backup non riconosciuto');
+        const summary = 'Backup del ' + (data.exportedAt ? new Date(data.exportedAt).toLocaleString('it-IT') : 'data sconosciuta') + '\n' + data.positions.length + ' posizioni, ' + data.watches.length + ' orologi.\n\nSostituire i dati attuali?';
+        if (!confirm(summary)) return;
+        state.positions = migratePositions(data.positions); state.watches = data.watches;
+        state.priceHistory = Array.isArray(data.priceHistory) ? data.priceHistory : [];
+        state.intradayHistory = Array.isArray(data.intradayHistory) ? data.intradayHistory : [];
+        if (data.settings?.currentCurrency) state.currentCurrency = data.settings.currentCurrency;
+        if (Number.isFinite(data.settings?.selectedPeriod)) state.selectedPeriod = data.settings.selectedPeriod;
+        saveData(); saveWatches(); savePriceHistory(); saveIntradayHistory(); updateUI();
+        alert('Backup importato correttamente.');
+      } catch (err) { alert('Impossibile importare il backup: ' + err.message); }
     }
 
     // Load/save orologi da localStorage
@@ -2213,6 +2312,7 @@
     function saveWatches() {
       try {
         localStorage.setItem('watchPortfolio', JSON.stringify(state.watches));
+        saveLocalBackupSilently();
       } catch (err) {
         console.log('save watches err', err);
         alert('Spazio di archiviazione pieno: alcune foto potrebbero non essere state salvate. Rimuovi qualche foto o usa immagini piu piccole.');
@@ -2854,6 +2954,11 @@
       return fallback;
     }
 
+    // Chiave data locale AAAA-MM-GG (evita lo slittamento del giorno dovuto all'UTC).
+    function localDateKey(d) {
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
     function calendarPeriodStart(period, now) {
       if (period === 'all') return new Date(0);
       const start = new Date(now);
@@ -2863,76 +2968,102 @@
       return start;
     }
 
+    // Prezzo attuale (USD/oncia) da prezzo live, altrimenti ultimo punto intraday di oggi.
+    function currentUsdPoint() {
+      const usdToChf = state.exchangeRates.USD || 0.80;
+      const pt = { goldUsd: null, silverUsd: null };
+      if (state.currentPrices.gold > 0) pt.goldUsd = state.currentPrices.gold / usdToChf * OZ_TO_G;
+      if (state.currentPrices.silver > 0) pt.silverUsd = state.currentPrices.silver / usdToChf * OZ_TO_G;
+      if (pt.goldUsd == null && pt.silverUsd == null) {
+        const last = state.intradayHistory[state.intradayHistory.length - 1];
+        if (last) { pt.goldUsd = last.goldUsd; pt.silverUsd = last.silverUsd; }
+      }
+      return pt;
+    }
+
     function getChartData() {
       const period = state.selectedPeriod;
       const now = new Date();
-      const usdToChf = state.exchangeRates.USD || 0.80;
-      const cutoffTs = calendarPeriodStart(period, now).getTime();
-      const pointMap = new Map();
+      const todayKey = localDateKey(now);
 
-      // Dati giornalieri: sempre a mezzogiorno locale, evitando lo slittamento UTC.
-      const dailyHistory = state.priceHistory
-        .filter(h => h.goldUsd != null || h.gold != null || h.silverUsd != null || h.silver != null)
-        .slice()
-        .sort((a, b) => localNoonFromDate(a.date) - localNoonFromDate(b.date));
-      dailyHistory.forEach(h => {
-        const d = localNoonFromDate(h.date);
-        const ts = d.getTime();
-        if (ts >= cutoffTs) {
-          pointMap.set(ts, { ts, goldUsd: h.goldUsd, silverUsd: h.silverUsd, gold: h.gold, silver: h.silver });
-        }
+      // Storico giornaliero indicizzato per data (una sola chiusura per giorno).
+      const byDate = {};
+      state.priceHistory.forEach(h => {
+        if (!h || !h.date) return;
+        if (h.goldUsd == null && h.gold == null && h.silverUsd == null && h.silver == null) return;
+        byDate[String(h.date).slice(0, 10)] = h;
       });
+      const dateKeys = Object.keys(byDate).sort();
 
-      // Intraday: mantiene i punti raccolti mentre l'app era aperta.
-      state.intradayHistory
-        .filter(p => p.ts >= cutoffTs && (p.goldUsd != null || p.silverUsd != null))
-        .forEach(p => pointMap.set(p.ts, p));
-
-      // Prezzo live: ultimo punto del periodo.
-      if (state.currentPrices.gold > 0 || state.currentPrices.silver > 0) {
-        const liveTs = Date.now();
-        if (liveTs >= cutoffTs) {
-          pointMap.set(liveTs, {
-            ts: liveTs,
-            goldUsd: state.currentPrices.gold > 0 ? state.currentPrices.gold / usdToChf * OZ_TO_G : null,
-            silverUsd: state.currentPrices.silver > 0 ? state.currentPrices.silver / usdToChf * OZ_TO_G : null
-          });
+      // ===== 1 giorno: andamento intraday di oggi =====
+      if (period === 1) {
+        const startTs = calendarPeriodStart(1, now).getTime();
+        const pts = state.intradayHistory
+          .filter(p => p.ts >= startTs && (p.goldUsd != null || p.silverUsd != null))
+          .slice()
+          .sort((a, b) => a.ts - b.ts);
+        const live = currentUsdPoint();
+        if (live.goldUsd != null || live.silverUsd != null) {
+          const lastPt = pts[pts.length - 1];
+          if (!lastPt || Date.now() - lastPt.ts > 60 * 1000) pts.push({ ts: Date.now(), goldUsd: live.goldUsd, silverUsd: live.silverUsd });
         }
+        const labels = pts.map(p => {
+          const d = new Date(p.ts);
+          return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        });
+        // Punto di partenza: ultima chiusura giornaliera precedente a oggi.
+        const prevKey = dateKeys.filter(k => k < todayKey).pop();
+        if (prevKey) {
+          labels.unshift('Chius. prec.');
+          pts.unshift(byDate[prevKey]);
+        }
+        if (pts.length === 0) return { labels: ['Nessun dato'], data: [{ gold: null, silver: null }] };
+        return { labels, data: pts.map(pointToChfPerG) };
       }
 
-      const allPoints = Array.from(pointMap.values()).sort((a, b) => a.ts - b.ts);
-      if (allPoints.length === 0) {
+      // ===== Tutto: tutte le chiusure giornaliere disponibili + oggi =====
+      if (period === 'all') {
+        const pts = dateKeys.filter(k => k < todayKey).map(k => byDate[k]);
+        const live = currentUsdPoint();
+        if (live.goldUsd != null || live.silverUsd != null) pts.push({ date: todayKey, goldUsd: live.goldUsd, silverUsd: live.silverUsd });
+        else if (byDate[todayKey]) pts.push(byDate[todayKey]);
+        if (pts.length === 0) return { labels: ['Nessun dato'], data: [{ gold: null, silver: null }] };
+        const labels = pts.map(p => localNoonFromDate(p.date).toLocaleDateString('it-IT', { month: 'short', year: 'numeric' }));
+        return { labels, data: pts.map(pointToChfPerG) };
+      }
+
+      // ===== 7 / 30 / 90 / 365 giorni: esattamente un punto per giorno di calendario =====
+      const days = Number(period);
+      const start = calendarPeriodStart(days, now);
+      const startKey = localDateKey(start);
+      // Valore di partenza per i giorni senza quotazione (weekend/festivi): ultima chiusura nota.
+      let carry = null;
+      const prevKeys = dateKeys.filter(k => k < startKey);
+      if (prevKeys.length) carry = byDate[prevKeys[prevKeys.length - 1]];
+
+      const pts = [];
+      const labels = [];
+      const cursor = new Date(start);
+      for (let i = 0; i < days; i++) {
+        const key = localDateKey(cursor);
+        let p = null;
+        if (key === todayKey) {
+          const live = currentUsdPoint();
+          if (live.goldUsd != null || live.silverUsd != null) p = { date: key, goldUsd: live.goldUsd, silverUsd: live.silverUsd };
+          else if (byDate[key]) p = byDate[key];
+        } else if (byDate[key]) {
+          p = byDate[key];
+        }
+        if (p) carry = p;
+        pts.push(carry ? Object.assign({}, carry, { date: key }) : { date: key, goldUsd: null, silverUsd: null });
+        if (days <= 7) labels.push(cursor.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' }));
+        else labels.push(cursor.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }));
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      if (!pts.some(p => p.goldUsd != null || p.gold != null || p.silverUsd != null || p.silver != null)) {
         return { labels: ['Nessun dato'], data: [{ gold: null, silver: null }] };
       }
-
-      function thinByInterval(pts, intervalMs) {
-        if (pts.length <= 2) return pts;
-        const result = [pts[0]];
-        for (let i = 1; i < pts.length - 1; i++) {
-          if (pts[i].ts - result[result.length - 1].ts >= intervalMs) result.push(pts[i]);
-        }
-        result.push(pts[pts.length - 1]);
-        return result;
-      }
-
-      let thinned = allPoints;
-      if (period === 'all' || period >= 365) thinned = thinByInterval(allPoints, 24 * 60 * 60 * 1000);
-      else if (period >= 90) thinned = thinByInterval(allPoints, 12 * 60 * 60 * 1000);
-      else if (period >= 30) thinned = thinByInterval(allPoints, 4 * 60 * 60 * 1000);
-      else if (period === 7) thinned = thinByInterval(allPoints, 60 * 60 * 1000);
-
-      const labels = thinned.map(p => {
-        const d = new Date(p.ts);
-        if (period === 1) {
-          return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-        }
-        if (period === 7) {
-          return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) + ' ' +
-                 String(d.getHours()).padStart(2, '0') + ':00';
-        }
-        return d.toLocaleDateString('it-IT', { month: 'short', day: 'numeric' });
-      });
-      return { labels, data: thinned.map(pointToChfPerG) };
+      return { labels, data: pts.map(pointToChfPerG) };
     }
 
     // Plugin: mirino interattivo (crosshair) al tocco/hover
@@ -4028,6 +4159,7 @@
         e.target.classList.add('active');
         state.selectedPeriod = e.target.dataset.period === 'all' ? 'all' : parseInt(e.target.dataset.period);
         updateChart();
+        drawAndamentoSparkline(); // la mini-linea Andamento segue il periodo selezionato
       });
     });
 
@@ -4083,6 +4215,22 @@
       googleTokenClient.requestAccessToken({ prompt: '' });
     }
 
+    // Scollega Google Drive: torna allo stato iniziale senza toccare i dati locali.
+    function disconnectGoogleDrive(skipConfirm) {
+      if (!googleAccessToken) { setDriveConnected(false); return; }
+      if (!skipConfirm && !confirm('Scollegare Google Drive? I dati salvati sul telefono restano invariati.')) return;
+      const token = googleAccessToken;
+      googleAccessToken = null;
+      try {
+        if (window.google && window.google.accounts && window.google.accounts.oauth2 && token) {
+          window.google.accounts.oauth2.revoke(token, function () {});
+        }
+      } catch (e) { console.log('Revoca token Drive:', e); }
+      const statusEl = document.getElementById('driveSyncStatus');
+      if (statusEl) statusEl.textContent = '';
+      setDriveConnected(false);
+    }
+
     function initializeGoogleAuth() {
       if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
         setDriveConnected(false);
@@ -4094,6 +4242,7 @@
         callback: function() {}
       });
       document.getElementById('googleSignIn')?.addEventListener('click', requestGoogleDriveAccess);
+      document.getElementById('googleSignOut')?.addEventListener('click', function () { disconnectGoogleDrive(false); });
       // Elimina eventuali vecchi token ID salvati da una versione non compatibile con Drive.
       localStorage.removeItem('googleAccessToken');
       localStorage.removeItem('userEmail');
@@ -4221,6 +4370,9 @@
       }
     }
 
+    document.getElementById('localBackupBtn')?.addEventListener('click', openLocalBackupMenu);
+    document.getElementById('localBackupInput')?.addEventListener('change', function () { importLocalBackup(this.files[0]); this.value = ''; });
+
     // Initialize Google Auth quando il documento è caricato
     window.addEventListener('load', () => {
       setTimeout(() => {
@@ -4299,7 +4451,9 @@
       if (rb) rb.addEventListener('click', function () { fetchPrices(); });
     })();
     fetchPrices();
+    syncLbmaHistory(false); // Completa lo storico giornaliero con i fixing ufficiali LBMA
     setInterval(fetchPrices, 5 * 60 * 1000); // Aggiorna ogni 5 minuti
+    setInterval(function () { syncLbmaHistory(false); }, 60 * 60 * 1000);
     updateUI();
 
     // ── Shop Category Sub-page System ──────────────────
