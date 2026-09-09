@@ -965,8 +965,17 @@
         display: flex;
         align-items: center;
       }
+      #localBackupSlot {
+        flex: 0 0 120px;
+        width: 120px;
+        min-width: 120px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+      }
       #googleLoginContainer .google-drive-button,
-      #googleLoggedIn .google-drive-button {
+      #googleLoggedIn .google-drive-button,
+      #localBackupSlot .google-drive-button {
         width: 100%;
         min-width: 0 !important;
         height: 38px;
@@ -989,7 +998,8 @@
       .currency-btn { padding: 0.32rem 0.38rem; font-size: 0.68rem; }
       .shop-header-btn { padding: 0.42rem 0.6rem; font-size: 0.72rem; }
       #googleSignIn,
-      #googleSignOut { padding: 0.42rem 0.55rem !important; font-size: 0.7rem; }
+      #googleSignOut,
+      #localBackupBtn { padding: 0.42rem 0.55rem !important; font-size: 0.7rem; }
     }
 
 
@@ -1282,6 +1292,15 @@
       box-shadow: 0 0 0 3px rgba(212,168,67,0.12);
       background: #fff;
     }
+    .backup-modal { display: none; position: fixed; inset: 0; z-index: 10000; align-items: center; justify-content: center; padding: 1rem; background: rgba(27,58,45,0.32); }
+    .backup-modal.is-open { display: flex; }
+    .backup-dialog { width: min(92vw, 320px); box-sizing: border-box; padding: 1.1rem; border-radius: 16px; background: #FAFBFC; box-shadow: 0 12px 40px rgba(0,0,0,0.22); text-align: center; }
+    .backup-dialog h2 { margin: 0 0 1rem; color: #1B3A2D; font-size: 1.15rem; }
+    .backup-dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+    .backup-dialog-actions button, .backup-close-btn { min-height: 42px; border: 0; border-radius: 12px; font: inherit; font-weight: 700; cursor: pointer; }
+    .backup-dialog-actions button { color: #fff; background: #1B3A2D; }
+    .backup-close-btn { width: 100%; margin-top: 0.7rem; color: #1B3A2D; background: #e9efec; }
+
     </style>
 
 </head>
@@ -1303,7 +1322,17 @@
           <button id="googleSignOut" class="sync-btn google-drive-button" type="button" aria-label="Google Drive collegato: tocca per scollegare" title="Google Drive collegato: tocca per scollegare">Google Drive</button>
         </div>
         <div class="google-drive-slot" id="localBackupSlot">
-          <button id="localBackupBtn" class="sync-btn google-drive-button" type="button">Backup locale</button>
+          <button id="localBackupBtn" class="sync-btn google-drive-button" type="button">Backup</button>
+        </div>
+        <div id="localBackupModal" class="backup-modal" aria-hidden="true">
+          <div class="backup-dialog" role="dialog" aria-modal="true" aria-labelledby="backupDialogTitle">
+            <h2 id="backupDialogTitle">Backup</h2>
+            <div class="backup-dialog-actions">
+              <button id="backupImportBtn" type="button">Importa</button>
+              <button id="backupExportBtn" type="button">Esporta</button>
+            </div>
+            <button id="backupCloseBtn" class="backup-close-btn" type="button">Annulla</button>
+          </div>
         </div>
         <input id="localBackupInput" type="file" accept="application/json,.json" style="display:none">
       </div>
@@ -2272,11 +2301,14 @@
       try { localStorage.setItem('portafoglioAssetsLocalBackup', JSON.stringify(buildLocalBackup())); } catch (err) { console.log('local backup err', err); }
     }
     function openLocalBackupMenu() {
-      const choice = prompt('Backup locale: digita ESPORTA per scaricare il file oppure IMPORTA per caricarne uno.');
-      if (!choice) return;
-      if (choice.trim().toLowerCase() === 'esporta') exportLocalBackup();
-      else if (choice.trim().toLowerCase() === 'importa') document.getElementById('localBackupInput')?.click();
-      else alert('Operazione non riconosciuta. Usa ESPORTA oppure IMPORTA.');
+      const modal = document.getElementById('localBackupModal');
+      if (!modal) return;
+      modal.classList.add('is-open'); modal.setAttribute('aria-hidden', 'false');
+    }
+    function closeLocalBackupMenu() {
+      const modal = document.getElementById('localBackupModal');
+      if (!modal) return;
+      modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true');
     }
     function exportLocalBackup() {
       const data = JSON.stringify(buildLocalBackup(), null, 2);
@@ -4371,6 +4403,10 @@
     }
 
     document.getElementById('localBackupBtn')?.addEventListener('click', openLocalBackupMenu);
+    document.getElementById('backupImportBtn')?.addEventListener('click', function () { closeLocalBackupMenu(); document.getElementById('localBackupInput')?.click(); });
+    document.getElementById('backupExportBtn')?.addEventListener('click', function () { closeLocalBackupMenu(); exportLocalBackup(); });
+    document.getElementById('backupCloseBtn')?.addEventListener('click', closeLocalBackupMenu);
+    document.getElementById('localBackupModal')?.addEventListener('click', function (event) { if (event.target === this) closeLocalBackupMenu(); });
     document.getElementById('localBackupInput')?.addEventListener('change', function () { importLocalBackup(this.files[0]); this.value = ''; });
 
     // Initialize Google Auth quando il documento è caricato
