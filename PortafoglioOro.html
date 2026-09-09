@@ -1301,7 +1301,81 @@
     .backup-dialog-actions button { color: #fff; background: #1B3A2D; }
     .backup-close-btn { width: 100%; margin-top: 0.7rem; color: #1B3A2D; background: #e9efec; }
 
-    </style>
+        /* ===== Barra superiore: titolo e comandi sempre sulla stessa riga ===== */
+    #fixedTop {
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+    }
+    #fixedTop::-webkit-scrollbar { display: none; }
+    header {
+      min-width: max-content;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      gap: 0.6rem;
+    }
+    header h1 {
+      width: auto;
+      flex: 0 0 auto;
+      white-space: nowrap;
+      text-align: left;
+    }
+    .header-controls {
+      width: auto;
+      flex: 0 0 auto;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      gap: 0.5rem;
+    }
+    @media (max-width: 700px) {
+      header {
+        padding: 0.65rem 0.75rem;
+        gap: 0.45rem;
+      }
+      header h1 {
+        font-size: 1.05rem;
+      }
+      .header-controls {
+        gap: 0.35rem;
+      }
+      .currency-selector {
+        padding: 0.2rem;
+        gap: 0.1rem;
+      }
+      .currency-btn {
+        padding: 0.3rem 0.4rem;
+        font-size: 0.68rem;
+      }
+      .shop-header-btn {
+        padding: 0.4rem 0.65rem;
+        font-size: 0.72rem;
+      }
+      #googleLoginContainer,
+      #googleLoggedIn,
+      #localBackupSlot {
+        flex: 0 0 104px;
+        width: 104px;
+        min-width: 104px;
+      }
+      #googleLoginContainer .google-drive-button,
+      #googleLoggedIn .google-drive-button,
+      #localBackupSlot .google-drive-button {
+        font-size: 0.72rem;
+        padding: 0.4rem 0.45rem !important;
+      }
+    }
+    @media (max-width: 360px) {
+      header h1 { font-size: 0.98rem; }
+      #googleLoginContainer,
+      #googleLoggedIn,
+      #localBackupSlot {
+        flex-basis: 96px;
+        width: 96px;
+        min-width: 96px;
+      }
+    }
+
+</style>
 
 </head>
 <body>
