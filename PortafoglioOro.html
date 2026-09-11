@@ -657,9 +657,9 @@
     .sync-dot.live { background: #2ecc71; box-shadow: 0 0 6px #2ecc71; }
     .sync-dot.stale { background: #888; }
     .sync-dot.busy { background: #1B3A2D; box-shadow: 0 0 6px #1B3A2D; animation: syncpulse 1s infinite; }
-    @keyframes syncpulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; }
+    @keyframes syncpulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
     @keyframes pulseDot { 0%,100% { opacity: 1; box-shadow: 0 0 6px 2px rgba(27,58,45,0.5); } 50% { opacity: 0.4; box-shadow: 0 0 2px 1px rgba(27,58,45,0.2); } }
-    .chart-live-dot { animation: pulseDot 1.5s ease-in-out infinite; } }
+    .chart-live-dot { animation: pulseDot 1.5s ease-in-out infinite; }
     .rate-info { color: #7a8a80; display: flex; gap: 0.6rem; flex-wrap: wrap; }
     .rate-box { background: rgba(27,58,45,0.06); border: 1px solid rgba(27,58,45,0.12); border-radius: 8px; padding: 0.25rem 0.6rem; font-size: 0.82rem; font-weight: 600; color: #1B3A2D; white-space: nowrap; }
     .refresh-btn {
@@ -826,6 +826,24 @@
     .history-card-cols { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; font-size: 0.9rem; margin-bottom: 0.3rem; }
     .history-card-footer { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
     .history-card-photos { margin-top: 0.5rem; }
+    .product-card-preview {
+      width: 78px;
+      height: 78px;
+      aspect-ratio: 1 / 1;
+      flex: 0 0 78px;
+      align-self: center;
+      object-fit: cover;
+      object-position: center;
+      border-radius: 10px;
+      border: 1px solid rgba(27,58,45,0.18);
+      background: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(27,58,45,0.10);
+      pointer-events: none;
+    }
+    @media (max-width: 480px) {
+      .watch-card, .history-card { padding: 0.85rem; gap: 0.65rem; }
+      .product-card-preview { width: 64px; height: 64px; flex-basis: 64px; }
+    }
 
 
     #watchDetailModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1000; align-items:flex-start; justify-content:center; overflow-y:auto; padding:2rem 1rem; }
@@ -2193,7 +2211,9 @@
       syncBusy: false,
       marketHistoryCache: {},
       marketHistoryLoading: {},
-      marketHistoryErrors: {}
+      marketHistoryErrors: {},
+      marketHistoryRetryAt: {},
+      marketHistoryRetryCounts: {}
     };
 
 
@@ -2216,8 +2236,8 @@
 
     function validMarketPoint(point) {
       return point && Number.isFinite(Number(point.ts)) &&
-        ((Number.isFinite(Number(point.goldUsd)) && Number(point.goldUsd) > 0) ||
-         (Number.isFinite(Number(point.silverUsd)) && Number(point.silverUsd) > 0));
+        Number.isFinite(Number(point.goldUsd)) && Number(point.goldUsd) > 0 &&
+        Number.isFinite(Number(point.silverUsd)) && Number(point.silverUsd) > 0;
     }
 
     function loadMarketHistoryCache() {
@@ -2241,7 +2261,12 @@
     function marketCoverageIsValid(code, payload, points) {
       if (!Array.isArray(points) || points.length < 2) return false;
       const span = points[points.length - 1].ts - points[0].ts;
-      if (code === 'all') return points.length >= 600 && span >= 49.8 * 365.2425 * 24 * 60 * 60 * 1000;
+      if (code === 'all') {
+        const first = new Date(points[0].ts);
+        const last = new Date(points[points.length - 1].ts);
+        const monthSpan = (last.getUTCFullYear() - first.getUTCFullYear()) * 12 + last.getUTCMonth() - first.getUTCMonth();
+        return points.length >= 601 && monthSpan >= 600;
+      }
       if (code === '24h') {
         const step = 5 * 60 * 1000;
         if (points.length !== 289 || span !== 24 * 60 * 60 * 1000) return false;
@@ -2266,6 +2291,16 @@
       return date.toLocaleDateString('it-IT', { month: 'short', year: 'numeric' });
     }
 
+    async function fetchMarketHistoryWithTimeout(url) {
+      const controller = new AbortController();
+      const timeout = setTimeout(function() { controller.abort(); }, 20 * 1000);
+      try {
+        return await fetch(url, { cache: 'no-store', mode: 'cors', signal: controller.signal });
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+
     async function loadMarketHistory(period, force) {
       const code = marketPeriodCode(period);
       const cached = state.marketHistoryCache[code];
@@ -2276,7 +2311,7 @@
       const task = (async function () {
         try {
           const suffix = force ? '&refresh=' + Date.now() : '';
-          const response = await fetch(MARKET_HISTORY_ENDPOINT + '?period=' + encodeURIComponent(code) + suffix, { cache: 'no-store', mode: 'cors' });
+          const response = await fetchMarketHistoryWithTimeout(MARKET_HISTORY_ENDPOINT + '?period=' + encodeURIComponent(code) + suffix);
           if (!response.ok) throw new Error('HTTP ' + response.status);
           const payload = await response.json();
           const points = (Array.isArray(payload.points) ? payload.points : [])
@@ -2300,6 +2335,8 @@
             points: points
           };
           state.marketHistoryErrors[code] = false;
+          delete state.marketHistoryRetryAt[code];
+          delete state.marketHistoryRetryCounts[code];
           saveMarketHistoryCache();
           updateChart();
           drawAndamentoSparkline();
@@ -2307,6 +2344,13 @@
         } catch (error) {
           state.marketHistoryErrors[code] = true;
           console.log('Storico Gold API non disponibile:', error);
+          const retryCount = Number(state.marketHistoryRetryCounts[code] || 0) + 1;
+          state.marketHistoryRetryCounts[code] = retryCount;
+          if (retryCount <= 3) {
+            const retryDelay = [1500, 5000, 15000][retryCount - 1];
+            state.marketHistoryRetryAt[code] = Date.now() + retryDelay;
+            setTimeout(function() { loadMarketHistory(period, true); }, retryDelay);
+          }
           updateChart();
           drawAndamentoSparkline();
           return null;
@@ -2317,6 +2361,18 @@
 
       state.marketHistoryLoading[code] = task;
       return task;
+    }
+
+    async function prefetchMarketHistories(onlyMissing) {
+      const periods = [1, 7, 30, 90, 365, 'all'];
+      const requests = periods.filter(function(period) {
+        const code = marketPeriodCode(period);
+        return !onlyMissing || !state.marketHistoryCache[code] || state.marketHistoryErrors[code];
+      }).map(function(period) {
+        const code = marketPeriodCode(period);
+        return loadMarketHistory(period, !!state.marketHistoryErrors[code]);
+      });
+      await Promise.allSettled(requests);
     }
 
     // Fetch real prices e aggiorna storico
@@ -2764,6 +2820,15 @@
     function escapeHtml(s) {
       return (s == null ? '' : String(s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
+    function escapeAttr(s) {
+      return escapeHtml(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function firstPhotoPreview(item, altText) {
+      const photos = item && Array.isArray(item.photos) ? item.photos : [];
+      const src = photos.find(function(photo) { return typeof photo === 'string' && photo.trim(); });
+      if (!src) return '';
+      return '<img class="product-card-preview" src="' + escapeAttr(src) + '" alt="' + escapeAttr(altText || 'Anteprima prodotto') + '">';
+    }
     // Popola caratura/titolo in base al metallo e gestisce "Altro"
     // Opzioni purezza per monete d'oro (millesimi)
     function populateGoldCoinOptions(psel, plabel) {
@@ -3058,8 +3123,8 @@
         const subtitle = [metalLabel, titolo, formatDate(pos.date)].filter(Boolean).join(' \u00b7 ');
         const soldBadge = (wRem <= 0 && w > 0) ? '<span class="sold-badge">VENDUTO</span>' : '';
         const strike = (wRem <= 0 && w > 0) ? 'watch-sold-strike' : '';
-        // Photos only visible in detail modal
-        const photoHtml = '';
+        // Nella scheda si mostra soltanto la prima foto; gestione e cancellazione restano nel dettaglio.
+        const previewPhotoHtml = firstPhotoPreview(pos, descSafe);
 
         html += '<div class="history-card" data-idx="' + i + '">' +
           '<div class="history-metal-circle ' + metalClass + '">' +
@@ -3079,8 +3144,8 @@
               (pos.metal !== 'other' ? '<span class="andamento-badge" style="margin:0; color:' + (up ? '#4ade80' : '#f87171') + '; background:' + (up ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)') + ';">' + (up ? '\u25b2 +' : '\u25bc ') + gainPct.toFixed(2) + '%</span>' : '') +
               soldBadge +
             '</div>' +
-            photoHtml +
           '</div>' +
+          previewPhotoHtml +
         '</div>';
       });
       container.innerHTML = html;
@@ -3476,7 +3541,7 @@
                 borderColor: tc.line,
                 backgroundColor: goldGrad,
                 borderWidth: 1.5,
-                tension: 0.1,
+                tension: state.selectedPeriod === 1 ? 0 : 0.1,
                 fill: true,
                 pointRadius: 0,
                 pointHoverRadius: 0
@@ -3531,7 +3596,7 @@
                 borderColor: stc.line,
                 backgroundColor: silverGrad,
                 borderWidth: 1.5,
-                tension: 0.1,
+                tension: state.selectedPeriod === 1 ? 0 : 0.1,
                 fill: true,
                 pointRadius: 0,
                 pointHoverRadius: 0
@@ -3870,6 +3935,7 @@
         const soldBadge = w.sale ? '<span class="sold-badge">VENDUTO</span>' : '';
         const strike = w.sale ? 'watch-sold-strike' : '';
         const chrono24Query = encodeURIComponent((w.brand + ' ' + w.model + ' ' + w.reference).trim()).replace(/%20/g, '+');
+        const previewPhotoHtml = firstPhotoPreview(w, (w.brand + ' ' + w.model).trim());
         html += '<div class="watch-card" data-idx="' + i + '">' +
           '<div class="watch-brand-circle">' + (isRolex ? '<img src="' + COIN_ROLEX_IMG + '" alt="Rolex">' : escapeHtml(initial)) + '</div>' +
           '<div class="watch-card-body">' +
@@ -3886,6 +3952,7 @@
               '<a class="chrono24-btn" href="https://www.chrono24.ch/search/index.htm?query=' + chrono24Query + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Chrono24</a>' +
             '</div>' +
           '</div>' +
+          previewPhotoHtml +
         '</div>';
       });
       c.innerHTML = html;
@@ -4850,9 +4917,12 @@
       lastResumeMarketRefresh = now;
       fetchPrices();
       loadMarketHistory(state.selectedPeriod, true);
+      prefetchMarketHistories(true);
     });
     updateUI();
     loadMarketHistory(state.selectedPeriod, false);
+    setTimeout(function() { prefetchMarketHistories(false); }, 1200);
+    setInterval(function() { prefetchMarketHistories(true); }, 2 * 60 * 1000);
 
     // ── Shop Category Sub-page System ──────────────────
     function showShopCategory(idx, options) {
