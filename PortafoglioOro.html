@@ -2269,9 +2269,19 @@
       }
       if (code === '24h') {
         const step = 5 * 60 * 1000;
-        if (points.length !== 289 || span !== 24 * 60 * 60 * 1000) return false;
-        if (points[0].ts !== Number(payload.requestedStart) || points[points.length - 1].ts !== Number(payload.requestedEnd)) return false;
-        if (!points.every(function(point, index) { return index === 0 || point.ts - points[index - 1].ts === step; })) return false;
+        const exactDay = 24 * 60 * 60 * 1000;
+        // La fonte può riportare requestedStart/requestedEnd con secondi residui,
+        // mentre i punti reali sono correttamente allineati ai 5 minuti.
+        if (points.length < 289 || Math.abs(span - exactDay) > step) return false;
+        // Accetta anche i due estremi reali non arrotondati restituiti dalla fonte;
+        // tutti gli intervalli devono restare positivi e non superare 5 minuti.
+        if (!points.every(function(point, index) {
+          if (index === 0) return true;
+          const delta = point.ts - points[index - 1].ts;
+          return delta > 0 && delta <= step;
+        })) return false;
+        if (Number.isFinite(Number(payload.actualStart)) && points[0].ts !== Number(payload.actualStart)) return false;
+        if (Number.isFinite(Number(payload.actualEnd)) && points[points.length - 1].ts !== Number(payload.actualEnd)) return false;
       }
       const expected = { '24h': 24, '7d': 7 * 24, '30d': 30 * 24, '90d': 90 * 24, '1y': 365 * 24 }[code];
       return Number.isFinite(expected) && span >= (expected - 0.1) * 60 * 60 * 1000 &&
