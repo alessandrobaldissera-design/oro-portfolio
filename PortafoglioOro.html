@@ -1301,78 +1301,159 @@
     .backup-dialog-actions button { color: #fff; background: #1B3A2D; }
     .backup-close-btn { width: 100%; margin-top: 0.7rem; color: #1B3A2D; background: #e9efec; }
 
-        /* ===== Barra superiore: titolo e comandi sempre sulla stessa riga ===== */
-    #fixedTop {
-      overflow-x: auto;
-      overflow-y: hidden;
-      scrollbar-width: none;
+    /* ===== Barra superiore responsiva, senza scorrimento laterale ===== */
+    html, body {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
     }
-    #fixedTop::-webkit-scrollbar { display: none; }
+    #fixedTop {
+      width: 100%;
+      max-width: 100%;
+      overflow: visible;
+    }
     header {
-      min-width: max-content;
+      width: 100%;
+      min-width: 0;
       flex-wrap: nowrap;
-      justify-content: flex-start;
+      justify-content: space-between;
       gap: 0.6rem;
     }
     header h1 {
       width: auto;
-      flex: 0 0 auto;
+      min-width: 0;
+      flex: 1 1 auto;
       white-space: nowrap;
       text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .header-controls {
       width: auto;
+      min-width: 0;
       flex: 0 0 auto;
       flex-wrap: nowrap;
-      justify-content: flex-start;
+      justify-content: flex-end;
       gap: 0.5rem;
     }
-    @media (max-width: 700px) {
+    .mobile-overflow-wrap { display: none; position: relative; flex: 0 0 auto; }
+    .overflow-menu-btn {
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 50%;
+      color: #1B3A2D;
+      background: #EAF0EC;
+      font: 800 1.45rem/1 sans-serif;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .overflow-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 0.45rem);
+      right: 0;
+      width: min(210px, calc(100vw - 1rem));
+      padding: 0.35rem;
+      border: 1px solid rgba(27,58,45,0.12);
+      border-radius: 12px;
+      background: #FFFFFF;
+      box-shadow: 0 12px 30px rgba(27,58,45,0.22);
+      z-index: 10020;
+    }
+    .overflow-menu.is-open { display: block; }
+    .overflow-menu button {
+      width: 100%;
+      min-height: 44px;
+      padding: 0.65rem 0.8rem;
+      border: 0;
+      border-radius: 9px;
+      color: #1B3A2D;
+      background: transparent;
+      font: inherit;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+    }
+    .overflow-menu button:active { background: #EAF0EC; }
+    .section-navigation {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin: 0 0 1rem;
+    }
+    .section-back-btn {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.45rem 0.8rem;
+      border: 0;
+      border-radius: 10px;
+      background: #EAF0EC;
+      color: #1B3A2D;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .section-back-btn span { font-size: 1.35rem; line-height: 0.8; }
+    .section-navigation strong { font-size: 1.05rem; color: #1B3A2D; }
+    .drive-panel-navigation { flex: 1 0 100%; margin-bottom: 0; }
+    .container, .content, .tab-content, .card, .chart-card, .sync-bar {
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    /* Su smartphone e tablet compatti: titolo, valuta, Shop e menu restano nella larghezza disponibile. */
+    @media (max-width: 900px) {
       header {
-        padding: 0.65rem 0.75rem;
-        gap: 0.45rem;
+        padding: 0.55rem max(0.45rem, env(safe-area-inset-right, 0px)) 0.55rem max(0.45rem, env(safe-area-inset-left, 0px));
+        gap: 0.28rem;
       }
       header h1 {
-        font-size: 1.05rem;
+        flex: 1 1 auto;
+        font-size: clamp(0.72rem, 3.2vw, 1.15rem);
+        letter-spacing: -0.02em;
       }
-      .header-controls {
-        gap: 0.35rem;
-      }
+      .header-controls { gap: 0.22rem; }
       .currency-selector {
-        padding: 0.2rem;
-        gap: 0.1rem;
+        padding: 0.16rem;
+        gap: 0.06rem;
+        border-radius: 9px;
       }
       .currency-btn {
-        padding: 0.3rem 0.4rem;
-        font-size: 0.68rem;
+        padding: 0.28rem 0.3rem;
+        font-size: clamp(0.61rem, 1.9vw, 0.72rem);
+        border-radius: 7px;
       }
       .shop-header-btn {
-        padding: 0.4rem 0.65rem;
-        font-size: 0.72rem;
+        padding: 0.42rem 0.55rem;
+        font-size: clamp(0.66rem, 2vw, 0.76rem);
+        letter-spacing: 0;
       }
-      #googleLoginContainer,
-      #googleLoggedIn,
-      #localBackupSlot {
-        flex: 0 0 104px;
-        width: 104px;
-        min-width: 104px;
+      .desktop-header-action,
+      #newsBtn { display: none !important; }
+      .mobile-overflow-wrap { display: block; }
+      .overflow-menu-btn { width: 36px; height: 36px; }
+      .sync-bar {
+        margin-inline: 0;
+        padding: 0.55rem 0.7rem;
+        gap: 0.5rem;
+        overflow: hidden;
       }
-      #googleLoginContainer .google-drive-button,
-      #googleLoggedIn .google-drive-button,
-      #localBackupSlot .google-drive-button {
-        font-size: 0.72rem;
-        padding: 0.4rem 0.45rem !important;
-      }
+      .sync-status, .rate-info { min-width: 0; }
+      .rate-box { max-width: 100%; }
     }
-    @media (max-width: 360px) {
-      header h1 { font-size: 0.98rem; }
-      #googleLoginContainer,
-      #googleLoggedIn,
-      #localBackupSlot {
-        flex-basis: 96px;
-        width: 96px;
-        min-width: 96px;
-      }
+    @media (max-width: 340px) {
+      header { padding-left: 0.3rem; padding-right: 0.3rem; gap: 0.18rem; }
+      header h1 { font-size: 0.68rem; }
+      .header-controls { gap: 0.14rem; }
+      .currency-btn { padding-inline: 0.23rem; font-size: 0.58rem; }
+      .shop-header-btn { padding-inline: 0.42rem; font-size: 0.63rem; }
+      .overflow-menu-btn { width: 34px; height: 34px; }
     }
 
 </style>
@@ -1389,14 +1470,22 @@
           <button class="currency-btn" data-currency="CHF">CHF</button>
         </div>
         <button id="shopBtn" class="shop-header-btn">Shop</button>
-        <div id="googleLoginContainer" class="google-drive-slot" style="display: flex;">
+        <div id="googleLoginContainer" class="google-drive-slot desktop-header-action" style="display: flex;">
           <button id="googleSignIn" class="sync-btn google-drive-button" type="button">Google Drive</button>
         </div>
-        <div id="googleLoggedIn" class="google-drive-slot" style="display: none;">
+        <div id="googleLoggedIn" class="google-drive-slot desktop-header-action" style="display: none;">
           <button id="googleSignOut" class="sync-btn google-drive-button" type="button" aria-label="Google Drive collegato: tocca per scollegare" title="Google Drive collegato: tocca per scollegare">Google Drive</button>
         </div>
-        <div class="google-drive-slot" id="localBackupSlot">
+        <div class="google-drive-slot desktop-header-action" id="localBackupSlot">
           <button id="localBackupBtn" class="sync-btn google-drive-button" type="button">Backup</button>
+        </div>
+        <div class="mobile-overflow-wrap" id="mobileOverflowWrap">
+          <button id="overflowMenuBtn" class="overflow-menu-btn" type="button" aria-label="Apri menu" aria-expanded="false" aria-controls="overflowMenu">&#8942;</button>
+          <div id="overflowMenu" class="overflow-menu" role="menu" aria-hidden="true">
+            <button id="mobileBackupBtn" type="button" role="menuitem">Backup</button>
+            <button id="mobileDriveBtn" type="button" role="menuitem">Google Drive</button>
+            <button id="mobileNewsBtn" type="button" role="menuitem">Notizie</button>
+          </div>
         </div>
         <div id="localBackupModal" class="backup-modal" aria-hidden="true">
           <div class="backup-dialog" role="dialog" aria-modal="true" aria-labelledby="backupDialogTitle">
@@ -1467,7 +1556,7 @@
         </div>
 
         <div class="period-selector" id="periodSelector">
-            <button class="period-btn" data-period="1">1 giorno</button>
+            <button class="period-btn" data-period="1">24 ore</button>
             <button class="period-btn active" data-period="7">7 giorni</button>
             <button class="period-btn" data-period="30">30 giorni</button>
             <button class="period-btn" data-period="90">90 giorni</button>
@@ -1551,6 +1640,10 @@
         </div>
         <button class="export-btn" onclick="exportCSV()">Esporta CSV</button>
         <div class="sync-container" id="syncControls" style="display: none;">
+          <div class="section-navigation drive-panel-navigation">
+            <button class="section-back-btn" type="button" onclick="navigateAppBack()"><span aria-hidden="true">&#8249;</span> Indietro</button>
+            <strong>Google Drive</strong>
+          </div>
           <button class="sync-btn" onclick="syncToGoogleDrive()">Sincronizza su Drive</button>
           <button class="sync-btn" onclick="loadFromGoogleDrive()">Carica da Drive</button>
           <button class="sync-btn" onclick="disconnectGoogleDrive()">Scollega Drive</button>
@@ -1713,6 +1806,10 @@
       </div>
 
       <div class="tab-content" id="news">
+        <div class="section-navigation">
+          <button class="section-back-btn" type="button" onclick="navigateAppBack()"><span aria-hidden="true">&#8249;</span> Indietro</button>
+          <strong>Notizie</strong>
+        </div>
         <button class="news-refresh-btn" onclick="loadNews()">Aggiorna Notizie</button>
         <div id="newsContainer" class="news-container">
           <div class="news-loading">Tocca "Aggiorna" per caricare le ultime notizie sui metalli preziosi.</div>
@@ -1720,6 +1817,10 @@
       </div>
 
       <div class="tab-content" id="shop">
+        <div class="section-navigation">
+          <button class="section-back-btn" type="button" onclick="navigateAppBack()"><span aria-hidden="true">&#8249;</span> Indietro</button>
+          <strong>Shop</strong>
+        </div>
         <!-- Shop Category List -->
         <div id="shopCategoryList" class="shop-cat-list">
           <div class="shop-cat-card" data-shop-cat="0" onclick="showShopCategory(0)">
@@ -1750,7 +1851,7 @@
         </div>
         <!-- Shop Category Detail (hidden initially) -->
         <div id="shopCategoryDetail" style="display:none;">
-          <button type="button" class="shop-back-btn" onclick="resetShopToCategories()">
+          <button type="button" class="shop-back-btn" onclick="navigateAppBack()">
             <span class="shop-back-arrow">&#8249;</span> Tutte le categorie
           </button>
           <div class="shop-cat-detail-section" data-shop-detail="0" style="display:none;">
@@ -2089,8 +2190,134 @@
       silverPurity: 999,
       lastUpdate: null,
       lastUpdateOk: false,
-      syncBusy: false
+      syncBusy: false,
+      marketHistoryCache: {},
+      marketHistoryLoading: {},
+      marketHistoryErrors: {}
     };
+
+
+    // Storico professionale Gold API tramite servizio Vercel: la chiave resta solo sul server.
+    const MARKET_HISTORY_ENDPOINT = 'https://oro-portfolio-seven.vercel.app/api/market-history';
+    const MARKET_PERIOD_CODES = Object.freeze({ '1': '24h', '7': '7d', '30': '30d', '90': '90d', '365': '1y', 'all': 'all' });
+    const MARKET_CACHE_KEY = 'portafoglioAssetsMarketHistoryV1';
+    const MARKET_CACHE_TTL_MS = Object.freeze({
+      '24h': 5 * 60 * 1000,
+      '7d': 15 * 60 * 1000,
+      '30d': 30 * 60 * 1000,
+      '90d': 6 * 60 * 60 * 1000,
+      '1y': 6 * 60 * 60 * 1000,
+      'all': 24 * 60 * 60 * 1000
+    });
+
+    function marketPeriodCode(period) {
+      return MARKET_PERIOD_CODES[String(period)] || '7d';
+    }
+
+    function validMarketPoint(point) {
+      return point && Number.isFinite(Number(point.ts)) &&
+        ((Number.isFinite(Number(point.goldUsd)) && Number(point.goldUsd) > 0) ||
+         (Number.isFinite(Number(point.silverUsd)) && Number(point.silverUsd) > 0));
+    }
+
+    function loadMarketHistoryCache() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(MARKET_CACHE_KEY) || '{}');
+        if (saved && typeof saved === 'object' && !Array.isArray(saved)) state.marketHistoryCache = saved;
+      } catch (error) {
+        state.marketHistoryCache = {};
+        console.log('Cache storico non disponibile:', error);
+      }
+    }
+
+    function saveMarketHistoryCache() {
+      try {
+        localStorage.setItem(MARKET_CACHE_KEY, JSON.stringify(state.marketHistoryCache));
+      } catch (error) {
+        console.log('Salvataggio cache storico non disponibile:', error);
+      }
+    }
+
+    function marketCoverageIsValid(code, payload, points) {
+      if (!Array.isArray(points) || points.length < 2) return false;
+      const span = points[points.length - 1].ts - points[0].ts;
+      if (code === 'all') return points.length >= 600 && span >= 49.8 * 365.2425 * 24 * 60 * 60 * 1000;
+      if (code === '24h') {
+        const step = 5 * 60 * 1000;
+        if (points.length !== 289 || span !== 24 * 60 * 60 * 1000) return false;
+        if (points[0].ts !== Number(payload.requestedStart) || points[points.length - 1].ts !== Number(payload.requestedEnd)) return false;
+        if (!points.every(function(point, index) { return index === 0 || point.ts - points[index - 1].ts === step; })) return false;
+      }
+      const expected = { '24h': 24, '7d': 7 * 24, '30d': 30 * 24, '90d': 90 * 24, '1y': 365 * 24 }[code];
+      return Number.isFinite(expected) && span >= (expected - 0.1) * 60 * 60 * 1000 &&
+        Number(payload.requestedEnd) - Number(payload.requestedStart) >= (expected - 0.1) * 60 * 60 * 1000;
+    }
+
+    function formatMarketTimestamp(ts, code) {
+      const date = new Date(ts);
+      if (code === '24h') {
+        return date.toLocaleString('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', ' ·');
+      }
+      if (code === '7d' || code === '30d') {
+        return date.toLocaleString('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', ' ·');
+      }
+      if (code === '90d') return date.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
+      if (code === '1y') return date.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
+      return date.toLocaleDateString('it-IT', { month: 'short', year: 'numeric' });
+    }
+
+    async function loadMarketHistory(period, force) {
+      const code = marketPeriodCode(period);
+      const cached = state.marketHistoryCache[code];
+      const ttl = MARKET_CACHE_TTL_MS[code] || 15 * 60 * 1000;
+      if (!force && cached && Date.now() - Number(cached.fetchedAt || 0) < ttl) return cached;
+      if (state.marketHistoryLoading[code]) return state.marketHistoryLoading[code];
+
+      const task = (async function () {
+        try {
+          const suffix = force ? '&refresh=' + Date.now() : '';
+          const response = await fetch(MARKET_HISTORY_ENDPOINT + '?period=' + encodeURIComponent(code) + suffix, { cache: 'no-store', mode: 'cors' });
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          const payload = await response.json();
+          const points = (Array.isArray(payload.points) ? payload.points : [])
+            .filter(validMarketPoint)
+            .map(function (point) {
+              return {
+                ts: Number(point.ts),
+                goldUsd: Number.isFinite(Number(point.goldUsd)) ? Number(point.goldUsd) : null,
+                silverUsd: Number.isFinite(Number(point.silverUsd)) ? Number(point.silverUsd) : null
+              };
+            })
+            .sort(function (a, b) { return a.ts - b.ts; })
+            .filter(function (point, index, rows) { return index === 0 || point.ts !== rows[index - 1].ts; });
+
+          if (payload.period !== code || !marketCoverageIsValid(code, payload, points)) throw new Error('Copertura storica non valida');
+          state.marketHistoryCache[code] = {
+            fetchedAt: Date.now(),
+            resolution: payload.resolution,
+            requestedStart: Number(payload.requestedStart),
+            requestedEnd: Number(payload.requestedEnd),
+            points: points
+          };
+          state.marketHistoryErrors[code] = false;
+          saveMarketHistoryCache();
+          updateChart();
+          drawAndamentoSparkline();
+          return state.marketHistoryCache[code];
+        } catch (error) {
+          state.marketHistoryErrors[code] = true;
+          console.log('Storico Gold API non disponibile:', error);
+          updateChart();
+          drawAndamentoSparkline();
+          return null;
+        } finally {
+          delete state.marketHistoryLoading[code];
+        }
+      })();
+
+      state.marketHistoryLoading[code] = task;
+      return task;
+    }
 
     // Fetch real prices e aggiorna storico
     async function fetchPrices() {
@@ -3088,88 +3315,20 @@
     }
 
     function getChartData() {
-      const period = state.selectedPeriod;
-      const now = new Date();
-      const todayKey = localDateKey(now);
-
-      // Storico giornaliero indicizzato per data (una sola chiusura per giorno).
-      const byDate = {};
-      state.priceHistory.forEach(h => {
-        if (!h || !h.date) return;
-        if (h.goldUsd == null && h.gold == null && h.silverUsd == null && h.silver == null) return;
-        byDate[String(h.date).slice(0, 10)] = h;
-      });
-      const dateKeys = Object.keys(byDate).sort();
-
-      // ===== 1 giorno: andamento intraday di oggi =====
-      if (period === 1) {
-        const startTs = calendarPeriodStart(1, now).getTime();
-        const pts = state.intradayHistory
-          .filter(p => p.ts >= startTs && (p.goldUsd != null || p.silverUsd != null))
-          .slice()
-          .sort((a, b) => a.ts - b.ts);
-        const live = currentUsdPoint();
-        if (live.goldUsd != null || live.silverUsd != null) {
-          const lastPt = pts[pts.length - 1];
-          if (!lastPt || Date.now() - lastPt.ts > 60 * 1000) pts.push({ ts: Date.now(), goldUsd: live.goldUsd, silverUsd: live.silverUsd });
-        }
-        const labels = pts.map(p => {
-          const d = new Date(p.ts);
-          return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-        });
-        // Punto di partenza: ultima chiusura giornaliera precedente a oggi.
-        const prevKey = dateKeys.filter(k => k < todayKey).pop();
-        if (prevKey) {
-          labels.unshift('Chius. prec.');
-          pts.unshift(byDate[prevKey]);
-        }
-        if (pts.length === 0) return { labels: ['Nessun dato'], data: [{ gold: null, silver: null }] };
-        return { labels, data: pts.map(pointToChfPerG) };
+      const code = marketPeriodCode(state.selectedPeriod);
+      const cached = state.marketHistoryCache[code];
+      if (!cached || !Array.isArray(cached.points) || cached.points.length < 2) {
+        const label = state.marketHistoryErrors[code] ? 'Dati non disponibili' : 'Caricamento dati…';
+        return { labels: [label], data: [{ ts: null, gold: null, silver: null }], resolution: null };
       }
-
-      // ===== Tutto: tutte le chiusure giornaliere disponibili + oggi =====
-      if (period === 'all') {
-        const pts = dateKeys.filter(k => k < todayKey).map(k => byDate[k]);
-        const live = currentUsdPoint();
-        if (live.goldUsd != null || live.silverUsd != null) pts.push({ date: todayKey, goldUsd: live.goldUsd, silverUsd: live.silverUsd });
-        else if (byDate[todayKey]) pts.push(byDate[todayKey]);
-        if (pts.length === 0) return { labels: ['Nessun dato'], data: [{ gold: null, silver: null }] };
-        const labels = pts.map(p => localNoonFromDate(p.date).toLocaleDateString('it-IT', { month: 'short', year: 'numeric' }));
-        return { labels, data: pts.map(pointToChfPerG) };
-      }
-
-      // ===== 7 / 30 / 90 / 365 giorni: esattamente un punto per giorno di calendario =====
-      const days = Number(period);
-      const start = calendarPeriodStart(days, now);
-      const startKey = localDateKey(start);
-      // Valore di partenza per i giorni senza quotazione (weekend/festivi): ultima chiusura nota.
-      let carry = null;
-      const prevKeys = dateKeys.filter(k => k < startKey);
-      if (prevKeys.length) carry = byDate[prevKeys[prevKeys.length - 1]];
-
-      const pts = [];
-      const labels = [];
-      const cursor = new Date(start);
-      for (let i = 0; i < days; i++) {
-        const key = localDateKey(cursor);
-        let p = null;
-        if (key === todayKey) {
-          const live = currentUsdPoint();
-          if (live.goldUsd != null || live.silverUsd != null) p = { date: key, goldUsd: live.goldUsd, silverUsd: live.silverUsd };
-          else if (byDate[key]) p = byDate[key];
-        } else if (byDate[key]) {
-          p = byDate[key];
-        }
-        if (p) carry = p;
-        pts.push(carry ? Object.assign({}, carry, { date: key }) : { date: key, goldUsd: null, silverUsd: null });
-        if (days <= 7) labels.push(cursor.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' }));
-        else labels.push(cursor.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }));
-        cursor.setDate(cursor.getDate() + 1);
-      }
-      if (!pts.some(p => p.goldUsd != null || p.gold != null || p.silverUsd != null || p.silver != null)) {
-        return { labels: ['Nessun dato'], data: [{ gold: null, silver: null }] };
-      }
-      return { labels, data: pts.map(pointToChfPerG) };
+      const points = cached.points.filter(validMarketPoint).slice().sort(function (a, b) { return a.ts - b.ts; });
+      return {
+        labels: points.map(function (point) { return formatMarketTimestamp(point.ts, code); }),
+        data: points.map(pointToChfPerG),
+        resolution: cached.resolution,
+        requestedStart: cached.requestedStart,
+        requestedEnd: cached.requestedEnd
+      };
     }
 
     // Plugin: mirino interattivo (crosshair) al tocco/hover
@@ -3294,6 +3453,7 @@
       const chartData = getChartData();
       const currSym = state.currentCurrency === 'EUR' ? '\u20AC' : state.currentCurrency === 'USD' ? '$' : 'CHF';
       const currRate = (state.currentCurrency === 'CHF') ? 1 : (state.exchangeRates[state.currentCurrency] || 1);
+      const xTickLimit = state.selectedPeriod === 1 ? 7 : state.selectedPeriod === 7 ? 8 : state.selectedPeriod === 30 ? 7 : 6;
 
       // Oro Chart — area GoldAvenue + colori trend + pallino pulsante
       const goldCtx = document.getElementById('goldChart')?.getContext('2d');
@@ -3344,7 +3504,7 @@
               },
               scales: {
                 y: { ticks: { color: '#9aa5b4', font: { size: 11 }, padding: 8 }, grid: { color: 'rgba(160,175,195,0.2)', lineWidth: 1, drawTicks: false }, border: { display: false } },
-                x: { ticks: { color: '#9aa5b4', maxRotation: 0, font: { size: 11 }, padding: 6 }, grid: { display: false }, border: { display: false } }
+                x: { ticks: { color: '#9aa5b4', autoSkip: true, maxTicksLimit: xTickLimit, maxRotation: 0, font: { size: 11 }, padding: 6 }, grid: { display: false }, border: { display: false } }
               }
             }
           });
@@ -3399,7 +3559,7 @@
               },
               scales: {
                 y: { ticks: { color: '#9aa5b4', font: { size: 11 }, padding: 8 }, grid: { color: 'rgba(160,175,195,0.2)', lineWidth: 1, drawTicks: false }, border: { display: false } },
-                x: { ticks: { color: '#9aa5b4', maxRotation: 0, font: { size: 11 }, padding: 6 }, grid: { display: false }, border: { display: false } }
+                x: { ticks: { color: '#9aa5b4', autoSkip: true, maxTicksLimit: xTickLimit, maxRotation: 0, font: { size: 11 }, padding: 6 }, grid: { display: false }, border: { display: false } }
               }
             }
           });
@@ -4201,19 +4361,86 @@
     setupHistoryLongPress();
 
 
-    // Navigazione fra pagine dedicate
-    function showAppTab(tab) {
+    // Navigazione interna: supporta freccia, gesto laterale e tasto Indietro Android.
+    function activeAppTab() {
+      var current = document.querySelector('.tab-content.active');
+      return current ? current.id : 'home';
+    }
+
+    function setOverflowMenu(open) {
+      var menu = document.getElementById('overflowMenu');
+      var button = document.getElementById('overflowMenuBtn');
+      if (!menu || !button) return;
+      menu.classList.toggle('is-open', !!open);
+      menu.setAttribute('aria-hidden', open ? 'false' : 'true');
+      button.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function closeOverflowMenu() { setOverflowMenu(false); }
+
+    function closeTransientUi() {
+      var menu = document.getElementById('overflowMenu');
+      if (menu && menu.classList.contains('is-open')) { closeOverflowMenu(); return true; }
+      var backup = document.getElementById('localBackupModal');
+      if (backup && backup.classList.contains('is-open')) { closeLocalBackupMenu(); return true; }
+      var detail = document.getElementById('detailModal');
+      if (detail && detail.classList.contains('open')) { closeDetail(); return true; }
+      var watchDetail = document.getElementById('watchDetailModal');
+      if (watchDetail && watchDetail.classList.contains('open')) { closeWatchDetail(); return true; }
+      var lightbox = document.getElementById('lightbox');
+      if (lightbox && lightbox.classList.contains('open')) { closeLightbox(); return true; }
+      return false;
+    }
+
+    function renderAppTab(tab, options) {
       var el = document.getElementById(tab);
-      if (!el) return;
+      if (!el || !el.classList.contains('tab-content')) return false;
+      closeOverflowMenu();
       document.querySelectorAll('.bottom-nav-btn').forEach(function(b) {
         b.classList.toggle('active', b.dataset.tab === tab);
       });
       document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
       el.classList.add('active');
+      if (tab === 'shop' && !(options && options.preserveShopDetail)) resetShopToCategories();
       if (tab === 'news') loadNews();
       if (tab === 'home' || tab === 'overview') updateUI();
       window.scrollTo(0, 0);
+      return true;
     }
+
+    function appHistoryUrl(tab, shopDetail) {
+      var suffix = shopDetail === null || shopDetail === undefined ? tab : 'shop-' + shopDetail;
+      return window.location.pathname + window.location.search + '#view=' + encodeURIComponent(suffix);
+    }
+
+    function showAppTab(tab, options) {
+      options = options || {};
+      var previousTab = activeAppTab();
+      if (!renderAppTab(tab, options)) return;
+      if (options.fromHistory) return;
+      var nextState = { portafoglioApp: true, tab: tab, shopDetail: null };
+      var sameView = previousTab === tab && history.state && history.state.portafoglioApp && history.state.tab === tab && history.state.shopDetail == null;
+      if (options.replace) history.replaceState(nextState, '', appHistoryUrl(tab, null));
+      else if (!sameView) history.pushState(nextState, '', appHistoryUrl(tab, null));
+    }
+
+    function navigateAppBack() {
+      if (closeTransientUi()) return true;
+      var detail = document.getElementById('shopCategoryDetail');
+      if (detail && detail.style.display !== 'none' && activeAppTab() === 'shop') {
+        if (window.location.hash.indexOf('#view=shop-') === 0) history.back();
+        else resetShopToCategories();
+        return true;
+      }
+      if (activeAppTab() !== 'home') {
+        if (window.location.hash.indexOf('#view=') === 0) history.back();
+        else showAppTab('home', { replace: true });
+        return true;
+      }
+      return false;
+    }
+    window.navigateAppBack = navigateAppBack;
+    window.portafoglioHandleBack = navigateAppBack;
 
     document.querySelectorAll('.bottom-nav-btn').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
@@ -4223,29 +4450,69 @@
       });
     });
 
-    // Shop button in header
     document.getElementById('shopBtn').addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
-      document.querySelectorAll('.bottom-nav-btn').forEach(function(b) { b.classList.remove('active'); });
-      document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
-      var shopEl = document.getElementById('shop');
-      if (shopEl) shopEl.classList.add('active');
-      resetShopToCategories();
-      window.scrollTo(0, 0);
+      showAppTab('shop');
     });
 
-    // Notizie button in sync-bar
     document.getElementById('newsBtn').addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
-      document.querySelectorAll('.bottom-nav-btn').forEach(function(b) { b.classList.remove('active'); });
-      document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
-      var newsEl = document.getElementById('news');
-      if (newsEl) newsEl.classList.add('active');
-      loadNews();
-      window.scrollTo(0, 0);
+      showAppTab('news');
     });
+
+    document.getElementById('overflowMenuBtn')?.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var menu = document.getElementById('overflowMenu');
+      setOverflowMenu(!(menu && menu.classList.contains('is-open')));
+    });
+    document.getElementById('mobileBackupBtn')?.addEventListener('click', function() {
+      closeOverflowMenu();
+      openLocalBackupMenu();
+    });
+    document.getElementById('mobileNewsBtn')?.addEventListener('click', function() {
+      closeOverflowMenu();
+      showAppTab('news');
+    });
+    document.getElementById('mobileDriveBtn')?.addEventListener('click', function() {
+      closeOverflowMenu();
+      if (googleAccessToken) showAppTab('overview');
+      else requestGoogleDriveAccess();
+    });
+    document.addEventListener('click', function(e) {
+      var wrap = document.getElementById('mobileOverflowWrap');
+      if (wrap && !wrap.contains(e.target)) closeOverflowMenu();
+    });
+
+    window.addEventListener('popstate', function(event) {
+      var view = event.state && event.state.portafoglioApp ? event.state : { tab: 'home', shopDetail: null };
+      var tab = view.tab || 'home';
+      renderAppTab(tab, { fromHistory: true, preserveShopDetail: view.shopDetail != null });
+      if (tab === 'shop' && view.shopDetail != null) showShopCategory(Number(view.shopDetail), { fromHistory: true });
+      else if (tab === 'shop') resetShopToCategories();
+      history.replaceState({ portafoglioApp: true, tab: tab, shopDetail: view.shopDetail ?? null }, '', appHistoryUrl(tab, view.shopDetail));
+    });
+
+    (function setupBackSwipe() {
+      var startX = 0, startY = 0, tracking = false;
+      document.addEventListener('touchstart', function(e) {
+        if (!e.touches || e.touches.length !== 1) return;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        tracking = startX <= 28;
+      }, { passive: true });
+      document.addEventListener('touchend', function(e) {
+        if (!tracking || !e.changedTouches || !e.changedTouches.length) return;
+        tracking = false;
+        var dx = e.changedTouches[0].clientX - startX;
+        var dy = Math.abs(e.changedTouches[0].clientY - startY);
+        if (dx >= 72 && dy <= 55) navigateAppBack();
+      }, { passive: true });
+    })();
+
+    history.replaceState({ portafoglioApp: true, tab: 'home', shopDetail: null }, '', appHistoryUrl('home', null));
 
     // Currency switching
     document.querySelectorAll('.currency-btn').forEach(btn => {
@@ -4266,6 +4533,7 @@
         state.selectedPeriod = e.target.dataset.period === 'all' ? 'all' : parseInt(e.target.dataset.period);
         updateChart();
         drawAndamentoSparkline(); // la mini-linea Andamento segue il periodo selezionato
+        loadMarketHistory(state.selectedPeriod, false);
       });
     });
 
@@ -4299,9 +4567,11 @@
       const loginEl = document.getElementById('googleLoginContainer');
       const loggedEl = document.getElementById('googleLoggedIn');
       const controlsEl = document.getElementById('syncControls');
+      const mobileDriveEl = document.getElementById('mobileDriveBtn');
       if (loginEl) loginEl.style.display = connected ? 'none' : 'flex';
       if (loggedEl) loggedEl.style.display = connected ? 'flex' : 'none';
       if (controlsEl) controlsEl.style.display = connected ? 'flex' : 'none';
+      if (mobileDriveEl) mobileDriveEl.textContent = connected ? 'Google Drive (collegato)' : 'Google Drive';
     }
 
     function requestGoogleDriveAccess() {
@@ -4317,6 +4587,7 @@
         }
         googleAccessToken = response.access_token;
         setDriveConnected(true);
+        showAppTab('overview');
       };
       googleTokenClient.requestAccessToken({ prompt: '' });
     }
@@ -4554,20 +4825,38 @@
     loadMeta();
     loadPriceHistory();
     loadIntradayHistory();
+    loadMarketHistoryCache();
     onMetalChange();
     populateWatchBrandSelects();
     (function () {
       const rb = document.getElementById('refreshBtn');
-      if (rb) rb.addEventListener('click', function () { fetchPrices(); });
+      if (rb) rb.addEventListener('click', function () {
+        fetchPrices();
+        loadMarketHistory(state.selectedPeriod, true);
+      });
     })();
     fetchPrices();
-    syncLbmaHistory(false); // Completa lo storico giornaliero con i fixing ufficiali LBMA
-    setInterval(fetchPrices, 5 * 60 * 1000); // Aggiorna ogni 5 minuti
+    syncLbmaHistory(false); // Mantiene una copia giornaliera locale di riserva
+    setInterval(function () {
+      fetchPrices();
+      loadMarketHistory(state.selectedPeriod, false);
+    }, 5 * 60 * 1000);
     setInterval(function () { syncLbmaHistory(false); }, 60 * 60 * 1000);
+    let lastResumeMarketRefresh = 0;
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) return;
+      const now = Date.now();
+      if (now - lastResumeMarketRefresh < 30 * 1000) return;
+      lastResumeMarketRefresh = now;
+      fetchPrices();
+      loadMarketHistory(state.selectedPeriod, true);
+    });
     updateUI();
+    loadMarketHistory(state.selectedPeriod, false);
 
     // ── Shop Category Sub-page System ──────────────────
-    function showShopCategory(idx) {
+    function showShopCategory(idx, options) {
+      options = options || {};
       var catList = document.getElementById('shopCategoryList');
       var catDetail = document.getElementById('shopCategoryDetail');
       if (!catList || !catDetail) return;
@@ -4580,6 +4869,11 @@
       }
       // Header fisso: scrolla in cima alla pagina
       window.scrollTo(0, 0);
+      if (!options.fromHistory) {
+        var nextState = { portafoglioApp: true, tab: 'shop', shopDetail: Number(idx) };
+        var sameDetail = history.state && history.state.portafoglioApp && history.state.tab === 'shop' && history.state.shopDetail != null && Number(history.state.shopDetail) === Number(idx);
+        if (!sameDetail) history.pushState(nextState, '', appHistoryUrl('shop', Number(idx)));
+      }
     }
 
     function resetShopToCategories() {
