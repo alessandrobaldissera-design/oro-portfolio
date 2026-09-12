@@ -1428,7 +1428,7 @@
     /* Su smartphone e tablet compatti: titolo, valuta, Shop e menu restano nella larghezza disponibile. */
     @media (max-width: 900px) {
       header {
-        padding: 0.55rem max(0.45rem, env(safe-area-inset-right, 0px)) 0.55rem max(0.45rem, env(safe-area-inset-left, 0px));
+        padding: 0.55rem max(1.1rem, env(safe-area-inset-right, 0px)) 0.55rem max(1.1rem, env(safe-area-inset-left, 0px));
         gap: 0.28rem;
       }
       header h1 {
@@ -1438,18 +1438,18 @@
       }
       .header-controls { gap: 0.22rem; }
       .currency-selector {
-        padding: 0.16rem;
-        gap: 0.06rem;
-        border-radius: 9px;
+        padding: 0.2rem;
+        gap: 0.08rem;
+        border-radius: 10px;
       }
       .currency-btn {
-        padding: 0.28rem 0.3rem;
-        font-size: clamp(0.61rem, 1.9vw, 0.72rem);
-        border-radius: 7px;
+        padding: 0.36rem 0.42rem;
+        font-size: clamp(0.68rem, 2.1vw, 0.8rem);
+        border-radius: 8px;
       }
       .shop-header-btn {
-        padding: 0.42rem 0.55rem;
-        font-size: clamp(0.66rem, 2vw, 0.76rem);
+        padding: 0.48rem 0.72rem;
+        font-size: clamp(0.74rem, 2.15vw, 0.84rem);
         letter-spacing: 0;
       }
       .desktop-header-action,
@@ -1457,8 +1457,9 @@
       .mobile-overflow-wrap { display: block; }
       .overflow-menu-btn { width: 36px; height: 36px; }
       .sync-bar {
-        margin-inline: 0;
-        padding: 0.55rem 0.7rem;
+        width: auto;
+        margin-inline: max(1.1rem, env(safe-area-inset-left, 0px));
+        padding: 0.55rem 0;
         gap: 0.5rem;
         overflow: hidden;
       }
@@ -1466,14 +1467,60 @@
       .rate-box { max-width: 100%; }
     }
     @media (max-width: 340px) {
-      header { padding-left: 0.3rem; padding-right: 0.3rem; gap: 0.18rem; }
+      header { padding-left: 0.65rem; padding-right: 0.65rem; gap: 0.16rem; }
       header h1 { font-size: 0.68rem; }
-      .header-controls { gap: 0.14rem; }
-      .currency-btn { padding-inline: 0.23rem; font-size: 0.58rem; }
-      .shop-header-btn { padding-inline: 0.42rem; font-size: 0.63rem; }
+      .header-controls { gap: 0.12rem; }
+      .currency-btn { padding-inline: 0.27rem; font-size: 0.61rem; }
+      .shop-header-btn { padding-inline: 0.46rem; font-size: 0.66rem; }
+      .sync-bar { margin-inline: 0.65rem; }
       .overflow-menu-btn { width: 34px; height: 34px; }
     }
 
+
+    /* ===== Privacy visuale, filtri e metadati (nessuna modifica a grafici/layout) ===== */
+    .privacy-slot { flex-basis: 132px; width: 132px; min-width: 132px; }
+    .privacy-toggle-btn[aria-pressed="true"] { background: #1B3A2D; color: #fff; }
+    /* Solo mascheramento visuale: i dati restano nel DOM/localStorage e NON sono cifrati. */
+    body.privacy-values-hidden [data-private-value="true"] {
+      color: transparent !important;
+      text-shadow: 0 0 9px rgba(27,58,45,0.72) !important;
+      user-select: none;
+    }
+    .compact-filters { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin:-0.45rem 0 0.9rem; }
+    .compact-filter { width:100%; min-width:0; padding:0.55rem 0.7rem; border:1px solid rgba(27,58,45,0.22); border-radius:10px; background:#fff; color:#1B3A2D; font:inherit; font-size:0.82rem; }
+    .metadata-row { display:flex; flex-wrap:wrap; gap:0.3rem; margin:0.35rem 0; }
+    .metadata-chip { display:inline-block; max-width:100%; overflow-wrap:anywhere; padding:0.15rem 0.45rem; border-radius:999px; background:rgba(27,58,45,0.08); color:#4f6659; font-size:0.74rem; }
+    .metric-label { font-size:0.76rem; color:#617269; }
+    .document-note { color:#687a70; font-size:0.78rem; line-height:1.35; margin-top:0.35rem; }
+    .document-list { display:flex; flex-direction:column; gap:0.5rem; }
+    .document-item { display:flex; align-items:center; justify-content:space-between; gap:0.6rem; padding:0.55rem; border:1px solid rgba(27,58,45,0.15); border-radius:8px; background:#fff; min-width:0; }
+    .document-name { min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.84rem; }
+    .document-actions { display:flex; flex:0 0 auto; gap:0.35rem; }
+    .document-actions button { border:1px solid rgba(27,58,45,0.25); border-radius:6px; background:#eef2ef; color:#1B3A2D; padding:0.35rem 0.5rem; cursor:pointer; font:inherit; font-size:0.75rem; }
+    @media (max-width:900px) { .privacy-slot { display:none !important; } }
+    @media (max-width:420px) {
+      .compact-filters { grid-template-columns:1fr; }
+      .document-item { align-items:flex-start; flex-direction:column; }
+      .document-actions { width:100%; flex-wrap:wrap; }
+    }
+
+    /* Margini laterali blindati: solo intestazione e barra Dati live */
+    header {
+      padding-left: 1.1rem;
+      padding-right: 1.1rem;
+    }
+    .sync-bar {
+      margin-left: 1.1rem;
+      margin-right: 1.1rem;
+    }
+    @media (min-width: 601px) and (max-width: 768px) {
+      header { padding-left: 1.5rem; padding-right: 1.5rem; }
+      .sync-bar { margin-left: 1.5rem; margin-right: 1.5rem; }
+    }
+    @media (max-width: 600px) {
+      header { padding-left: 0.75rem; padding-right: 0.75rem; }
+      .sync-bar { margin-left: 0.75rem; margin-right: 0.75rem; }
+    }
 </style>
 
 </head>
@@ -1497,9 +1544,13 @@
         <div class="google-drive-slot desktop-header-action" id="localBackupSlot">
           <button id="localBackupBtn" class="sync-btn google-drive-button" type="button">Backup</button>
         </div>
+        <div class="google-drive-slot desktop-header-action privacy-slot">
+          <button id="privacyToggleBtn" class="sync-btn google-drive-button privacy-toggle-btn" type="button" aria-pressed="false" title="Mascheramento solo visuale; i dati non sono cifrati">Nascondi valori</button>
+        </div>
         <div class="mobile-overflow-wrap" id="mobileOverflowWrap">
           <button id="overflowMenuBtn" class="overflow-menu-btn" type="button" aria-label="Apri menu" aria-expanded="false" aria-controls="overflowMenu">&#8942;</button>
           <div id="overflowMenu" class="overflow-menu" role="menu" aria-hidden="true">
+            <button id="mobilePrivacyBtn" type="button" role="menuitem" aria-pressed="false" title="Mascheramento solo visuale; i dati non sono cifrati">Nascondi valori</button>
             <button id="mobileBackupBtn" type="button" role="menuitem">Backup</button>
             <button id="mobileDriveBtn" type="button" role="menuitem">Google Drive</button>
             <button id="mobileNewsBtn" type="button" role="menuitem">Notizie</button>
@@ -1716,6 +1767,14 @@
             <input type="date" id="date" required>
           </div>
           <div class="form-group">
+            <label>Tag <span style="color:#888;font-weight:400;">(facoltativi, separati da virgola)</span></label>
+            <input type="text" id="tags" placeholder="Es. collezione, regalo, investimento">
+          </div>
+          <div class="form-group">
+            <label>Luogo di custodia <span style="color:#888;font-weight:400;">(facoltativo)</span></label>
+            <input type="text" id="storageLocation" placeholder="Es. Cassaforte, cassetta di sicurezza">
+          </div>
+          <div class="form-group">
             <label>Foto articolo (fotocamera o galleria)</label>
             <label class="photo-input-label">
               &#128247; Aggiungi foto
@@ -1731,6 +1790,10 @@
         <div class="app-search-wrap">
           <svg class="app-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="text" class="app-search-input" id="historySearch" placeholder="Cerca nei tuoi asset...">
+        </div>
+        <div class="compact-filters" aria-label="Filtri storico">
+          <select id="historyTagFilter" class="compact-filter" aria-label="Filtra storico per tag"><option value="">Tutti i tag</option></select>
+          <select id="historyLocationFilter" class="compact-filter" aria-label="Filtra storico per luogo"><option value="">Tutti i luoghi</option></select>
         </div>
         <div id="historyListContainer"></div>
       </div>
@@ -1753,6 +1816,10 @@
         <div class="app-search-wrap">
           <svg class="app-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="text" class="app-search-input" id="watchesSearch" placeholder="Cerca nei tuoi orologi...">
+        </div>
+        <div class="compact-filters" aria-label="Filtri orologi">
+          <select id="watchesTagFilter" class="compact-filter" aria-label="Filtra orologi per tag"><option value="">Tutti i tag</option></select>
+          <select id="watchesLocationFilter" class="compact-filter" aria-label="Filtra orologi per luogo"><option value="">Tutti i luoghi</option></select>
         </div>
 
         <button class="btn add-watch-btn" type="button" onclick="toggleWatchForm()">Aggiungi Orologio</button>
@@ -1805,8 +1872,31 @@
             <input type="date" id="watchMarketValueDate" required>
           </div>
           <div class="form-group">
+            <label>Corredo</label>
+            <select id="watchSetContents">
+              <option value="">Non specificato</option><option value="Completo">Completo (scatola e documenti)</option>
+              <option value="Solo scatola">Solo scatola</option><option value="Solo documenti">Solo documenti</option>
+              <option value="Senza corredo">Senza corredo</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Valore assicurativo <span style="color:#888;font-weight:400;">(facoltativo; escluso dai calcoli)</span></label>
+            <div style="display:flex;gap:0.5rem;">
+              <input type="number" id="watchInsuranceValue" min="0" step="0.01" style="flex:1;">
+              <select id="watchInsuranceCurrency" style="width:90px;padding:0.5rem;border-radius:6px;"><option value="CHF">CHF</option><option value="EUR">EUR</option><option value="USD">USD</option></select>
+            </div>
+          </div>
+          <div class="form-group"><label>Manutenzioni <span style="color:#888;font-weight:400;">(facoltativo)</span></label><textarea id="watchMaintenance" rows="3" placeholder="Es. revisione, data, laboratorio, costo..."></textarea></div>
+          <div class="form-group"><label>Tag <span style="color:#888;font-weight:400;">(facoltativi, separati da virgola)</span></label><input type="text" id="watchTags" placeholder="Es. sportivo, vintage, collezione"></div>
+          <div class="form-group"><label>Luogo di custodia <span style="color:#888;font-weight:400;">(facoltativo)</span></label><input type="text" id="watchStorageLocation" placeholder="Es. Cassaforte, cassetta di sicurezza"></div>
+          <div class="form-group">
+            <label>Documenti (PDF o immagini)</label>
+            <input type="file" id="watchDocuments" accept="application/pdf,image/*" multiple onchange="handleWatchDocumentSelect(this)">
+            <div id="watchDocumentStatus" class="document-note">Massimo 3 file, 1 MB ciascuno e 2 MB totali per orologio. Apertura, download e rimozione sono disponibili solo nel dettaglio.</div>
+          </div>
+          <div class="form-group">
             <label>Note</label>
-            <textarea id="watchNotes" rows="3" placeholder="Es. condizioni, scatola e documenti, provenienza..."></textarea>
+            <textarea id="watchNotes" rows="3" placeholder="Es. condizioni e provenienza..."></textarea>
           </div>
           <div class="form-group">
             <label>Foto orologio (fotocamera o galleria)</label>
@@ -2024,6 +2114,8 @@
         <label>Note</label>
         <textarea id="editNotes" rows="3" placeholder="Es. tiratura, provenienza, certificato, numero di serie..."></textarea>
       </div>
+      <div class="form-group"><label>Tag <span style="color:#888;font-weight:400;">(separati da virgola)</span></label><input type="text" id="editTags"></div>
+      <div class="form-group"><label>Luogo di custodia</label><input type="text" id="editStorageLocation"></div>
       <div class="form-group" id="editTypeGroup">
         <label>Tipologia</label>
         <select id="editItemType" onchange="onEditItemTypeChange()">
@@ -2132,6 +2224,17 @@
         <label>Data Ultimo Aggiornamento Valore</label>
         <input type="date" id="editWatchMarketValueDate">
       </div>
+      <div class="form-group"><label>Corredo</label><select id="editWatchSetContents"><option value="">Non specificato</option><option value="Completo">Completo (scatola e documenti)</option><option value="Solo scatola">Solo scatola</option><option value="Solo documenti">Solo documenti</option><option value="Senza corredo">Senza corredo</option></select></div>
+      <div class="form-group"><label>Valore assicurativo <span style="color:#888;font-weight:400;">(escluso dai calcoli)</span></label><div style="display:flex;gap:0.5rem;"><input type="number" id="editWatchInsuranceValue" min="0" step="0.01" style="flex:1;"><select id="editWatchInsuranceCurrency" style="width:90px;padding:0.5rem;border-radius:6px;"><option value="CHF">CHF</option><option value="EUR">EUR</option><option value="USD">USD</option></select></div></div>
+      <div class="form-group"><label>Manutenzioni</label><textarea id="editWatchMaintenance" rows="3"></textarea></div>
+      <div class="form-group"><label>Tag <span style="color:#888;font-weight:400;">(separati da virgola)</span></label><input type="text" id="editWatchTags"></div>
+      <div class="form-group"><label>Luogo di custodia</label><input type="text" id="editWatchStorageLocation"></div>
+      <div class="form-group">
+        <label>Documenti</label>
+        <div id="editWatchDocumentList" class="document-list"></div>
+        <button type="button" class="btn-secondary" style="margin-top:0.5rem;" onclick="editAddWatchDocuments()">Aggiungi documenti</button>
+        <div class="document-note">PDF o immagini; massimo 3 file, 1 MB ciascuno e 2 MB totali. I documenti sono salvati localmente e nel backup/Drive, non nel CSV.</div>
+      </div>
       <div class="form-group">
         <label>Note</label>
         <textarea id="editWatchNotes" rows="3"></textarea>
@@ -2213,7 +2316,9 @@
       marketHistoryLoading: {},
       marketHistoryErrors: {},
       marketHistoryRetryAt: {},
-      marketHistoryRetryCounts: {}
+      marketHistoryRetryCounts: {},
+      currentPriceConfirmed: { gold: false, silver: false },
+      privacyValuesHidden: localStorage.getItem('portafoglioAssetsPrivacyHidden') === '1' 
     };
 
 
@@ -2390,6 +2495,7 @@
       state.syncBusy = true;
       updateStatusIndicator();
       let fxOk = false, metalOk = false;
+      state.currentPriceConfirmed = { gold: false, silver: false };
       let usdToChf = state.exchangeRates.USD || 0.80;
       try {
         // 1) Tassi di cambio live (base USD) - fonte primaria: frankfurter.dev
@@ -2435,14 +2541,16 @@
           const silverData = await silverRes.json();
 
           let goldUsd = null, silverUsd = null;
-          if (goldData && goldData.price) {
-            goldUsd = goldData.price;
-            state.currentPrices.gold = (goldData.price * usdToChf) / OZ_TO_G;   // CHF/g
+          if (goldData && Number.isFinite(Number(goldData.price)) && Number(goldData.price) > 0) {
+            goldUsd = Number(goldData.price);
+            state.currentPrices.gold = (goldUsd * usdToChf) / OZ_TO_G;   // CHF/g
+            state.currentPriceConfirmed.gold = !!fxOk;
             metalOk = true;
           }
-          if (silverData && silverData.price) {
-            silverUsd = silverData.price;
-            state.currentPrices.silver = (silverData.price * usdToChf) / OZ_TO_G; // CHF/g
+          if (silverData && Number.isFinite(Number(silverData.price)) && Number(silverData.price) > 0) {
+            silverUsd = Number(silverData.price);
+            state.currentPrices.silver = (silverUsd * usdToChf) / OZ_TO_G; // CHF/g
+            state.currentPriceConfirmed.silver = !!fxOk;
             metalOk = true;
           }
 
@@ -2637,13 +2745,26 @@
 
     // Migra i record vecchi: prima "price" era il prezzo AL GRAMMO, ora e' il TOTALE
     function migratePositions(arr) {
-      return (arr || []).map(function (p) {
+      return (Array.isArray(arr) ? arr : []).map(function (record) {
+        var p = Object.assign({}, record || {});
         if (!('purity' in p) && !('description' in p)) {
-          const totalPrice = (p.quantity || 0) * (p.price || 0);
-          const purity = p.metal === 'silver' ? 999 : (p.metal === 'gold' ? 24 : null);
-          return Object.assign({}, p, { price: totalPrice, purity: purity, description: '' });
+          p.price = (p.quantity || 0) * (p.price || 0);
+          p.purity = p.metal === 'silver' ? 999 : (p.metal === 'gold' ? 24 : null);
+          p.description = '';
         }
+        if (typeof p.tags !== 'string') p.tags = Array.isArray(p.tags) ? p.tags.join(', ') : '';
+        if (typeof p.storageLocation !== 'string') p.storageLocation = '';
         return p;
+      });
+    }
+
+    function migrateWatches(arr) {
+      return (Array.isArray(arr) ? arr : []).map(function (record) {
+        var w = Object.assign({ setContents: '', insuranceValue: null, insuranceCurrency: 'CHF', maintenance: '', tags: '', storageLocation: '', documents: [] }, record || {});
+        if (typeof w.tags !== 'string') w.tags = Array.isArray(w.tags) ? w.tags.join(', ') : '';
+        if (!Array.isArray(w.documents)) w.documents = [];
+        w.documents = w.documents.filter(function (d) { return d && typeof d.data === 'string' && typeof d.name === 'string'; });
+        return w;
       });
     }
 
@@ -2660,7 +2781,7 @@
 
     // Backup locale portabile: il salvataggio automatico resta interno al browser/app.
     function buildLocalBackup() {
-      return { format: 'PortafoglioAssets-Backup', formatVersion: 1, exportedAt: new Date().toISOString(),
+      return { format: 'PortafoglioAssets-Backup', formatVersion: 2, exportedAt: new Date().toISOString(),
         positions: state.positions || [], watches: state.watches || [], priceHistory: state.priceHistory || [],
         intradayHistory: state.intradayHistory || [], settings: { currentCurrency: state.currentCurrency, selectedPeriod: state.selectedPeriod } };
     }
@@ -2688,14 +2809,14 @@
       if (!file) return;
       try {
         const data = JSON.parse(await file.text());
-        if (!data || data.format !== 'PortafoglioAssets-Backup' || !Array.isArray(data.positions) || !Array.isArray(data.watches)) throw new Error('Formato backup non riconosciuto');
+        if (!data || data.format !== 'PortafoglioAssets-Backup' || ![1, 2].includes(Number(data.formatVersion || 1)) || !Array.isArray(data.positions) || !Array.isArray(data.watches)) throw new Error('Formato backup non riconosciuto');
         const summary = 'Backup del ' + (data.exportedAt ? new Date(data.exportedAt).toLocaleString('it-IT') : 'data sconosciuta') + '\n' + data.positions.length + ' posizioni, ' + data.watches.length + ' orologi.\n\nSostituire i dati attuali?';
         if (!confirm(summary)) return;
-        state.positions = migratePositions(data.positions); state.watches = data.watches;
+        state.positions = migratePositions(data.positions); state.watches = migrateWatches(data.watches);
         state.priceHistory = Array.isArray(data.priceHistory) ? data.priceHistory : [];
         state.intradayHistory = Array.isArray(data.intradayHistory) ? data.intradayHistory : [];
         if (data.settings?.currentCurrency) state.currentCurrency = data.settings.currentCurrency;
-        if (Number.isFinite(data.settings?.selectedPeriod)) state.selectedPeriod = data.settings.selectedPeriod;
+        if (data.settings?.selectedPeriod === 'all' || Number.isFinite(data.settings?.selectedPeriod)) state.selectedPeriod = data.settings.selectedPeriod;
         saveData(); saveWatches(); savePriceHistory(); saveIntradayHistory(); updateUI();
         alert('Backup importato correttamente.');
       } catch (err) { alert('Impossibile importare il backup: ' + err.message); }
@@ -2705,16 +2826,18 @@
     function loadWatches() {
       const saved = localStorage.getItem('watchPortfolio');
       if (saved) {
-        try { state.watches = JSON.parse(saved) || []; } catch (err) { console.log('loadWatches err', err); state.watches = []; }
+        try { state.watches = migrateWatches(JSON.parse(saved) || []); } catch (err) { console.log('loadWatches err', err); state.watches = []; }
       }
     }
     function saveWatches() {
       try {
         localStorage.setItem('watchPortfolio', JSON.stringify(state.watches));
         saveLocalBackupSilently();
+        return true;
       } catch (err) {
         console.log('save watches err', err);
-        alert('Spazio di archiviazione pieno: alcune foto potrebbero non essere state salvate. Rimuovi qualche foto o usa immagini piu piccole.');
+        alert('Spazio di archiviazione insufficiente. I nuovi allegati non sono stati salvati: rimuovi file o foto e riprova.');
+        return false;
       }
     }
 
@@ -2728,10 +2851,12 @@
       const priceCurrency = (document.getElementById('priceCurrency').value || 'CHF').toUpperCase();
       const purity = metal === 'other' ? null : parseFloat(document.getElementById('purity').value);
       const date = document.getElementById('date').value;
+      const tags = normalizeTags(document.getElementById('tags').value);
+      const storageLocation = (document.getElementById('storageLocation').value || '').trim();
       const photos = pendingPhotos.slice();
 
       const itemType = metal === 'other' ? null : (document.getElementById('itemType').value || 'lingotto');
-      state.positions.push({ metal, description, quantity, purity, price, priceCurrency, date, photos, itemType });
+      state.positions.push({ metal, description, quantity, purity, price, priceCurrency, date, photos, itemType, tags, storageLocation });
       saveData();
       pendingPhotos = [];
       document.getElementById('photoPreview').innerHTML = '';
@@ -2833,6 +2958,63 @@
     function escapeAttr(s) {
       return escapeHtml(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
+    function normalizeTags(value) {
+      var seen = {};
+      return String(value || '').split(',').map(function (t) { return t.trim(); }).filter(function (t) {
+        var key = t.toLocaleLowerCase('it-IT');
+        if (!key || seen[key]) return false;
+        seen[key] = true; return true;
+      }).join(', ');
+    }
+    function tagList(value) { return normalizeTags(value).split(',').map(function(t) { return t.trim(); }).filter(Boolean); }
+    function metadataHtml(item) {
+      var chips = tagList(item && item.tags).map(function(t) { return '<span class="metadata-chip">#' + escapeHtml(t) + '</span>'; });
+      if (item && item.storageLocation) chips.push('<span class="metadata-chip">Custodia: ' + escapeHtml(item.storageLocation) + '</span>');
+      return chips.length ? '<div class="metadata-row">' + chips.join('') + '</div>' : '';
+    }
+    function csvCell(value) {
+      var text = value == null ? '' : String(value);
+      return /[",\n\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+    }
+    function metalCardMetrics(p) {
+      var confirmed = !!(p && (p.metal === 'gold' || p.metal === 'silver') && state.currentPriceConfirmed[p.metal]);
+      var cost = p ? costChfRemaining(p) : NaN;
+      var value = p ? currentValueChf(p) : NaN;
+      var valid = confirmed && remainingQty(p) > 0 && Number.isFinite(cost) && cost > 0 && Number.isFinite(value) && value > 0;
+      if (!valid) return { valid: false, returnPct: null, premiumPct: null };
+      return { valid: true, returnPct: (value - cost) / cost * 100, premiumPct: (cost - value) / value * 100 };
+    }
+    function watchCardPerformance(w) {
+      var cost = costChfWatch(w);
+      var terminal = w && w.sale ? saleProceedsChfWatch(w) : marketValueChfWatch(w);
+      if (!Number.isFinite(cost) || cost <= 0 || !Number.isFinite(terminal) || terminal <= 0) return null;
+      return (terminal - cost) / cost * 100;
+    }
+
+    // Privacy persistente puramente visuale: non cifra, non elimina e non trasforma alcun dato.
+    function markPrivateValues(root) {
+      var scope = root && root.querySelectorAll ? root : document;
+      var fixed = '#totalValue,#totalMetals,#totalWatches,#gainLoss,#gainLossPct,#metalsGainVal,#watchesGainVal,#watchTotalValue,#watchGainLoss,#watchGainLossPct,#goldLivePrice,#goldLiveChange,#goldWeekChange,#silverLivePrice,#silverLiveChange,#silverWeekChange,#price,#editPrice,#salePrice,#watchPurchasePrice,#watchMarketValue,#watchInsuranceValue,#editWatchPurchasePrice,#editWatchMarketValue,#editWatchInsuranceValue,#watchSalePrice,.rate-box,.andamento-badge,.portfolio-legend-value,.metric-value';
+      scope.querySelectorAll(fixed).forEach(function(el) { el.setAttribute('data-private-value', 'true'); });
+      scope.querySelectorAll('td,.history-card-cols span,.watch-card-cols span,.sale-item-detail,.sales-remaining,.sale-total').forEach(function(el) {
+        var text = el.textContent || '';
+        if (/\d/.test(text) && /(?:CHF|EUR|USD|%|\b(?:Acquisto|Valore|Mercato|Costo|Incasso|Guadagno|Perdita)\b)/i.test(text)) el.setAttribute('data-private-value', 'true');
+      });
+    }
+    function applyPrivacyMode() {
+      document.body.classList.toggle('privacy-values-hidden', !!state.privacyValuesHidden);
+      markPrivateValues(document);
+      var label = state.privacyValuesHidden ? 'Mostra valori' : 'Nascondi valori';
+      ['privacyToggleBtn', 'mobilePrivacyBtn'].forEach(function(id) {
+        var b = document.getElementById(id); if (!b) return;
+        b.textContent = label; b.setAttribute('aria-pressed', state.privacyValuesHidden ? 'true' : 'false');
+      });
+    }
+    function togglePrivacyValues() {
+      state.privacyValuesHidden = !state.privacyValuesHidden;
+      localStorage.setItem('portafoglioAssetsPrivacyHidden', state.privacyValuesHidden ? '1' : '0');
+      applyPrivacyMode(); closeOverflowMenu();
+    }
     function firstPhotoPreview(item, altText) {
       const photos = item && Array.isArray(item.photos) ? item.photos : [];
       const src = photos.find(function(photo) { return typeof photo === 'string' && photo.trim(); });
@@ -2914,6 +3096,7 @@
       updateLivePrices();
       updateStatusIndicator();
       updateWatchUI();
+      applyPrivacyMode();
     }
 
     function updatePositionsTable() {
@@ -3082,6 +3265,7 @@
       const container = document.getElementById('historyListContainer');
       if (!container) return;
       const rows = state.positions.map((pos, i) => ({ pos: pos, idx: i }));
+      updateFilterOptions('historyTagFilter', 'historyLocationFilter', state.positions);
       // Ordine per categoria, poi per data decrescente
       const catOrder = {
         'gold_moneta': 0, 'silver_moneta': 1,
@@ -3119,7 +3303,8 @@
         const gainChf = valChf - costChfRemaining(pos);
         const costRem = costChfRemaining(pos);
         const gainPct = costRem > 0 ? (gainChf / costRem * 100) : 0;
-        const up = gainChf >= 0;
+        const metrics = metalCardMetrics(pos);
+        const up = metrics.valid ? metrics.returnPct >= 0 : gainChf >= 0;
         const metalLabel = pos.metal === 'gold' ? 'Oro' : (pos.metal === 'silver' ? 'Argento' : 'Altro');
         const metalClass = pos.metal === 'gold' ? 'gold' : (pos.metal === 'silver' ? 'silver' : 'other');
         const metalSymbol = pos.metal === 'gold' ? 'Au' : (pos.metal === 'silver' ? 'Ag' : '+');
@@ -3136,7 +3321,7 @@
         // Nella scheda si mostra soltanto la prima foto; gestione e cancellazione restano nel dettaglio.
         const previewPhotoHtml = firstPhotoPreview(pos, descSafe);
 
-        html += '<div class="history-card" data-idx="' + i + '">' +
+        html += '<div class="history-card" data-idx="' + i + '" data-tags="' + escapeAttr(tagList(pos.tags).map(function(t){return t.toLocaleLowerCase('it-IT');}).join('|')) + '" data-location="' + escapeAttr(String(pos.storageLocation || '').toLocaleLowerCase('it-IT')) + '">' +
           '<div class="history-metal-circle ' + metalClass + '">' +
             (pos.metal === 'gold' ? (isIngot ? '<img class="ingot" src="' + INGOT_GOLD_IMG + '" alt="Lingotto oro">' : '<img src="' + COIN_GOLD_IMG + '" alt="Au">') :
              pos.metal === 'silver' ? (isIngot ? '<img class="ingot" src="' + INGOT_SILVER_IMG + '" alt="Lingotto argento">' : '<img src="' + COIN_SILVER_IMG + '" alt="Ag">') :
@@ -3145,13 +3330,15 @@
           '<div class="history-card-body">' +
             '<div class="history-card-title">' + descSafe + '</div>' +
             '<div class="history-card-sub">' + subtitle + '</div>' +
+            metadataHtml(pos) +
             '<div class="history-card-cols ' + strike + '">' +
               '<span>Peso: ' + (w > 0 ? (sold > 0 ? wRem.toFixed(2) + '/' + w.toFixed(2) + 'g' : w.toFixed(2) + 'g') : '\u2013') + '</span>' +
               '<span>Acquisto: ' + currency + ' ' + (pos.price || 0).toFixed(2) + '</span>' +
               '<span>Valore: ' + cur + ' ' + (valChf / rate).toFixed(2) + '</span>' +
             '</div>' +
             '<div class="history-card-footer">' +
-              (pos.metal !== 'other' ? '<span class="andamento-badge" style="margin:0; color:' + (up ? '#4ade80' : '#f87171') + '; background:' + (up ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)') + ';">' + (up ? '\u25b2 +' : '\u25bc ') + gainPct.toFixed(2) + '%</span>' : '') +
+              '<span class="metric-label">Rendimento: <strong class="metric-value andamento-badge" style="margin:0; color:' + (metrics.valid ? (up ? '#4ade80' : '#f87171') : '#687a70') + '; background:' + (metrics.valid ? (up ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)') : 'rgba(27,58,45,0.08)') + ';">' + (metrics.valid ? ((up ? '\u25b2 +' : '\u25bc ') + metrics.returnPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
+              '<span class="metric-label">Premio spot: <strong class="metric-value">' + (metrics.valid ? ((metrics.premiumPct >= 0 ? '+' : '') + metrics.premiumPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
               soldBadge +
             '</div>' +
           '</div>' +
@@ -3160,6 +3347,8 @@
       });
       container.innerHTML = html;
       setupHistoryLongPress();
+      applyHistoryFilters();
+      markPrivateValues(container);
     }
 
     // ===== Mini Sparkline per card Andamento =====
@@ -3680,6 +3869,37 @@
       return out;
     }
 
+    function openImageFileInput(onFiles) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.multiple = true;
+      input.style.display = 'none';
+      input.value = '';
+      document.body.appendChild(input);
+
+      let cleaned = false;
+      let focusHandler = null;
+      const cleanup = function () {
+        if (cleaned) return;
+        cleaned = true;
+        if (focusHandler) window.removeEventListener('focus', focusHandler);
+        input.value = '';
+        input.remove();
+      };
+      input.addEventListener('change', async function () {
+        try { await onFiles(input.files); } finally { cleanup(); }
+      }, { once: true });
+      input.addEventListener('cancel', cleanup, { once: true });
+      focusHandler = function () {
+        setTimeout(function () {
+          if (!input.files || !input.files.length) cleanup();
+        }, 500);
+      };
+      window.addEventListener('focus', focusHandler, { once: true });
+      input.click();
+    }
+
     async function handlePhotoSelect(input) {
       const imgs = await filesToCompressed(input.files);
       pendingPhotos = pendingPhotos.concat(imgs);
@@ -3701,18 +3921,14 @@
     }
 
     function triggerAddPhotos(index) {
-      const inp = document.createElement('input');
-      inp.type = 'file';
-      inp.accept = 'image/*';
-      inp.multiple = true;
-      inp.onchange = async () => {
-        const imgs = await filesToCompressed(inp.files);
+      openImageFileInput(async function (files) {
+        const imgs = await filesToCompressed(files);
+        if (!state.positions[index]) return;
         if (!state.positions[index].photos) state.positions[index].photos = [];
         state.positions[index].photos = state.positions[index].photos.concat(imgs);
         saveData();
         updateUI();
-      };
-      inp.click();
+      });
     }
 
     function removePhoto(index, photoIdx) {
@@ -3816,6 +4032,50 @@
 
 // ===== Orologi: form, foto pendenti, rendering, dettaglio =====
     let pendingWatchPhotos = [];
+    let pendingWatchDocuments = [];
+    const WATCH_DOCUMENT_MAX_FILES = 3;
+    const WATCH_DOCUMENT_MAX_BYTES = 1024 * 1024;
+    const WATCH_DOCUMENT_TOTAL_BYTES = 2 * 1024 * 1024;
+
+    function readFileAsDataUrl(file) {
+      return new Promise(function(resolve, reject) { var r = new FileReader(); r.onload = function() { resolve(r.result); }; r.onerror = reject; r.readAsDataURL(file); });
+    }
+    function documentBytes(d) { return Number(d && d.size) || Math.floor(String(d && d.data || '').length * 0.75); }
+    async function filesToWatchDocuments(fileList, existing) {
+      var docs = (existing || []).slice(), added = [], total = docs.reduce(function(sum, d) { return sum + documentBytes(d); }, 0);
+      for (const file of Array.from(fileList || [])) {
+        var lowerName = String(file.name || '').toLowerCase();
+        var guessedType = /\.pdf$/.test(lowerName) ? 'application/pdf' : (/\.(?:jpe?g|png|gif|webp|bmp|heic|heif)$/.test(lowerName) ? 'image/' + lowerName.split('.').pop().replace('jpg', 'jpeg') : '');
+        var mimeType = file.type || guessedType;
+        var validType = mimeType === 'application/pdf' || mimeType.startsWith('image/');
+        if (!validType) { alert('Formato non supportato: ' + file.name + '. Usa PDF o immagini.'); continue; }
+        if (file.size > WATCH_DOCUMENT_MAX_BYTES) { alert(file.name + ' supera il limite di 1 MB.'); continue; }
+        if (docs.length + added.length >= WATCH_DOCUMENT_MAX_FILES) { alert('Massimo 3 documenti per orologio.'); break; }
+        if (total + file.size > WATCH_DOCUMENT_TOTAL_BYTES) { alert('I documenti superano il limite totale di 2 MB per orologio.'); break; }
+        var data = await readFileAsDataUrl(file);
+        added.push({ id: Date.now() + '_' + Math.random().toString(36).slice(2, 9), name: file.name, type: mimeType, size: file.size, data: data });
+        total += file.size;
+      }
+      return added;
+    }
+    async function storageAllows(additionalChars) {
+      try {
+        if (navigator.storage && navigator.storage.estimate) {
+          var estimate = await navigator.storage.estimate();
+          if (Number.isFinite(estimate.quota) && Number.isFinite(estimate.usage) && estimate.usage + additionalChars * 2.2 > estimate.quota * 0.92) return false;
+        }
+      } catch (_) {}
+      return true;
+    }
+    async function handleWatchDocumentSelect(input) {
+      var added = await filesToWatchDocuments(input.files, pendingWatchDocuments);
+      var chars = added.reduce(function(sum, d) { return sum + d.data.length; }, 0);
+      if (added.length && !(await storageAllows(chars))) alert('Spazio locale insufficiente per questi documenti.');
+      else pendingWatchDocuments = pendingWatchDocuments.concat(added);
+      var status = document.getElementById('watchDocumentStatus');
+      if (status) status.textContent = pendingWatchDocuments.length + ' allegati selezionati. Massimo 3 file, 1 MB ciascuno e 2 MB totali; gestione solo nel dettaglio.';
+      input.value = '';
+    }
 
     function populateWatchBrandSelects() {
       const opts = WATCH_BRANDS.map(function (b) {
@@ -3873,14 +4133,24 @@
       const marketValueCurrency = (document.getElementById('watchMarketValueCurrency').value || 'CHF').toUpperCase();
       const marketValueDate = document.getElementById('watchMarketValueDate').value;
       const notes = (document.getElementById('watchNotes').value || '').trim();
+      const setContents = document.getElementById('watchSetContents').value || '';
+      const insuranceRaw = parseFloat(document.getElementById('watchInsuranceValue').value);
+      const insuranceValue = Number.isFinite(insuranceRaw) ? insuranceRaw : null;
+      const insuranceCurrency = (document.getElementById('watchInsuranceCurrency').value || 'CHF').toUpperCase();
+      const maintenance = (document.getElementById('watchMaintenance').value || '').trim();
+      const tags = normalizeTags(document.getElementById('watchTags').value);
+      const storageLocation = (document.getElementById('watchStorageLocation').value || '').trim();
+      const documents = pendingWatchDocuments.slice();
       const photos = pendingWatchPhotos.slice();
       const id = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-      state.watches.push({ id, brand, model, reference, serial, purchasePrice, purchaseCurrency, purchaseDate, marketValue, marketValueCurrency, marketValueDate, notes, photos, sale: null });
-      saveWatches();
+      state.watches.push({ id, brand, model, reference, serial, purchasePrice, purchaseCurrency, purchaseDate, marketValue, marketValueCurrency, marketValueDate, setContents, insuranceValue, insuranceCurrency, maintenance, tags, storageLocation, documents, notes, photos, sale: null });
+      if (!saveWatches()) { state.watches.pop(); return; }
       pendingWatchPhotos = [];
+      pendingWatchDocuments = [];
       document.getElementById('watchPhotoPreview').innerHTML = '';
       document.getElementById('watchForm').reset();
+      document.getElementById('watchDocumentStatus').textContent = 'Massimo 3 file, 1 MB ciascuno e 2 MB totali per orologio. Apertura, download e rimozione sono disponibili solo nel dettaglio.';
       document.getElementById('watchForm').style.display = 'none';
       updateWatchUI();
     }
@@ -3926,6 +4196,7 @@
     function renderWatchCards() {
       const c = document.getElementById('watchListContainer');
       if (!c) return;
+      updateFilterOptions('watchesTagFilter', 'watchesLocationFilter', state.watches);
       if (!state.watches.length) {
         c.innerHTML = '<div class="empty-state">Nessun orologio. Aggiungine uno con il pulsante qui sopra.</div>';
         setupWatchLongPress();
@@ -3940,24 +4211,25 @@
         const costChfW = costChfWatch(w);
         const marketChfW = marketValueChfWatch(w);
         const gainChf = watchGainChf(w);
-        const gainPct = costChfW > 0 ? (gainChf / costChfW * 100) : 0;
-        const up = gainChf >= 0;
+        const gainPct = watchCardPerformance(w);
+        const up = gainPct != null ? gainPct >= 0 : gainChf >= 0;
         const soldBadge = w.sale ? '<span class="sold-badge">VENDUTO</span>' : '';
         const strike = w.sale ? 'watch-sold-strike' : '';
         const chrono24Query = encodeURIComponent((w.brand + ' ' + w.model + ' ' + w.reference).trim()).replace(/%20/g, '+');
         const previewPhotoHtml = firstPhotoPreview(w, (w.brand + ' ' + w.model).trim());
-        html += '<div class="watch-card" data-idx="' + i + '">' +
+        html += '<div class="watch-card" data-idx="' + i + '" data-tags="' + escapeAttr(tagList(w.tags).map(function(t){return t.toLocaleLowerCase('it-IT');}).join('|')) + '" data-location="' + escapeAttr(String(w.storageLocation || '').toLocaleLowerCase('it-IT')) + '">' +
           '<div class="watch-brand-circle">' + (isRolex ? '<img src="' + COIN_ROLEX_IMG + '" alt="Rolex">' : escapeHtml(initial)) + '</div>' +
           '<div class="watch-card-body">' +
             '<div class="watch-card-title">' + escapeHtml(w.brand) + ' ' + escapeHtml(w.model) + '</div>' +
             '<div class="watch-card-sub">Ref. ' + escapeHtml(w.reference) + '</div>' +
+            metadataHtml(w) +
             '<div class="watch-card-cols ' + strike + '">' +
               '<span>Acquisto: ' + cur + ' ' + formatSwissAmount(costChfW / rate) + '</span>' +
               '<span>Mercato: ' + cur + ' ' + formatSwissAmount(marketChfW / rate) + '</span>' +
             '</div>' +
             '<div class="watch-card-updated">Aggiornato: ' + formatDate(w.marketValueDate) + '</div>' +
             '<div class="watch-card-footer">' +
-              '<span class="andamento-badge" style="margin:0; color:' + (up ? '#4ade80' : '#f87171') + '; background:' + (up ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)') + ';">' + (up ? '\u25b2 +' : '\u25bc ') + gainPct.toFixed(2) + '%</span>' +
+              '<span class="metric-label">Rendimento: <strong class="metric-value andamento-badge" style="margin:0; color:' + (gainPct != null ? (up ? '#4ade80' : '#f87171') : '#687a70') + '; background:' + (gainPct != null ? (up ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)') : 'rgba(27,58,45,0.08)') + ';">' + (gainPct != null ? ((up ? '\u25b2 +' : '\u25bc ') + gainPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
               soldBadge +
               '<a class="chrono24-btn" href="https://www.chrono24.ch/search/index.htm?query=' + chrono24Query + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Chrono24</a>' +
             '</div>' +
@@ -3967,23 +4239,18 @@
       });
       c.innerHTML = html;
       setupWatchLongPress();
+      applyWatchFilters();
+      markPrivateValues(c);
     }
 
-    // Esporta CSV orologi
+    // Esporta CSV orologi: include i nuovi campi testuali e solo i nomi degli allegati (mai i blob/data URL).
     function exportWatchesCSV() {
-      let csv = 'Marca,Modello,Referenza,Numero Serie,Data Acquisto,Prezzo Acquisto,Valuta Acquisto,Valore Mercato,Valuta Mercato,Data Aggiornamento,Venduto,Prezzo Vendita,Valuta Vendita,Data Vendita,Note\n';
+      var header = ['Marca','Modello','Referenza','Numero Serie','Data Acquisto','Prezzo Acquisto','Valuta Acquisto','Valore Mercato','Valuta Mercato','Data Aggiornamento','Corredo','Valore Assicurativo','Valuta Assicurativa','Manutenzioni','Tag','Luogo Custodia','Allegati','Venduto','Prezzo Vendita','Valuta Vendita','Data Vendita','Note'];
+      var rows = [header.map(csvCell).join(',')];
       state.watches.forEach(function (w) {
-        const notes = (w.notes || '').replace(/,/g, ' ');
-        csv += [
-          w.brand, w.model, w.reference, (w.serial || ''), formatDate(w.purchaseDate), w.purchasePrice, w.purchaseCurrency,
-          w.marketValue, w.marketValueCurrency, formatDate(w.marketValueDate),
-          w.sale ? 'SI' : 'NO', (w.sale ? w.sale.price : ''), (w.sale ? w.sale.currency : ''), (w.sale ? formatDate(w.sale.date) : ''), notes
-        ].join(',') + '\n';
+        rows.push([w.brand,w.model,w.reference,w.serial || '',formatDate(w.purchaseDate),w.purchasePrice,w.purchaseCurrency,w.marketValue,w.marketValueCurrency,formatDate(w.marketValueDate),w.setContents || '',w.insuranceValue == null ? '' : w.insuranceValue,w.insuranceCurrency || '',w.maintenance || '',w.tags || '',w.storageLocation || '',(w.documents || []).map(function(d){return d.name;}).join('; '),w.sale ? 'SI' : 'NO',w.sale ? w.sale.price : '',w.sale ? w.sale.currency : '',w.sale ? formatDate(w.sale.date) : '',w.notes || ''].map(csvCell).join(','));
       });
-      const link = document.createElement('a');
-      link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-      link.download = 'orologi.csv';
-      link.click();
+      var link = document.createElement('a'); link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.join('\n') + '\n'); link.download = 'orologi.csv'; link.click();
     }
 
     // ===== Dettaglio / modifica orologio =====
@@ -4006,10 +4273,56 @@
       document.getElementById('editWatchMarketValue').value = (editWatchState.marketValue != null ? editWatchState.marketValue : '');
       document.getElementById('editWatchMarketValueCurrency').value = editWatchState.marketValueCurrency || 'CHF';
       document.getElementById('editWatchMarketValueDate').value = editWatchState.marketValueDate || '';
+      document.getElementById('editWatchSetContents').value = editWatchState.setContents || '';
+      document.getElementById('editWatchInsuranceValue').value = editWatchState.insuranceValue == null ? '' : editWatchState.insuranceValue;
+      document.getElementById('editWatchInsuranceCurrency').value = editWatchState.insuranceCurrency || 'CHF';
+      document.getElementById('editWatchMaintenance').value = editWatchState.maintenance || '';
+      document.getElementById('editWatchTags').value = editWatchState.tags || '';
+      document.getElementById('editWatchStorageLocation').value = editWatchState.storageLocation || '';
       document.getElementById('editWatchNotes').value = editWatchState.notes || '';
+      renderEditWatchDocuments();
       renderEditWatchPhotos();
       renderWatchSaleSection();
       document.getElementById('watchDetailModal').classList.add('open');
+    }
+
+    function renderEditWatchDocuments() {
+      var c = document.getElementById('editWatchDocumentList');
+      if (!c || !editWatchState) return;
+      var docs = editWatchState.documents || [];
+      c.innerHTML = docs.length ? docs.map(function(d, idx) {
+        return '<div class="document-item"><span class="document-name" title="' + escapeAttr(d.name) + '">' + escapeHtml(d.name) + ' (' + Math.ceil(documentBytes(d) / 1024) + ' KB)</span><span class="document-actions"><button type="button" onclick="openWatchDocument(' + idx + ')">Apri</button><button type="button" onclick="downloadWatchDocument(' + idx + ')">Scarica</button><button type="button" onclick="removeWatchDocument(' + idx + ')">Rimuovi</button></span></div>';
+      }).join('') : '<div class="sales-empty">Nessun documento allegato.</div>';
+    }
+    function watchDocumentBlob(doc) {
+      var parts = String(doc.data || '').split(','), match = /^data:([^;]+);base64$/.exec(parts[0]);
+      if (!match || !parts[1]) throw new Error('Allegato non valido');
+      var binary = atob(parts[1]), bytes = new Uint8Array(binary.length);
+      for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return new Blob([bytes], { type: doc.type || match[1] });
+    }
+    function openWatchDocument(idx) {
+      var d = editWatchState && (editWatchState.documents || [])[idx]; if (!d) return;
+      try { var url = URL.createObjectURL(watchDocumentBlob(d)); window.open(url, '_blank', 'noopener'); setTimeout(function(){ URL.revokeObjectURL(url); }, 60000); } catch (e) { alert('Impossibile aprire il documento.'); }
+    }
+    function downloadWatchDocument(idx) {
+      var d = editWatchState && (editWatchState.documents || [])[idx]; if (!d) return;
+      try { var url = URL.createObjectURL(watchDocumentBlob(d)), a = document.createElement('a'); a.href = url; a.download = d.name || 'documento'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(url); }, 1000); } catch (e) { alert('Impossibile scaricare il documento.'); }
+    }
+    function removeWatchDocument(idx) {
+      if (!editWatchState || !editWatchState.documents) return;
+      if (!confirm('Rimuovere questo documento?')) return;
+      editWatchState.documents.splice(idx, 1); renderEditWatchDocuments();
+    }
+    async function editAddWatchDocuments() {
+      var input = document.createElement('input'); input.type = 'file'; input.accept = 'application/pdf,image/*'; input.multiple = true;
+      input.onchange = async function() {
+        var added = await filesToWatchDocuments(input.files, editWatchState.documents || []);
+        var chars = added.reduce(function(sum,d){return sum + d.data.length;},0);
+        if (added.length && !(await storageAllows(chars))) { alert('Spazio locale insufficiente per questi documenti.'); return; }
+        editWatchState.documents = (editWatchState.documents || []).concat(added); renderEditWatchDocuments();
+      };
+      input.click();
     }
 
     function renderEditWatchPhotos() {
@@ -4022,15 +4335,13 @@
     }
 
     function editAddWatchPhotos() {
-      const inp = document.createElement('input');
-      inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true;
-      inp.onchange = async function () {
-        const imgs = await filesToCompressed(inp.files);
+      openImageFileInput(async function (files) {
+        const imgs = await filesToCompressed(files);
+        if (!editWatchState) return;
         if (!editWatchState.photos) editWatchState.photos = [];
         editWatchState.photos = editWatchState.photos.concat(imgs);
         renderEditWatchPhotos();
-      };
-      inp.click();
+      });
     }
 
     function editRemoveWatchPhoto(idx) {
@@ -4104,9 +4415,17 @@
       editWatchState.marketValue = isNaN(mv) ? 0 : mv;
       editWatchState.marketValueCurrency = (document.getElementById('editWatchMarketValueCurrency').value || 'CHF').toUpperCase();
       editWatchState.marketValueDate = document.getElementById('editWatchMarketValueDate').value;
+      editWatchState.setContents = document.getElementById('editWatchSetContents').value || '';
+      var insurance = parseFloat(document.getElementById('editWatchInsuranceValue').value);
+      editWatchState.insuranceValue = Number.isFinite(insurance) ? insurance : null;
+      editWatchState.insuranceCurrency = (document.getElementById('editWatchInsuranceCurrency').value || 'CHF').toUpperCase();
+      editWatchState.maintenance = (document.getElementById('editWatchMaintenance').value || '').trim();
+      editWatchState.tags = normalizeTags(document.getElementById('editWatchTags').value);
+      editWatchState.storageLocation = (document.getElementById('editWatchStorageLocation').value || '').trim();
       editWatchState.notes = (document.getElementById('editWatchNotes').value || '').trim();
+      var previousWatch = state.watches[editWatchIndex];
       state.watches[editWatchIndex] = editWatchState;
-      saveWatches();
+      if (!saveWatches()) { state.watches[editWatchIndex] = previousWatch; return; }
       closeWatchDetail();
       updateWatchUI();
     }
@@ -4180,22 +4499,14 @@
     }
 
     function exportCSV() {
-      let csv = 'Data,Metallo,Descrizione,Titolo,Peso(g),Prezzo Totale,Valuta,Costo/g CHF,Valore Attuale CHF\n';
-      const sortedCsv = state.positions.slice().sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
-      sortedCsv.forEach(pos => {
-        const costInChf = costChf(pos);
-        const w = pos.quantity || 0;
-        const costPerG = w > 0 ? (costInChf / w) : 0;
-        const valChf = currentValueChf(pos);
-        const purVal = pos.purity || (pos.metal === 'gold' ? 24 : 999);
-        const titolo = pos.metal === 'gold' ? (pos.itemType === 'moneta' && purVal > 24 ? purVal + '/1000' : purVal + 'k') : (pos.metal === 'silver' ? String(purVal) : '');
-        const desc = (pos.description || '').replace(/,/g, ' ');
-        csv += `${formatDate(pos.date)},${pos.metal},${desc},${titolo},${w},${pos.price},${pos.priceCurrency},${costPerG.toFixed(2)},${valChf.toFixed(2)}\n`;
+      var rows = [['Data','Metallo','Descrizione','Titolo','Peso(g)','Prezzo Totale','Valuta','Costo/g CHF','Valore Attuale CHF','Tag','Luogo Custodia'].map(csvCell).join(',')];
+      state.positions.slice().sort(function(a,b){ return new Date(a.date || 0) - new Date(b.date || 0); }).forEach(function(pos) {
+        var costInChf = costChf(pos), w = pos.quantity || 0, costPerG = w > 0 ? costInChf / w : 0, valChf = currentValueChf(pos);
+        var purVal = pos.purity || (pos.metal === 'gold' ? 24 : 999);
+        var titolo = pos.metal === 'gold' ? (pos.itemType === 'moneta' && purVal > 24 ? purVal + '/1000' : purVal + 'k') : (pos.metal === 'silver' ? String(purVal) : '');
+        rows.push([formatDate(pos.date),pos.metal,pos.description || '',titolo,w,pos.price,pos.priceCurrency,costPerG.toFixed(2),valChf.toFixed(2),pos.tags || '',pos.storageLocation || ''].map(csvCell).join(','));
       });
-      const link = document.createElement('a');
-      link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-      link.download = 'portafoglio-oro.csv';
-      link.click();
+      var link = document.createElement('a'); link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.join('\n') + '\n'); link.download = 'portafoglio-oro.csv'; link.click();
     }
 
     // === Dettaglio / modifica posizione (v9) ===
@@ -4210,6 +4521,8 @@
       document.getElementById('editMetal').value = editState.metal || 'gold';
       document.getElementById('editDescription').value = editState.description || '';
       document.getElementById('editNotes').value = editState.notes || '';
+      document.getElementById('editTags').value = editState.tags || '';
+      document.getElementById('editStorageLocation').value = editState.storageLocation || '';
       if (editState.metal !== 'other') {
         document.getElementById('editItemType').value = editState.itemType || 'lingotto';
       }
@@ -4276,15 +4589,13 @@
     }
 
     function editAddPhotos() {
-      const inp = document.createElement('input');
-      inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true;
-      inp.onchange = async function () {
-        const imgs = await filesToCompressed(inp.files);
+      openImageFileInput(async function (files) {
+        const imgs = await filesToCompressed(files);
+        if (!editState) return;
         if (!editState.photos) editState.photos = [];
         editState.photos = editState.photos.concat(imgs);
         renderEditPhotos();
-      };
-      inp.click();
+      });
     }
 
     function editRemovePhoto(idx) {
@@ -4363,6 +4674,8 @@
       editState.metal = metal;
       editState.description = (document.getElementById('editDescription').value || '').trim();
       editState.notes = (document.getElementById('editNotes').value || '').trim();
+      editState.tags = normalizeTags(document.getElementById('editTags').value);
+      editState.storageLocation = (document.getElementById('editStorageLocation').value || '').trim();
       editState.quantity = parseFloat(document.getElementById('editQuantity').value) || 0;
       const pr = parseFloat(document.getElementById('editPrice').value);
       editState.price = isNaN(pr) ? 0 : pr;
@@ -4437,6 +4750,32 @@
     }
     setupHistoryLongPress();
 
+
+    function updateFilterOptions(tagId, locationId, items) {
+      var tagEl = document.getElementById(tagId), locEl = document.getElementById(locationId); if (!tagEl || !locEl) return;
+      var selectedTag = tagEl.value, selectedLoc = locEl.value, tags = {}, locations = {};
+      (items || []).forEach(function(item) { tagList(item.tags).forEach(function(t){ tags[t.toLocaleLowerCase('it-IT')] = t; }); if (item.storageLocation) locations[item.storageLocation.toLocaleLowerCase('it-IT')] = item.storageLocation; });
+      tagEl.innerHTML = '<option value="">Tutti i tag</option>' + Object.keys(tags).sort().map(function(k){return '<option value="'+escapeAttr(k)+'">'+escapeHtml(tags[k])+'</option>';}).join('');
+      locEl.innerHTML = '<option value="">Tutti i luoghi</option>' + Object.keys(locations).sort().map(function(k){return '<option value="'+escapeAttr(k)+'">'+escapeHtml(locations[k])+'</option>';}).join('');
+      if ([].some.call(tagEl.options,function(o){return o.value===selectedTag;})) tagEl.value=selectedTag;
+      if ([].some.call(locEl.options,function(o){return o.value===selectedLoc;})) locEl.value=selectedLoc;
+    }
+    function cardMatchesFilters(card, query, tag, location) {
+      var text = (card.textContent || '').toLocaleLowerCase('it-IT');
+      var tags = (card.getAttribute('data-tags') || '').split('|');
+      var loc = card.getAttribute('data-location') || '';
+      return (!query || text.indexOf(query) !== -1) && (!tag || tags.indexOf(tag) !== -1) && (!location || loc === location);
+    }
+    function applyHistoryFilters() {
+      var query = (document.getElementById('historySearch')?.value || '').toLocaleLowerCase('it-IT');
+      var tag = document.getElementById('historyTagFilter')?.value || '', loc = document.getElementById('historyLocationFilter')?.value || '';
+      document.querySelectorAll('#historyListContainer .history-card').forEach(function(card){ card.style.display = cardMatchesFilters(card,query,tag,loc) ? '' : 'none'; });
+    }
+    function applyWatchFilters() {
+      var query = (document.getElementById('watchesSearch')?.value || '').toLocaleLowerCase('it-IT');
+      var tag = document.getElementById('watchesTagFilter')?.value || '', loc = document.getElementById('watchesLocationFilter')?.value || '';
+      document.querySelectorAll('#watchListContainer .watch-card').forEach(function(card){ card.style.display = cardMatchesFilters(card,query,tag,loc) ? '' : 'none'; });
+    }
 
     // Navigazione interna: supporta freccia, gesto laterale e tasto Indietro Android.
     function activeAppTab() {
@@ -4545,6 +4884,8 @@
       var menu = document.getElementById('overflowMenu');
       setOverflowMenu(!(menu && menu.classList.contains('is-open')));
     });
+    document.getElementById('privacyToggleBtn')?.addEventListener('click', togglePrivacyValues);
+    document.getElementById('mobilePrivacyBtn')?.addEventListener('click', togglePrivacyValues);
     document.getElementById('mobileBackupBtn')?.addEventListener('click', function() {
       closeOverflowMenu();
       openLocalBackupMenu();
@@ -4742,7 +5083,7 @@
       statusEl.textContent = 'Sincronizzazione...';
       statusEl.className = 'sync-status';
       try {
-        const fileData = JSON.stringify({ positions: state.positions, priceHistory: state.priceHistory, watches: state.watches }, null, 2);
+        const fileData = JSON.stringify({ format: 'PortafoglioAssets-Drive', formatVersion: 2, updatedAt: new Date().toISOString(), positions: state.positions, priceHistory: state.priceHistory, watches: state.watches }, null, 2);
         const fileId = await findDriveFile();
         if (fileId) {
           await driveFetch(
@@ -4810,7 +5151,7 @@
         const data = await downloadResponse.json();
         state.positions = migratePositions(data.positions || []);
         state.priceHistory = data.priceHistory || [];
-        state.watches = data.watches || [];
+        state.watches = migrateWatches(data.watches || []);
         saveData();
         savePriceHistory();
         saveWatches();
@@ -4930,6 +5271,12 @@
       prefetchMarketHistories(true);
     });
     updateUI();
+    applyPrivacyMode();
+    var privacyObserver = new MutationObserver(function(mutations) {
+      if (!state.privacyValuesHidden) return;
+      mutations.forEach(function(m) { m.addedNodes.forEach(function(n) { if (n.nodeType === 1) markPrivateValues(n); }); });
+    });
+    privacyObserver.observe(document.body, { childList: true, subtree: true });
     loadMarketHistory(state.selectedPeriod, false);
     setTimeout(function() { prefetchMarketHistories(false); }, 1200);
     setInterval(function() { prefetchMarketHistories(true); }, 2 * 60 * 1000);
@@ -4969,35 +5316,13 @@
       }
     }
 
-    // ── Search bar: Storico ────────────────────────────
-    document.getElementById('historySearch').addEventListener('input', function() {
-      var query = this.value.toLowerCase();
-      var container = document.getElementById('historyListContainer');
-      if (!container) return;
-      var items = container.children;
-      for (var i = 0; i < items.length; i++) {
-        if (!query) {
-          items[i].style.display = '';
-        } else {
-          items[i].style.display = items[i].textContent.toLowerCase().indexOf(query) !== -1 ? '' : 'none';
-        }
-      }
-    });
-
-    // ── Search bar: Orologi ────────────────────────────
-    document.getElementById('watchesSearch').addEventListener('input', function() {
-      var query = this.value.toLowerCase();
-      var watchTab = document.getElementById('watches');
-      if (!watchTab) return;
-      var cards = watchTab.querySelectorAll('.watch-card');
-      for (var i = 0; i < cards.length; i++) {
-        if (!query) {
-          cards[i].style.display = '';
-        } else {
-          cards[i].style.display = cards[i].textContent.toLowerCase().indexOf(query) !== -1 ? '' : 'none';
-        }
-      }
-    });
+    // Ricerca e filtri compatti combinati (compatibili con record privi dei nuovi campi).
+    document.getElementById('historySearch')?.addEventListener('input', applyHistoryFilters);
+    document.getElementById('historyTagFilter')?.addEventListener('change', applyHistoryFilters);
+    document.getElementById('historyLocationFilter')?.addEventListener('change', applyHistoryFilters);
+    document.getElementById('watchesSearch')?.addEventListener('input', applyWatchFilters);
+    document.getElementById('watchesTagFilter')?.addEventListener('change', applyWatchFilters);
+    document.getElementById('watchesLocationFilter')?.addEventListener('change', applyWatchFilters);
   </script>
 </body>
 </html>
