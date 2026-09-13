@@ -1942,10 +1942,10 @@
           </div>
           <div class="form-group">
             <label>Tag <span style="color:#888;font-weight:400;">(facoltativi, separati da virgola)</span></label>
-            <input type="text" id="tags" placeholder="Es. collezione, regalo, investimento">
+            <input type="text" id="tags" list="portfolioTagOptions" placeholder="Scegli o scrivi un tag">
           </div>
           <div class="form-group">
-            <label>Luogo di custodia <span style="color:#888;font-weight:400;">(facoltativo)</span></label>
+            <label>Luogo deposito <span style="color:#888;font-weight:400;">(facoltativo)</span></label>
             <input type="text" id="storageLocation" placeholder="Es. Cassaforte, cassetta di sicurezza">
           </div>
           <div class="form-group">
@@ -1967,7 +1967,7 @@
         </div>
         <div class="compact-filters" aria-label="Filtri storico">
           <select id="historyTagFilter" class="compact-filter" aria-label="Filtra storico per tag"><option value="">Tutti i tag</option></select>
-          <select id="historyLocationFilter" class="compact-filter" aria-label="Filtra storico per luogo"><option value="">Tutti i luoghi</option></select>
+          <select id="historyLocationFilter" class="compact-filter" aria-label="Filtra storico per luogo deposito"><option value="">Tutti i luoghi deposito</option></select>
         </div>
         <div id="historyListContainer"></div>
       </div>
@@ -1993,7 +1993,7 @@
         </div>
         <div class="compact-filters" aria-label="Filtri orologi">
           <select id="watchesTagFilter" class="compact-filter" aria-label="Filtra orologi per tag"><option value="">Tutti i tag</option></select>
-          <select id="watchesLocationFilter" class="compact-filter" aria-label="Filtra orologi per luogo"><option value="">Tutti i luoghi</option></select>
+          <select id="watchesLocationFilter" class="compact-filter" aria-label="Filtra orologi per luogo deposito"><option value="">Tutti i luoghi deposito</option></select>
         </div>
 
         <button class="btn add-watch-btn" type="button" onclick="toggleWatchForm()">Aggiungi Orologio</button>
@@ -2061,8 +2061,8 @@
             </div>
           </div>
           <div class="form-group"><label>Manutenzioni <span style="color:#888;font-weight:400;">(facoltativo)</span></label><textarea id="watchMaintenance" rows="3" placeholder="Es. revisione, data, laboratorio, costo..."></textarea></div>
-          <div class="form-group"><label>Tag <span style="color:#888;font-weight:400;">(facoltativi, separati da virgola)</span></label><input type="text" id="watchTags" placeholder="Es. sportivo, vintage, collezione"></div>
-          <div class="form-group"><label>Luogo di custodia <span style="color:#888;font-weight:400;">(facoltativo)</span></label><input type="text" id="watchStorageLocation" placeholder="Es. Cassaforte, cassetta di sicurezza"></div>
+          <div class="form-group"><label>Tag <span style="color:#888;font-weight:400;">(facoltativi, separati da virgola)</span></label><input type="text" id="watchTags" list="portfolioTagOptions" placeholder="Scegli o scrivi un tag"></div>
+          <div class="form-group"><label>Luogo deposito <span style="color:#888;font-weight:400;">(facoltativo)</span></label><input type="text" id="watchStorageLocation" placeholder="Es. Cassaforte, cassetta di sicurezza"></div>
           <div class="form-group">
             <label>Documenti (PDF o immagini)</label>
             <input type="file" id="watchDocuments" accept="application/pdf,image/*" multiple onchange="handleWatchDocumentSelect(this)">
@@ -2289,8 +2289,8 @@
         <label>Note</label>
         <textarea id="editNotes" rows="3" placeholder="Es. tiratura, provenienza, certificato, numero di serie..."></textarea>
       </div>
-      <div class="form-group"><label>Tag <span style="color:#888;font-weight:400;">(separati da virgola)</span></label><input type="text" id="editTags"></div>
-      <div class="form-group"><label>Luogo di custodia</label><input type="text" id="editStorageLocation"></div>
+      <div class="form-group"><label>Tag <span style="color:#888;font-weight:400;">(separati da virgola)</span></label><input type="text" id="editTags" list="portfolioTagOptions" placeholder="Scegli o scrivi un tag"></div>
+      <div class="form-group"><label>Luogo deposito</label><input type="text" id="editStorageLocation"></div>
       <div class="form-group" id="editTypeGroup">
         <label>Tipologia</label>
         <select id="editItemType" onchange="onEditItemTypeChange()">
@@ -2402,8 +2402,8 @@
       <div class="form-group"><label>Corredo</label><select id="editWatchSetContents"><option value="">Non specificato</option><option value="Completo">Completo (scatola e documenti)</option><option value="Solo scatola">Solo scatola</option><option value="Solo documenti">Solo documenti</option><option value="Senza corredo">Senza corredo</option></select></div>
       <div class="form-group"><label>Valore assicurativo <span style="color:#888;font-weight:400;">(escluso dai calcoli)</span></label><div style="display:flex;gap:0.5rem;"><input type="number" id="editWatchInsuranceValue" min="0" step="0.01" style="flex:1;"><select id="editWatchInsuranceCurrency" style="width:90px;padding:0.5rem;border-radius:6px;"><option value="CHF">CHF</option><option value="EUR">EUR</option><option value="USD">USD</option></select></div></div>
       <div class="form-group"><label>Manutenzioni</label><textarea id="editWatchMaintenance" rows="3"></textarea></div>
-      <div class="form-group"><label>Tag <span style="color:#888;font-weight:400;">(separati da virgola)</span></label><input type="text" id="editWatchTags"></div>
-      <div class="form-group"><label>Luogo di custodia</label><input type="text" id="editWatchStorageLocation"></div>
+      <div class="form-group"><label>Tag <span style="color:#888;font-weight:400;">(separati da virgola)</span></label><input type="text" id="editWatchTags" list="portfolioTagOptions" placeholder="Scegli o scrivi un tag"></div>
+      <div class="form-group"><label>Luogo deposito</label><input type="text" id="editWatchStorageLocation"></div>
       <div class="form-group">
         <label>Documenti</label>
         <div id="editWatchDocumentList" class="document-list"></div>
@@ -2452,6 +2452,19 @@
 
 </nav>
 
+
+  <datalist id="portfolioTagOptions">
+    <option value="Investimento"></option>
+    <option value="Collezione"></option>
+    <option value="Vintage"></option>
+    <option value="Edizione limitata"></option>
+    <option value="Certificato"></option>
+    <option value="Raro"></option>
+    <option value="Regalo"></option>
+    <option value="Eredità"></option>
+    <option value="Assicurato"></option>
+    <option value="Personale"></option>
+  </datalist>
   <script>
     // Google OAuth Configuration
     const GOOGLE_CLIENT_ID = '257312440835-vvehk768neda2le3sgpmfla2b9jgev8g.apps.googleusercontent.com';
@@ -3120,7 +3133,7 @@
     function tagList(value) { return normalizeTags(value).split(',').map(function(t) { return t.trim(); }).filter(Boolean); }
     function metadataHtml(item) {
       var chips = tagList(item && item.tags).map(function(t) { return '<span class="metadata-chip">#' + escapeHtml(t) + '</span>'; });
-      if (item && item.storageLocation) chips.push('<span class="metadata-chip">Custodia: ' + escapeHtml(item.storageLocation) + '</span>');
+      if (item && item.storageLocation) chips.push('<span class="metadata-chip">Deposito: ' + escapeHtml(item.storageLocation) + '</span>');
       return chips.length ? '<div class="metadata-row">' + chips.join('') + '</div>' : '';
     }
     function csvCell(value) {
@@ -4469,7 +4482,7 @@
 
     // Esporta CSV orologi: include i nuovi campi testuali e solo i nomi degli allegati (mai i blob/data URL).
     function exportWatchesCSV() {
-      var header = ['Marca','Modello','Referenza','Numero Serie','Data Acquisto','Prezzo Acquisto','Valuta Acquisto','Valore Mercato','Valuta Mercato','Data Aggiornamento','Corredo','Valore Assicurativo','Valuta Assicurativa','Manutenzioni','Tag','Luogo Custodia','Allegati','Venduto','Prezzo Vendita','Valuta Vendita','Data Vendita','Note'];
+      var header = ['Marca','Modello','Referenza','Numero Serie','Data Acquisto','Prezzo Acquisto','Valuta Acquisto','Valore Mercato','Valuta Mercato','Data Aggiornamento','Corredo','Valore Assicurativo','Valuta Assicurativa','Manutenzioni','Tag','Luogo deposito','Allegati','Venduto','Prezzo Vendita','Valuta Vendita','Data Vendita','Note'];
       var rows = [header.map(csvCell).join(',')];
       state.watches.forEach(function (w) {
         rows.push([w.brand,w.model,w.reference,w.serial || '',formatDate(w.purchaseDate),w.purchasePrice,w.purchaseCurrency,w.marketValue,w.marketValueCurrency,formatDate(w.marketValueDate),w.setContents || '',w.insuranceValue == null ? '' : w.insuranceValue,w.insuranceCurrency || '',w.maintenance || '',w.tags || '',w.storageLocation || '',(w.documents || []).map(function(d){return d.name;}).join('; '),w.sale ? 'SI' : 'NO',w.sale ? w.sale.price : '',w.sale ? w.sale.currency : '',w.sale ? formatDate(w.sale.date) : '',w.notes || ''].map(csvCell).join(','));
@@ -4723,7 +4736,7 @@
     }
 
     function exportCSV() {
-      var rows = [['Data','Metallo','Descrizione','Titolo','Peso(g)','Prezzo Totale','Valuta','Costo/g CHF','Valore Attuale CHF','Tag','Luogo Custodia'].map(csvCell).join(',')];
+      var rows = [['Data','Metallo','Descrizione','Titolo','Peso(g)','Prezzo Totale','Valuta','Costo/g CHF','Valore Attuale CHF','Tag','Luogo deposito'].map(csvCell).join(',')];
       state.positions.slice().sort(function(a,b){ return new Date(a.date || 0) - new Date(b.date || 0); }).forEach(function(pos) {
         var costInChf = costChf(pos), w = pos.quantity || 0, costPerG = w > 0 ? costInChf / w : 0, valChf = currentValueChf(pos);
         var purVal = pos.purity || (pos.metal === 'gold' ? 24 : (pos.metal === 'platinum' ? 999.5 : 999));
@@ -4977,12 +4990,15 @@
     setupHistoryLongPress();
 
 
+    const DEFAULT_PORTFOLIO_TAGS = ['Investimento', 'Collezione', 'Vintage', 'Edizione limitata', 'Certificato', 'Raro', 'Regalo', 'Eredità', 'Assicurato', 'Personale'];
+
     function updateFilterOptions(tagId, locationId, items) {
       var tagEl = document.getElementById(tagId), locEl = document.getElementById(locationId); if (!tagEl || !locEl) return;
       var selectedTag = tagEl.value, selectedLoc = locEl.value, tags = {}, locations = {};
+      DEFAULT_PORTFOLIO_TAGS.forEach(function(t) { tags[t.toLocaleLowerCase('it-IT')] = t; });
       (items || []).forEach(function(item) { tagList(item.tags).forEach(function(t){ tags[t.toLocaleLowerCase('it-IT')] = t; }); if (item.storageLocation) locations[item.storageLocation.toLocaleLowerCase('it-IT')] = item.storageLocation; });
-      tagEl.innerHTML = '<option value="">Tutti i tag</option>' + Object.keys(tags).sort().map(function(k){return '<option value="'+escapeAttr(k)+'">'+escapeHtml(tags[k])+'</option>';}).join('');
-      locEl.innerHTML = '<option value="">Tutti i luoghi</option>' + Object.keys(locations).sort().map(function(k){return '<option value="'+escapeAttr(k)+'">'+escapeHtml(locations[k])+'</option>';}).join('');
+      tagEl.innerHTML = '<option value="">Tutti i tag</option>' + Object.keys(tags).sort(function(a,b){ return tags[a].localeCompare(tags[b], 'it'); }).map(function(k){return '<option value="'+escapeAttr(k)+'">'+escapeHtml(tags[k])+'</option>';}).join('');
+      locEl.innerHTML = '<option value="">Tutti i luoghi deposito</option>' + Object.keys(locations).sort(function(a,b){ return locations[a].localeCompare(locations[b], 'it'); }).map(function(k){return '<option value="'+escapeAttr(k)+'">'+escapeHtml(locations[k])+'</option>';}).join('');
       if ([].some.call(tagEl.options,function(o){return o.value===selectedTag;})) tagEl.value=selectedTag;
       if ([].some.call(locEl.options,function(o){return o.value===selectedLoc;})) locEl.value=selectedLoc;
     }
