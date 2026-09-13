@@ -21,6 +21,8 @@
       --gold-bg: #FBF4E3;
       --silver: #808080;
       --silver-bg: #F1F2F3;
+      --platinum: #6E7C85;
+      --platinum-bg: #EEF1F3;
       --shadow: 0 4px 18px rgba(27, 58, 45, 0.08);
     }
 
@@ -814,6 +816,7 @@
       border: 1.5px solid #A8A9AD;
       color: #777;
     }
+    .history-metal-circle.platinum { background: rgba(110,124,133,0.12); border: 1.5px solid #6E7C85; color: #52616A; }
     .history-metal-circle.other {
       background: rgba(27,58,45,0.08);
       border: 1px solid #1B3A2D;
@@ -879,12 +882,22 @@
       cursor: pointer; font-weight: 600; font-size: 0.85rem;
     }
   
-    /* Gold section colors */
+    /* Accento laterale sfumato dedicato a ciascun metallo. */
+    .chart-card.gold-section {
+      border-left: 4px solid var(--gold);
+      background: linear-gradient(135deg, var(--card-bg) 65%, var(--gold-bg) 130%);
+    }
     .gold-section .chart-metal-name { color: #B8860B; }
     .gold-section .chart-live-price { color: #C5952A; }
-    /* Silver section colors */
+    .chart-card.silver-section {
+      border-left: 4px solid var(--silver);
+      background: linear-gradient(135deg, var(--card-bg) 65%, var(--silver-bg) 130%);
+    }
     .silver-section .chart-metal-name { color: #808080; }
     .silver-section .chart-live-price { color: #6b6b6b; }
+    /* Terza card fluida, senza immagine o logo aggiuntivi. */
+    .platinum-section { border-left:4px solid var(--platinum); background:linear-gradient(135deg,var(--card-bg) 65%,var(--platinum-bg) 130%); }
+    .platinum-section .chart-metal-name,.platinum-section .chart-live-price { color:#52616A; }
 
 
     /* Breakdown posizioni */
@@ -904,6 +917,7 @@
     }
     .breakdown-row.gold-row { background: rgba(197,149,42,0.10); }
     .breakdown-row.silver-row { background: rgba(128,128,128,0.10); }
+    .breakdown-row.platinum-row { background: rgba(110,124,133,0.10); }
     .breakdown-row.other-row { background: var(--green-tint); }
     .breakdown-row.watch-row { background: rgba(27,58,45,0.08); }
     .breakdown-label { font-weight: 600; color: var(--text-primary); }
@@ -1531,7 +1545,80 @@
       .header-controls { max-width: 74%; }
     }
 
-</style>
+
+    /* ===== Rifinitura: accenti coerenti e tabella Panoramica compatta ===== */
+    /* Gli accenti metallo mantengono i colori dedicati; le altre schede usano il verde dell'app. */
+    .card,
+    .portfolio-pie-card {
+      border-left: 4px solid rgba(27, 58, 45, 0.42);
+      background: linear-gradient(135deg, var(--card-bg) 64%, var(--green-tint) 130%);
+    }
+    .history-card,
+    .watch-card {
+      border-left: 4px solid rgba(27, 58, 45, 0.42);
+      background: linear-gradient(135deg, #f5f6f3 64%, #e1e9e3 130%);
+    }
+    .shop-card,
+    .shop-cat-card {
+      border-left: 4px solid var(--gold);
+      background: linear-gradient(135deg, var(--card-bg) 64%, var(--gold-bg) 130%);
+    }
+    .chart-card.chart-gold,
+    .chart-card.chart-silver,
+    .platinum-section {
+      border-left-width: 4px;
+    }
+
+    /* La tabella resta interamente nella larghezza disponibile, senza trascinamento laterale. */
+    #positionsContainer {
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    #positionsTable {
+      width: 100%;
+      max-width: 100%;
+      table-layout: fixed;
+    }
+    #positionsTable th,
+    #positionsTable td {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      line-height: 1.25;
+      vertical-align: top;
+    }
+
+    @media (max-width: 600px) {
+      #positionsTable {
+        margin-top: 0.7rem;
+        font-size: clamp(0.54rem, 2.05vw, 0.72rem);
+      }
+      #positionsTable th,
+      #positionsTable td {
+        padding: clamp(0.24rem, 1vw, 0.42rem) clamp(0.12rem, 0.7vw, 0.3rem);
+      }
+      #positionsTable th {
+        font-size: clamp(0.50rem, 1.82vw, 0.65rem);
+        letter-spacing: 0;
+        text-transform: none;
+      }
+      #positionsTable th:nth-child(1),
+      #positionsTable td:nth-child(1) { width: 17%; }
+      #positionsTable th:nth-child(2),
+      #positionsTable td:nth-child(2) { width: 12%; }
+      #positionsTable th:nth-child(3),
+      #positionsTable td:nth-child(3),
+      #positionsTable th:nth-child(4),
+      #positionsTable td:nth-child(4),
+      #positionsTable th:nth-child(5),
+      #positionsTable td:nth-child(5) { width: 17%; }
+      #positionsTable th:nth-child(6),
+      #positionsTable td:nth-child(6) { width: 20%; }
+      #positionsTable td:last-child { font-weight: 700; }
+    }
+
+  </style>
 
 </head>
 <body>
@@ -1682,6 +1769,13 @@
           </div>
           <div class="chart-canvas-wrap"><canvas id="silverChart"></canvas></div>
         </div>
+        <div class="chart-card platinum-section">
+          <div class="chart-live-header">
+            <span class="chart-metal-name" id="platinumMetalName">Platino</span><span class="chart-live-price" id="platinumLivePrice">N/D</span><span class="chart-live-change" id="platinumLiveChange"></span><span class="chart-live-change" id="platinumWeekChange" style="margin-left:0.3rem;"></span><span class="chart-live-sub" id="platinumLiveSub"></span>
+          </div>
+          <div class="karat-selector" id="platinumPuritySelector"><span class="karat-label">Titolo grafico:</span><button class="karat-btn" data-purity="999.9">999.9</button><button class="karat-btn active" data-purity="999.5">999.5</button><button class="karat-btn" data-purity="999">999</button></div>
+          <div class="chart-canvas-wrap"><canvas id="platinumChart"></canvas></div>
+        </div>
       </div>
 
       <div class="tab-content" id="overview">
@@ -1737,6 +1831,7 @@
             <select id="metal" required onchange="onMetalChange()">
               <option value="gold">Oro</option>
               <option value="silver">Argento</option>
+              <option value="platinum">Platino</option>
               <option value="other">Altro</option>
             </select>
           </div>
@@ -2113,6 +2208,7 @@
         <select id="editMetal" onchange="onEditMetalChange()">
           <option value="gold">Oro</option>
           <option value="silver">Argento</option>
+          <option value="platinum">Platino</option>
           <option value="other">Altro</option>
         </select>
       </div>
@@ -2311,14 +2407,15 @@
       positions: [],
       watches: [],
       currentCurrency: 'EUR',
-      currentPrices: { gold: 115.0, silver: 1.72 },
+      currentPrices: { gold: 115.0, silver: 1.72, platinum: 0 },
       exchangeRates: { CHF: 1, EUR: 0.93, USD: 0.80 },
       priceHistory: [], // Array di {date, gold, silver}
-      intradayHistory: [], // [{ts, goldUsd, silverUsd}, ...] ogni 5 min
+      intradayHistory: [], // [{ts, goldUsd, silverUsd, platinumUsd}, ...] ogni 5 min
       selectedPeriod: 7,
 
       goldKarat: 24,
       silverPurity: 999,
+      platinumPurity: 999.5,
       lastUpdate: null,
       lastUpdateOk: false,
       syncBusy: false,
@@ -2327,7 +2424,7 @@
       marketHistoryErrors: {},
       marketHistoryRetryAt: {},
       marketHistoryRetryCounts: {},
-      currentPriceConfirmed: { gold: false, silver: false },
+      currentPriceConfirmed: { gold: false, silver: false, platinum: false },
       privacyValuesHidden: localStorage.getItem('portafoglioAssetsPrivacyHidden') === '1' 
     };
 
@@ -2335,7 +2432,7 @@
     // Storico professionale Gold API tramite servizio Vercel: la chiave resta solo sul server.
     const MARKET_HISTORY_ENDPOINT = 'https://oro-portfolio-seven.vercel.app/api/market-history';
     const MARKET_PERIOD_CODES = Object.freeze({ '1': '24h', '7': '7d', '30': '30d', '90': '90d', '365': '1y', 'all': 'all' });
-    const MARKET_CACHE_KEY = 'portafoglioAssetsMarketHistoryV1';
+    const MARKET_CACHE_KEY = 'portafoglioAssetsMarketHistoryV2';
     const MARKET_CACHE_TTL_MS = Object.freeze({
       '24h': 5 * 60 * 1000,
       '7d': 15 * 60 * 1000,
@@ -2349,11 +2446,8 @@
       return MARKET_PERIOD_CODES[String(period)] || '7d';
     }
 
-    function validMarketPoint(point) {
-      return point && Number.isFinite(Number(point.ts)) &&
-        Number.isFinite(Number(point.goldUsd)) && Number(point.goldUsd) > 0 &&
-        Number.isFinite(Number(point.silverUsd)) && Number(point.silverUsd) > 0;
-    }
+    // I null sono reali: i metalli possono iniziare in date diverse.
+    function validMarketPoint(point) { return point && Number.isFinite(Number(point.ts)); }
 
     function loadMarketHistoryCache() {
       try {
@@ -2376,12 +2470,8 @@
     function marketCoverageIsValid(code, payload, points) {
       if (!Array.isArray(points) || points.length < 2) return false;
       const span = points[points.length - 1].ts - points[0].ts;
-      if (code === 'all') {
-        const first = new Date(points[0].ts);
-        const last = new Date(points[points.length - 1].ts);
-        const monthSpan = (last.getUTCFullYear() - first.getUTCFullYear()) * 12 + last.getUTCMonth() - first.getUTCMonth();
-        return points.length >= 601 && monthSpan >= 600;
-      }
+      // "Tutto" usa solo l'intervallo reale della fonte, senza soglie artificiali.
+      if (code === 'all') return span > 0 && (!Number.isFinite(Number(payload.actualStart)) || points[0].ts === Number(payload.actualStart)) && (!Number.isFinite(Number(payload.actualEnd)) || points[points.length - 1].ts === Number(payload.actualEnd));
       if (code === '24h') {
         const step = 5 * 60 * 1000;
         const exactDay = 24 * 60 * 60 * 1000;
@@ -2391,9 +2481,9 @@
         // Accetta anche i due estremi reali non arrotondati restituiti dalla fonte;
         // tutti gli intervalli devono restare positivi e non superare 5 minuti.
         if (!points.every(function(point, index) {
-          if (index === 0) return true;
+          if (index === 0) return Number(point.goldUsd) > 0 && Number(point.silverUsd) > 0 && Number(point.platinumUsd) > 0;
           const delta = point.ts - points[index - 1].ts;
-          return delta > 0 && delta <= step;
+          return delta === step && Number(point.goldUsd) > 0 && Number(point.silverUsd) > 0 && Number(point.platinumUsd) > 0;
         })) return false;
         if (Number.isFinite(Number(payload.actualStart)) && points[0].ts !== Number(payload.actualStart)) return false;
         if (Number.isFinite(Number(payload.actualEnd)) && points[points.length - 1].ts !== Number(payload.actualEnd)) return false;
@@ -2445,7 +2535,8 @@
               return {
                 ts: Number(point.ts),
                 goldUsd: Number.isFinite(Number(point.goldUsd)) ? Number(point.goldUsd) : null,
-                silverUsd: Number.isFinite(Number(point.silverUsd)) ? Number(point.silverUsd) : null
+                silverUsd: Number.isFinite(Number(point.silverUsd)) ? Number(point.silverUsd) : null,
+                platinumUsd: Number.isFinite(Number(point.platinumUsd)) ? Number(point.platinumUsd) : null
               };
             })
             .sort(function (a, b) { return a.ts - b.ts; })
@@ -2505,7 +2596,7 @@
       state.syncBusy = true;
       updateStatusIndicator();
       let fxOk = false, metalOk = false;
-      state.currentPriceConfirmed = { gold: false, silver: false };
+      state.currentPriceConfirmed = { gold: false, silver: false, platinum: false };
       let usdToChf = state.exchangeRates.USD || 0.80;
       try {
         // 1) Tassi di cambio live (base USD) - fonte primaria: frankfurter.dev
@@ -2541,54 +2632,25 @@
 
 
 
-        // 3) Prezzi metalli reali in USD per oncia troy
+        // 3) Richieste isolate: un errore XPT non degrada Oro/Argento.
         try {
-          const [goldRes, silverRes] = await Promise.all([
-            fetch('https://api.gold-api.com/price/XAU'),
-            fetch('https://api.gold-api.com/price/XAG')
-          ]);
-          const goldData = await goldRes.json();
-          const silverData = await silverRes.json();
-
-          let goldUsd = null, silverUsd = null;
-          if (goldData && Number.isFinite(Number(goldData.price)) && Number(goldData.price) > 0) {
-            goldUsd = Number(goldData.price);
-            state.currentPrices.gold = (goldUsd * usdToChf) / OZ_TO_G;   // CHF/g
-            state.currentPriceConfirmed.gold = !!fxOk;
-            metalOk = true;
+          const fetchMetal = function(symbol) { return fetch('https://api.gold-api.com/price/' + symbol).then(function(r) { if (!r.ok) throw new Error(symbol + ' HTTP ' + r.status); return r.json(); }).then(function(d) { const v = Number(d && d.price); return Number.isFinite(v) && v > 0 ? v : null; }).catch(function(e) { console.log(symbol + ' non disponibile:', e); return null; }); };
+          const [goldUsd, silverUsd, platinumUsd] = await Promise.all([fetchMetal('XAU'), fetchMetal('XAG'), fetchMetal('XPT')]);
+          let anyMetalOk = false;
+          if (goldUsd != null) { state.currentPrices.gold = goldUsd * usdToChf / OZ_TO_G; state.currentPriceConfirmed.gold = !!fxOk; anyMetalOk = true; }
+          if (silverUsd != null) { state.currentPrices.silver = silverUsd * usdToChf / OZ_TO_G; state.currentPriceConfirmed.silver = !!fxOk; anyMetalOk = true; }
+          if (platinumUsd != null) { state.currentPrices.platinum = platinumUsd * usdToChf / OZ_TO_G; state.currentPriceConfirmed.platinum = !!fxOk; anyMetalOk = true; }
+          metalOk = anyMetalOk;
+          // Nessun prezzo XPT valido: evita di presentare una quotazione obsoleta come live.
+          if (platinumUsd == null) state.currentPrices.platinum = 0;
+          if (anyMetalOk) {
+            const today = localDateKey(new Date()), existing = state.priceHistory.find(function(h) { return h.date === today; });
+            if (existing) { if (goldUsd != null) existing.goldUsd = goldUsd; if (silverUsd != null) existing.silverUsd = silverUsd; if (platinumUsd != null) existing.platinumUsd = platinumUsd; }
+            else state.priceHistory.push({ date: today, goldUsd: goldUsd, silverUsd: silverUsd, platinumUsd: platinumUsd });
+            savePriceHistory(); state.intradayHistory.push({ ts: Date.now(), goldUsd: goldUsd, silverUsd: silverUsd, platinumUsd: platinumUsd });
+            const cutoff365d = Date.now() - 365 * 24 * 60 * 60 * 1000; state.intradayHistory = state.intradayHistory.filter(function(p) { return p.ts >= cutoff365d; }); saveIntradayHistory();
           }
-          if (silverData && Number.isFinite(Number(silverData.price)) && Number(silverData.price) > 0) {
-            silverUsd = Number(silverData.price);
-            state.currentPrices.silver = (silverUsd * usdToChf) / OZ_TO_G; // CHF/g
-            state.currentPriceConfirmed.silver = !!fxOk;
-            metalOk = true;
-          }
-
-          if (metalOk) {
-            // Aggiorna o aggiungi il punto storico di oggi (in USD/oncia troy)
-            const today = localDateKey(new Date());
-            const existing = state.priceHistory.find(h => h.date === today);
-            if (existing) {
-              if (goldUsd != null) existing.goldUsd = goldUsd;
-              if (silverUsd != null) existing.silverUsd = silverUsd;
-            } else {
-              state.priceHistory.push({ date: today, goldUsd: goldUsd, silverUsd: silverUsd });
-            }
-            savePriceHistory();
-            // Punto intraday con timestamp per grafici ad alta risoluzione
-            state.intradayHistory.push({
-              ts: Date.now(),
-              goldUsd: goldUsd,
-              silverUsd: silverUsd
-            });
-            // Mantieni ultimi 365 giorni di dati intraday
-            const cutoff365d = Date.now() - 365 * 24 * 60 * 60 * 1000;
-            state.intradayHistory = state.intradayHistory.filter(p => p.ts >= cutoff365d);
-            saveIntradayHistory();
-          }
-        } catch (metErr) {
-          console.log('Metalli falliti:', metErr);
-        }
+        } catch (metErr) { console.log('Metalli falliti:', metErr); }
       } catch (e) {
         console.log('API fallback:', e);
       }
@@ -2678,6 +2740,7 @@
     // Salva storico prezzi
     function savePriceHistory() {
       localStorage.setItem('priceHistory', JSON.stringify(state.priceHistory));
+      saveLocalBackupSilently();
     }
 
     // Storico ufficiale giornaliero LBMA (fixing oro PM e argento, USD/oncia).
@@ -2743,6 +2806,7 @@
 
     function saveIntradayHistory() {
       localStorage.setItem('intradayHistory', JSON.stringify(state.intradayHistory));
+      saveLocalBackupSilently();
     }
 
     // Load data from localStorage
@@ -2759,9 +2823,10 @@
         var p = Object.assign({}, record || {});
         if (!('purity' in p) && !('description' in p)) {
           p.price = (p.quantity || 0) * (p.price || 0);
-          p.purity = p.metal === 'silver' ? 999 : (p.metal === 'gold' ? 24 : null);
+          p.purity = p.metal === 'platinum' ? 999.5 : (p.metal === 'silver' ? 999 : (p.metal === 'gold' ? 24 : null));
           p.description = '';
         }
+        if (p.metal === 'platinum' && (!Number.isFinite(Number(p.purity)) || Number(p.purity) <= 0)) p.purity = 999.5;
         if (typeof p.tags !== 'string') p.tags = Array.isArray(p.tags) ? p.tags.join(', ') : '';
         if (typeof p.storageLocation !== 'string') p.storageLocation = '';
         return p;
@@ -2791,9 +2856,9 @@
 
     // Backup locale portabile: il salvataggio automatico resta interno al browser/app.
     function buildLocalBackup() {
-      return { format: 'PortafoglioAssets-Backup', formatVersion: 2, exportedAt: new Date().toISOString(),
+      return { format: 'PortafoglioAssets-Backup', formatVersion: 3, exportedAt: new Date().toISOString(),
         positions: state.positions || [], watches: state.watches || [], priceHistory: state.priceHistory || [],
-        intradayHistory: state.intradayHistory || [], settings: { currentCurrency: state.currentCurrency, selectedPeriod: state.selectedPeriod } };
+        intradayHistory: state.intradayHistory || [], settings: { currentCurrency: state.currentCurrency, selectedPeriod: state.selectedPeriod, goldKarat: state.goldKarat, silverPurity: state.silverPurity, platinumPurity: state.platinumPurity, privacyValuesHidden: state.privacyValuesHidden } };
     }
     function saveLocalBackupSilently() {
       try { localStorage.setItem('portafoglioAssetsLocalBackup', JSON.stringify(buildLocalBackup())); } catch (err) { console.log('local backup err', err); }
@@ -2819,7 +2884,7 @@
       if (!file) return;
       try {
         const data = JSON.parse(await file.text());
-        if (!data || data.format !== 'PortafoglioAssets-Backup' || ![1, 2].includes(Number(data.formatVersion || 1)) || !Array.isArray(data.positions) || !Array.isArray(data.watches)) throw new Error('Formato backup non riconosciuto');
+        if (!data || data.format !== 'PortafoglioAssets-Backup' || ![1, 2, 3].includes(Number(data.formatVersion || 1)) || !Array.isArray(data.positions) || !Array.isArray(data.watches)) throw new Error('Formato backup non riconosciuto');
         const summary = 'Backup del ' + (data.exportedAt ? new Date(data.exportedAt).toLocaleString('it-IT') : 'data sconosciuta') + '\n' + data.positions.length + ' posizioni, ' + data.watches.length + ' orologi.\n\nSostituire i dati attuali?';
         if (!confirm(summary)) return;
         state.positions = migratePositions(data.positions); state.watches = migrateWatches(data.watches);
@@ -2827,6 +2892,10 @@
         state.intradayHistory = Array.isArray(data.intradayHistory) ? data.intradayHistory : [];
         if (data.settings?.currentCurrency) state.currentCurrency = data.settings.currentCurrency;
         if (data.settings?.selectedPeriod === 'all' || Number.isFinite(data.settings?.selectedPeriod)) state.selectedPeriod = data.settings.selectedPeriod;
+        if (Number.isFinite(Number(data.settings?.goldKarat))) state.goldKarat = Number(data.settings.goldKarat);
+        if (Number.isFinite(Number(data.settings?.silverPurity))) state.silverPurity = Number(data.settings.silverPurity);
+        if (Number.isFinite(Number(data.settings?.platinumPurity))) state.platinumPurity = Number(data.settings.platinumPurity);
+        if (typeof data.settings?.privacyValuesHidden === 'boolean') state.privacyValuesHidden = data.settings.privacyValuesHidden;
         saveData(); saveWatches(); savePriceHistory(); saveIntradayHistory(); updateUI();
         alert('Backup importato correttamente.');
       } catch (err) { alert('Impossibile importare il backup: ' + err.message); }
@@ -2885,6 +2954,7 @@
         return pur / 24;
       }
       if (p.metal === 'silver') return (p.purity || 999) / 1000;
+      if (p.metal === 'platinum') return (p.purity || 999.5) / 1000;
       return null;
     }
     // Costo d'acquisto convertito in CHF (price = prezzo TOTALE pagato)
@@ -2924,7 +2994,8 @@
     function currentValueChf(p) {
       const f = purityFraction(p);
       if (f === null) return costChf(p);
-      const spot = p.metal === 'gold' ? state.currentPrices.gold : state.currentPrices.silver;
+      const spot = p.metal === 'gold' ? state.currentPrices.gold : (p.metal === 'silver' ? state.currentPrices.silver : state.currentPrices.platinum);
+      if (!Number.isFinite(spot) || spot <= 0) return 0;
       return remainingQty(p) * f * spot;
     }
 
@@ -2987,7 +3058,7 @@
       return /[",\n\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
     }
     function metalCardMetrics(p) {
-      var confirmed = !!(p && (p.metal === 'gold' || p.metal === 'silver') && state.currentPriceConfirmed[p.metal]);
+      var confirmed = !!(p && (p.metal === 'gold' || p.metal === 'silver' || p.metal === 'platinum') && state.currentPriceConfirmed[p.metal]);
       var cost = p ? costChfRemaining(p) : NaN;
       var value = p ? currentValueChf(p) : NaN;
       var valid = confirmed && remainingQty(p) > 0 && Number.isFinite(cost) && cost > 0 && Number.isFinite(value) && value > 0;
@@ -3001,15 +3072,13 @@
       return (terminal - cost) / cost * 100;
     }
 
-    // Privacy persistente puramente visuale: non cifra, non elimina e non trasforma alcun dato.
+    // Privacy persistente puramente visuale: protegge solo le tre sintesi della Home.
+    // Prezzi live, grafici, storico, orologi e moduli restano sempre leggibili.
     function markPrivateValues(root) {
       var scope = root && root.querySelectorAll ? root : document;
-      var fixed = '#totalValue,#totalMetals,#totalWatches,#gainLoss,#gainLossPct,#metalsGainVal,#watchesGainVal,#watchTotalValue,#watchGainLoss,#watchGainLossPct,#goldLivePrice,#goldLiveChange,#goldWeekChange,#silverLivePrice,#silverLiveChange,#silverWeekChange,#price,#editPrice,#salePrice,#watchPurchasePrice,#watchMarketValue,#watchInsuranceValue,#editWatchPurchasePrice,#editWatchMarketValue,#editWatchInsuranceValue,#watchSalePrice,.rate-box,.andamento-badge,.portfolio-legend-value,.metric-value';
+      scope.querySelectorAll('[data-private-value="true"]').forEach(function(el) { el.removeAttribute('data-private-value'); });
+      var fixed = '#totalValue,#totalCurrency,#totalMetals,#totalWatches,#gainLoss,#gainLossPct,#metalsGainVal,#watchesGainVal,#positionCount,#positionBreakdown .breakdown-detail';
       scope.querySelectorAll(fixed).forEach(function(el) { el.setAttribute('data-private-value', 'true'); });
-      scope.querySelectorAll('td,.history-card-cols span,.watch-card-cols span,.sale-item-detail,.sales-remaining,.sale-total').forEach(function(el) {
-        var text = el.textContent || '';
-        if (/\d/.test(text) && /(?:CHF|EUR|USD|%|\b(?:Acquisto|Valore|Mercato|Costo|Incasso|Guadagno|Perdita)\b)/i.test(text)) el.setAttribute('data-private-value', 'true');
-      });
     }
     function applyPrivacyMode() {
       document.body.classList.toggle('privacy-values-hidden', !!state.privacyValuesHidden);
@@ -3040,6 +3109,7 @@
       coinOpts.forEach(function (o) { opts += '<option value="' + o[0] + '">' + o[1] + '</option>'; });
       psel.innerHTML = opts;
     }
+    function populatePlatinumOptions(psel, plabel) { plabel.textContent = 'Titolo (millesimi)'; psel.innerHTML = '<option value="999.9">999.9</option><option value="999.5" selected>999.5</option><option value="999">999</option>'; }
     // Opzioni purezza per oro non-moneta (carature)
     function populateGoldKaratOptions(psel, plabel) {
       plabel.textContent = 'Caratura';
@@ -3074,6 +3144,8 @@
         } else {
           populateGoldKaratOptions(psel, plabel);
         }
+      } else if (metal === 'platinum') {
+        populatePlatinumOptions(psel, plabel);
       } else {
         plabel.textContent = 'Titolo (millesimi)';
         var opts = '';
@@ -3114,7 +3186,7 @@
       tbody.innerHTML = '';
 
       const rate = state.exchangeRates[state.currentCurrency] || 1;
-      const groups = [['gold', 'Oro'], ['silver', 'Argento'], ['other', 'Altro']];
+      const groups = [['gold', 'Oro'], ['silver', 'Argento'], ['platinum', 'Platino'], ['other', 'Altro']];
       let any = false;
       groups.forEach(function (g) {
         const m = g[0], label = g[1];
@@ -3132,7 +3204,7 @@
         tbody.innerHTML += `<tr>
           <td><b>${label}</b></td>
           <td>${weight > 0 ? weight.toFixed(2) + 'g' : '&ndash;'}</td>
-          <td>${m === 'other' ? 'n/d' : priceNow.toFixed(2) + ' ' + cur + '/g'}</td>
+          <td>${m === 'other' ? 'n/d' : (state.currentPriceConfirmed[m] && Number.isFinite(priceNow) && priceNow > 0 ? priceNow.toFixed(2) + ' ' + cur + '/g' : 'N/D')}</td>
           <td>${val.toFixed(2)} ${cur}</td>
           <td>${m === 'other' ? '&ndash;' : costAvg.toFixed(2) + ' ' + cur + '/g'}</td>
           <td class="${gain >= 0 ? 'gain' : 'loss'}">${m === 'other' ? '&ndash;' : gain.toFixed(2) + ' (' + gainPct + '%)'}</td>
@@ -3247,6 +3319,7 @@
       const assetItems = [
         { label: 'Oro', value: state.positions.filter(function(p) { return p.metal === 'gold'; }).reduce(function(s, p) { return s + convertedValue(p); }, 0), color: '#C5952A' },
         { label: 'Argento', value: state.positions.filter(function(p) { return p.metal === 'silver'; }).reduce(function(s, p) { return s + convertedValue(p); }, 0), color: '#A8A9AD' },
+        { label: 'Platino', value: state.positions.filter(function(p) { return p.metal === 'platinum'; }).reduce(function(s, p) { return s + convertedValue(p); }, 0), color: '#6E7C85' },
         { label: 'Altri metalli', value: state.positions.filter(function(p) { return p.metal === 'other'; }).reduce(function(s, p) { return s + convertedValue(p); }, 0), color: '#1B3A2D' },
         { label: 'Orologi', value: (state.watches || []).reduce(function(s, w) { return s + marketValueChfWatch(w) / rate; }, 0), color: '#4C6558' }
       ];
@@ -3278,11 +3351,10 @@
       updateFilterOptions('historyTagFilter', 'historyLocationFilter', state.positions);
       // Ordine per categoria, poi per data decrescente
       const catOrder = {
-        'gold_moneta': 0, 'silver_moneta': 1,
-        'gold_lingotto': 2, 'silver_lingotto': 3,
-        'gold_lavorato': 4, 'silver_lavorato': 5,
-        'gold_oro_virtuale': 6, 'silver_oro_virtuale': 7,
-        'other': 8
+        'gold_moneta': 0, 'silver_moneta': 1, 'platinum_moneta': 2,
+        'gold_lingotto': 3, 'silver_lingotto': 4, 'platinum_lingotto': 5,
+        'gold_lavorato': 6, 'silver_lavorato': 7, 'platinum_lavorato': 8,
+        'gold_oro_virtuale': 9, 'silver_oro_virtuale': 10, 'platinum_oro_virtuale': 11, 'other': 12
       };
       function getCatKey(p) {
         if (p.metal === 'other') return 'other';
@@ -3315,15 +3387,16 @@
         const gainPct = costRem > 0 ? (gainChf / costRem * 100) : 0;
         const metrics = metalCardMetrics(pos);
         const up = metrics.valid ? metrics.returnPct >= 0 : gainChf >= 0;
-        const metalLabel = pos.metal === 'gold' ? 'Oro' : (pos.metal === 'silver' ? 'Argento' : 'Altro');
-        const metalClass = pos.metal === 'gold' ? 'gold' : (pos.metal === 'silver' ? 'silver' : 'other');
-        const metalSymbol = pos.metal === 'gold' ? 'Au' : (pos.metal === 'silver' ? 'Ag' : '+');
+        const metalLabel = pos.metal === 'gold' ? 'Oro' : (pos.metal === 'silver' ? 'Argento' : (pos.metal === 'platinum' ? 'Platino' : 'Altro'));
+        const metalClass = pos.metal === 'gold' ? 'gold' : (pos.metal === 'silver' ? 'silver' : (pos.metal === 'platinum' ? 'platinum' : 'other'));
+        const metalSymbol = pos.metal === 'gold' ? 'Au' : (pos.metal === 'silver' ? 'Ag' : (pos.metal === 'platinum' ? 'Pt' : '+'));
         const isIngot = (pos.itemType || 'lingotto') === 'lingotto';
         let titolo = '';
         if (pos.metal === 'gold') {
           const pur = pos.purity || 24;
           titolo = (pos.itemType === 'moneta' && pur > 24) ? pur + '/1000' : pur + 'k';
         } else if (pos.metal === 'silver') titolo = (pos.purity || 999) + '/1000';
+        else if (pos.metal === 'platinum') titolo = (pos.purity || 999.5) + '/1000';
         const descSafe = pos.description ? pos.description.replace(/</g, '&lt;').replace(/>/g, '&gt;') : metalLabel;
         const subtitle = [metalLabel, titolo, formatDate(pos.date)].filter(Boolean).join(' \u00b7 ');
         const soldBadge = (wRem <= 0 && w > 0) ? '<span class="sold-badge">VENDUTO</span>' : '';
@@ -3500,15 +3573,18 @@
       // Breakdown per categoria
       const goldPos = state.positions.filter(p => p.metal === 'gold');
       const silverPos = state.positions.filter(p => p.metal === 'silver');
+      const platinumPos = state.positions.filter(p => p.metal === 'platinum');
       const otherPos = state.positions.filter(p => p.metal === 'other');
       const watchCount = (state.watches || []).length;
       const goldWeight = goldPos.reduce((s,p) => s + (p.remainingQuantity != null ? p.remainingQuantity : p.quantity), 0);
       const silverWeight = silverPos.reduce((s,p) => s + (p.remainingQuantity != null ? p.remainingQuantity : p.quantity), 0);
+      const platinumWeight = platinumPos.reduce((s,p) => s + (p.remainingQuantity != null ? p.remainingQuantity : p.quantity), 0);
       const breakdownEl = document.getElementById('positionBreakdown');
       const barEl = document.getElementById('breakdownBar');
       let rows = '';
       if (goldPos.length > 0) rows += '<div class="breakdown-row gold-row"><span class="breakdown-label">Oro</span><span class="breakdown-detail">' + goldPos.length + ' pos. \u2014 ' + goldWeight.toFixed(1) + ' g</span></div>';
       if (silverPos.length > 0) rows += '<div class="breakdown-row silver-row"><span class="breakdown-label">Argento</span><span class="breakdown-detail">' + silverPos.length + ' pos. \u2014 ' + silverWeight.toFixed(1) + ' g</span></div>';
+      if (platinumPos.length > 0) rows += '<div class="breakdown-row platinum-row"><span class="breakdown-label">Platino</span><span class="breakdown-detail">' + platinumPos.length + ' pos. — ' + platinumWeight.toFixed(1) + ' g</span></div>';
       if (otherPos.length > 0) rows += '<div class="breakdown-row other-row"><span class="breakdown-label">Altro</span><span class="breakdown-detail">' + otherPos.length + ' pos.</span></div>';
       if (watchCount > 0) rows += '<div class="breakdown-row watch-row"><span class="breakdown-label">Orologi</span><span class="breakdown-detail">' + watchCount + ' pz.</span></div>';
       if (rows === '') rows = '<div class="breakdown-row" style="justify-content:center;color:var(--text-secondary);">Nessuna posizione</div>';
@@ -3517,16 +3593,19 @@
       // Barra distribuzione
       const goldVal = goldPos.reduce((s,p) => s + currentValueChf(p), 0);
       const silverVal = silverPos.reduce((s,p) => s + currentValueChf(p), 0);
+      const platinumVal = platinumPos.reduce((s,p) => s + currentValueChf(p), 0);
       const otherVal = otherPos.reduce((s,p) => s + currentValueChf(p), 0);
       const watchVal = (state.watches || []).reduce((s,w) => s + (w.currentValue || w.purchasePrice || 0), 0);
-      const totalBar = goldVal + silverVal + otherVal + watchVal;
+      const totalBar = goldVal + silverVal + platinumVal + otherVal + watchVal;
       if (totalBar > 0) {
         const gP = (goldVal/totalBar*100).toFixed(1);
         const sP = (silverVal/totalBar*100).toFixed(1);
+        const pP = (platinumVal/totalBar*100).toFixed(1);
         const oP = (otherVal/totalBar*100).toFixed(1);
         const wP = (watchVal/totalBar*100).toFixed(1);
         barEl.innerHTML = '<div class="breakdown-bar-segment" style="width:'+gP+'%;background:#C5952A;"></div>'
           + '<div class="breakdown-bar-segment" style="width:'+sP+'%;background:#A8A9AD;"></div>'
+          + '<div class="breakdown-bar-segment" style="width:'+pP+'%;background:#6E7C85;"></div>'
           + '<div class="breakdown-bar-segment" style="width:'+oP+'%;background:#1B3A2D;"></div>'
           + '<div class="breakdown-bar-segment" style="width:'+wP+'%;background:#4C6558;"></div>';
         barEl.style.display = 'flex';
@@ -3538,6 +3617,7 @@
 
     let goldChartInstance = null;
     let silverChartInstance = null;
+    let platinumChartInstance = null;
 
     // Converte un punto storico in CHF/g (gestisce formato USD/oncia e legacy CHF/g)
     function pointToChfPerG(h) {
@@ -3546,7 +3626,8 @@
         date: h.date || null,
         ts: h.ts || null,
         gold: (h.goldUsd != null) ? (h.goldUsd * usdToChf / OZ_TO_G) : (h.gold != null ? h.gold : null),
-        silver: (h.silverUsd != null) ? (h.silverUsd * usdToChf / OZ_TO_G) : (h.silver != null ? h.silver : null)
+        silver: (h.silverUsd != null) ? (h.silverUsd * usdToChf / OZ_TO_G) : (h.silver != null ? h.silver : null),
+        platinum: (h.platinumUsd != null) ? (h.platinumUsd * usdToChf / OZ_TO_G) : (h.platinum != null ? h.platinum : null)
       };
     }
 
@@ -3578,12 +3659,13 @@
     // Prezzo attuale (USD/oncia) da prezzo live, altrimenti ultimo punto intraday di oggi.
     function currentUsdPoint() {
       const usdToChf = state.exchangeRates.USD || 0.80;
-      const pt = { goldUsd: null, silverUsd: null };
+      const pt = { goldUsd: null, silverUsd: null, platinumUsd: null };
       if (state.currentPrices.gold > 0) pt.goldUsd = state.currentPrices.gold / usdToChf * OZ_TO_G;
       if (state.currentPrices.silver > 0) pt.silverUsd = state.currentPrices.silver / usdToChf * OZ_TO_G;
-      if (pt.goldUsd == null && pt.silverUsd == null) {
+      if (state.currentPrices.platinum > 0) pt.platinumUsd = state.currentPrices.platinum / usdToChf * OZ_TO_G;
+      if (pt.goldUsd == null && pt.silverUsd == null && pt.platinumUsd == null) {
         const last = state.intradayHistory[state.intradayHistory.length - 1];
-        if (last) { pt.goldUsd = last.goldUsd; pt.silverUsd = last.silverUsd; }
+        if (last) { pt.goldUsd = last.goldUsd; pt.silverUsd = last.silverUsd; pt.platinumUsd = last.platinumUsd; }
       }
       return pt;
     }
@@ -3593,7 +3675,7 @@
       const cached = state.marketHistoryCache[code];
       if (!cached || !Array.isArray(cached.points) || cached.points.length < 2) {
         const label = state.marketHistoryErrors[code] ? 'Dati non disponibili' : 'Caricamento dati…';
-        return { labels: [label], data: [{ ts: null, gold: null, silver: null }], resolution: null };
+        return { labels: [label], data: [{ ts: null, gold: null, silver: null, platinum: null }], resolution: null };
       }
       const points = cached.points.filter(validMarketPoint).slice().sort(function (a, b) { return a.ts - b.ts; });
       return {
@@ -3705,6 +3787,7 @@
       function tick() {
         if (goldChartInstance) goldChartInstance.draw();
         if (silverChartInstance) silverChartInstance.draw();
+        if (platinumChartInstance) platinumChartInstance.draw();
         _pulseAnim = requestAnimationFrame(tick);
       }
       if (_pulseAnim) cancelAnimationFrame(_pulseAnim);
@@ -3837,6 +3920,54 @@
               }
             }
           });
+      }
+
+      // Platino: stessa struttura stilistica e serie indipendente.
+      const platinumCtx = document.getElementById('platinumChart')?.getContext('2d');
+      if (platinumCtx) {
+        if (platinumChartInstance) platinumChartInstance.destroy();
+        // Il grafico Platino inizia dal suo primo dato reale disponibile:
+        // le date precedenti, se mancanti, non vengono mostrate né ricostruite.
+        const platinumRows = chartData.data.filter(function(h) { return h.platinum != null && Number.isFinite(h.platinum); });
+        const platinumLabels = platinumRows.map(function(h) { return formatMarketTimestamp(h.ts, marketPeriodCode(state.selectedPeriod)); });
+        const platinumDataArr = platinumRows.map(function(h) { return h.platinum / currRate * state.platinumPurity / 1000; });
+        const ptc = getTrendColors(platinumDataArr);
+        const platinumGrad = platinumCtx.createLinearGradient(0, 0, 0, platinumCtx.canvas.height);
+        platinumGrad.addColorStop(0, ptc.gradTop);
+        platinumGrad.addColorStop(0.7, ptc.gradMid);
+        platinumGrad.addColorStop(1, ptc.gradBot);
+        platinumChartInstance = new Chart(platinumCtx, {
+          type: 'line',
+          data: {
+            labels: platinumLabels,
+            datasets: [{
+              label: state.platinumPurity === 999.5 ? `Platino (${currSym}/g)` : `Platino ${state.platinumPurity}‰ (${currSym}/g)`,
+              data: platinumDataArr,
+              borderColor: ptc.line,
+              backgroundColor: platinumGrad,
+              borderWidth: 1.5,
+              tension: state.selectedPeriod === 1 ? 0 : 0.1,
+              fill: true, pointRadius: 0, pointHoverRadius: 0
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            animation: { duration: 800, easing: 'easeOutQuart' },
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: '#ffffff', borderColor: ptc.line, borderWidth: 1,
+                titleColor: '#1B3A2D', bodyColor: '#1B3A2D', padding: 12, cornerRadius: 8, displayColors: false,
+                callbacks: { label: function(ctx) { const v = ctx.parsed.y; return v == null ? '' : currSym + ' ' + v.toFixed(2) + '/g'; } }
+              }
+            },
+            scales: {
+              y: { ticks: { color: '#9aa5b4', font: { size: 11 }, padding: 8 }, grid: { color: 'rgba(160,175,195,0.2)', lineWidth: 1, drawTicks: false }, border: { display: false } },
+              x: { ticks: { color: '#9aa5b4', autoSkip: true, maxTicksLimit: xTickLimit, maxRotation: 0, font: { size: 11 }, padding: 6 }, grid: { display: false }, border: { display: false } }
+            }
+          }
+        });
       }
 
       // Avvia animazione pallino
@@ -3976,6 +4107,7 @@
       const cur = state.currentCurrency;
       const goldG = state.currentPrices.gold / rate;
       const silverG = state.currentPrices.silver / rate;
+      const platinumG = state.currentPrices.platinum / rate;
 
       const hist = state.priceHistory.slice()
         .sort((a, b) => new Date(a.date) - new Date(b.date))
@@ -4016,8 +4148,9 @@
         return ((last[key] - prev[key]) / prev[key]) * 100;
       }
       function setBadge(priceId, changeId, weekId, subId, perG, pct, wPct) {
-        document.getElementById(priceId).textContent = perG.toFixed(2) + ' ' + cur + '/g';
-        document.getElementById(subId).textContent = '\u00b7 ' + (perG * OZ_TO_G).toFixed(0) + ' ' + cur + '/oncia';
+        const priceEl = document.getElementById(priceId), subEl = document.getElementById(subId), valid = Number.isFinite(perG) && perG > 0;
+        if (priceEl) priceEl.textContent = valid ? perG.toFixed(2) + ' ' + cur + '/g' : 'N/D';
+        if (subEl) subEl.textContent = valid ? '· ' + (perG * OZ_TO_G).toFixed(0) + ' ' + cur + '/oncia' : '';
         var el = document.getElementById(changeId);
         if (pct == null) { el.textContent = ''; el.style.background = 'transparent'; }
         else {
@@ -4038,10 +4171,14 @@
       const gmn = document.getElementById('goldMetalName');
       if (gmn) gmn.textContent = state.goldKarat === 24 ? 'Oro' : 'Oro ' + state.goldKarat + 'k';
       const sf = state.silverPurity / 1000;
+      const pf = state.platinumPurity / 1000;
+      const pmn = document.getElementById('platinumMetalName');
+      if (pmn) pmn.textContent = state.platinumPurity === 999.5 ? 'Platino' : 'Platino ' + state.platinumPurity + '‰';
       const smn = document.getElementById('silverMetalName');
       if (smn) smn.textContent = state.silverPurity === 999 ? 'Argento' : 'Argento ' + state.silverPurity + '\u2030';
       setBadge('goldLivePrice', 'goldLiveChange', 'goldWeekChange', 'goldLiveSub', goldG * kf, changePct('gold'), weekChangePct('gold'));
       setBadge('silverLivePrice', 'silverLiveChange', 'silverWeekChange', 'silverLiveSub', silverG * sf, changePct('silver'), weekChangePct('silver'));
+      setBadge('platinumLivePrice', 'platinumLiveChange', 'platinumWeekChange', 'platinumLiveSub', platinumG * pf, changePct('platinum'), weekChangePct('platinum'));
     }
 
 
@@ -4519,8 +4656,8 @@
       var rows = [['Data','Metallo','Descrizione','Titolo','Peso(g)','Prezzo Totale','Valuta','Costo/g CHF','Valore Attuale CHF','Tag','Luogo Custodia'].map(csvCell).join(',')];
       state.positions.slice().sort(function(a,b){ return new Date(a.date || 0) - new Date(b.date || 0); }).forEach(function(pos) {
         var costInChf = costChf(pos), w = pos.quantity || 0, costPerG = w > 0 ? costInChf / w : 0, valChf = currentValueChf(pos);
-        var purVal = pos.purity || (pos.metal === 'gold' ? 24 : 999);
-        var titolo = pos.metal === 'gold' ? (pos.itemType === 'moneta' && purVal > 24 ? purVal + '/1000' : purVal + 'k') : (pos.metal === 'silver' ? String(purVal) : '');
+        var purVal = pos.purity || (pos.metal === 'gold' ? 24 : (pos.metal === 'platinum' ? 999.5 : 999));
+        var titolo = pos.metal === 'gold' ? (pos.itemType === 'moneta' && purVal > 24 ? purVal + '/1000' : purVal + 'k') : ((pos.metal === 'silver' || pos.metal === 'platinum') ? String(purVal) + '/1000' : '');
         rows.push([formatDate(pos.date),pos.metal,pos.description || '',titolo,w,pos.price,pos.priceCurrency,costPerG.toFixed(2),valChf.toFixed(2),pos.tags || '',pos.storageLocation || ''].map(csvCell).join(','));
       });
       var link = document.createElement('a'); link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.join('\n') + '\n'); link.download = 'portafoglio-oro.csv'; link.click();
@@ -4574,6 +4711,8 @@
         } else {
           populateGoldKaratOptions(psel, plabel);
         }
+      } else if (metal === 'platinum') {
+        populatePlatinumOptions(psel, plabel);
       } else {
         plabel.textContent = 'Titolo (millesimi)';
         var opts = '';
@@ -4994,6 +5133,8 @@
       });
     });
 
+    document.querySelectorAll('#platinumPuritySelector .karat-btn').forEach(btn => { btn.addEventListener('click', (e) => { document.querySelectorAll('#platinumPuritySelector .karat-btn').forEach(b => b.classList.remove('active')); e.target.classList.add('active'); state.platinumPurity = parseFloat(e.target.dataset.purity); updateChart(); updateLivePrices(); }); });
+
     // Google Drive Sync Functions
     const GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
     let googleTokenClient = null;
@@ -5100,7 +5241,7 @@
       statusEl.textContent = 'Sincronizzazione...';
       statusEl.className = 'sync-status';
       try {
-        const fileData = JSON.stringify({ format: 'PortafoglioAssets-Drive', formatVersion: 2, updatedAt: new Date().toISOString(), positions: state.positions, priceHistory: state.priceHistory, watches: state.watches }, null, 2);
+        const fileData = JSON.stringify({ format: 'PortafoglioAssets-Drive', formatVersion: 3, updatedAt: new Date().toISOString(), positions: state.positions, priceHistory: state.priceHistory, intradayHistory: state.intradayHistory, watches: state.watches, settings: { currentCurrency: state.currentCurrency, selectedPeriod: state.selectedPeriod, goldKarat: state.goldKarat, silverPurity: state.silverPurity, platinumPurity: state.platinumPurity, privacyValuesHidden: state.privacyValuesHidden } }, null, 2);
         const fileId = await findDriveFile();
         if (fileId) {
           await driveFetch(
@@ -5167,11 +5308,16 @@
         );
         const data = await downloadResponse.json();
         state.positions = migratePositions(data.positions || []);
-        state.priceHistory = data.priceHistory || [];
+        state.priceHistory = Array.isArray(data.priceHistory) ? data.priceHistory : [];
+        state.intradayHistory = Array.isArray(data.intradayHistory) ? data.intradayHistory : [];
         state.watches = migrateWatches(data.watches || []);
-        saveData();
-        savePriceHistory();
-        saveWatches();
+        if (data.settings?.currentCurrency) state.currentCurrency = data.settings.currentCurrency;
+        if (data.settings?.selectedPeriod === 'all' || Number.isFinite(data.settings?.selectedPeriod)) state.selectedPeriod = data.settings.selectedPeriod;
+        if (Number.isFinite(Number(data.settings?.goldKarat))) state.goldKarat = Number(data.settings.goldKarat);
+        if (Number.isFinite(Number(data.settings?.silverPurity))) state.silverPurity = Number(data.settings.silverPurity);
+        if (Number.isFinite(Number(data.settings?.platinumPurity))) state.platinumPurity = Number(data.settings.platinumPurity);
+        if (typeof data.settings?.privacyValuesHidden === 'boolean') state.privacyValuesHidden = data.settings.privacyValuesHidden;
+        saveData(); savePriceHistory(); saveIntradayHistory(); saveWatches();
         updateUI();
         statusEl.textContent = 'Dati caricati da Google Drive';
         setTimeout(() => { statusEl.textContent = ''; }, 3000);
