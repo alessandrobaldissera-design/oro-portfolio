@@ -561,6 +561,23 @@
     }
     .chart-canvas-wrap { height: 260px; position: relative; }
 
+    /* Confronto rendimenti: indice comune, senza sommare prezzi assoluti diversi. */
+    .comparison-section {
+      border-left: 4px solid #1B3A2D;
+      background: linear-gradient(135deg, var(--card-bg) 65%, rgba(27,58,45,0.09) 130%);
+    }
+    .comparison-chart-note {
+      margin: -0.2rem 0 0.9rem;
+      color: #667a70;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+    .comparison-chart-wrap { height: 310px; }
+    @media (max-width: 600px) {
+      .comparison-chart-wrap { height: 255px; }
+      .comparison-chart-note { font-size: 0.76rem; }
+    }
+
     /* Foto articoli */
     .photo-preview { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.75rem; }
     .photo-thumb {
@@ -1688,7 +1705,83 @@
       #refreshBtn { font-size: clamp(0.54rem, 2.5vw, 0.66rem); padding-inline: 0.25rem; }
     }
 
-  </style>
+  
+
+    /* ===== Barra superiore mobile: Shop proporzionato e senza sovrapposizioni ===== */
+    @media (max-width: 900px) {
+      #fixedTop > header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+        align-items: center;
+        column-gap: clamp(0.2rem, 1.1vw, 0.55rem);
+        padding: 0.55rem max(0.75rem, env(safe-area-inset-right, 0px)) 0.55rem max(0.75rem, env(safe-area-inset-left, 0px));
+      }
+      #fixedTop > header h1 {
+        grid-column: 1;
+        min-width: 0;
+        width: auto;
+        margin: 0;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: clamp(0.72rem, 3.1vw, 1.15rem);
+      }
+      #fixedTop > header .header-controls {
+        display: contents;
+        width: auto;
+        max-width: none;
+      }
+      #fixedTop > header .currency-selector {
+        grid-column: 3;
+        justify-self: end;
+        min-width: 0;
+        width: auto;
+        padding: clamp(0.14rem, 0.55vw, 0.24rem);
+        gap: clamp(0.05rem, 0.35vw, 0.15rem);
+      }
+      #fixedTop > header .currency-btn {
+        padding: clamp(0.31rem, 1.35vw, 0.43rem) clamp(0.28rem, 1.3vw, 0.52rem);
+        font-size: clamp(0.62rem, 2.05vw, 0.8rem);
+      }
+      #fixedTop > header #shopBtn {
+        position: static;
+        grid-column: 2;
+        justify-self: center;
+        box-sizing: border-box;
+        min-width: clamp(4.85rem, 12vw, 6.15rem);
+        min-height: clamp(2.2rem, 4.5vw, 2.45rem);
+        margin: 0;
+        padding: clamp(0.46rem, 1.3vw, 0.6rem) clamp(0.6rem, 1.9vw, 1rem);
+        transform: none;
+        font-size: clamp(0.76rem, 2.3vw, 0.94rem);
+        line-height: 1.1;
+        white-space: nowrap;
+      }
+      #fixedTop > header #shopBtn:active { transform: scale(0.96); }
+      #fixedTop > header .mobile-overflow-wrap {
+        display: block;
+        grid-column: 4;
+        justify-self: end;
+      }
+      #fixedTop > header .overflow-menu-btn {
+        width: clamp(2.1rem, 4.6vw, 2.35rem);
+        height: clamp(2.1rem, 4.6vw, 2.35rem);
+      }
+    }
+    @media (max-width: 340px) {
+      #fixedTop > header {
+        column-gap: 0.16rem;
+        padding-left: max(0.5rem, env(safe-area-inset-left, 0px));
+        padding-right: max(0.5rem, env(safe-area-inset-right, 0px));
+      }
+      #fixedTop > header #shopBtn {
+        min-width: 4.5rem;
+        padding-inline: 0.48rem;
+        font-size: 0.72rem;
+      }
+    }
+</style>
 
 </head>
 <body>
@@ -1846,6 +1939,8 @@
           <div class="karat-selector" id="platinumPuritySelector"><span class="karat-label">Titolo grafico:</span><button class="karat-btn" data-purity="999.9">999.9</button><button class="karat-btn active" data-purity="999.5">999.5</button><button class="karat-btn" data-purity="999">999</button></div>
           <div class="chart-canvas-wrap"><canvas id="platinumChart"></canvas></div>
         </div>
+
+
       </div>
 
       <div class="tab-content" id="overview">
@@ -1892,6 +1987,15 @@
           <button class="sync-btn" onclick="disconnectGoogleDrive()">Scollega Drive</button>
           <span id="driveSyncStatus" class="sync-status"></span>
         </div>
+
+        <section class="chart-card comparison-section" aria-labelledby="performanceComparisonTitle">
+          <div class="chart-live-header">
+            <span class="chart-metal-name" id="performanceComparisonTitle">Confronto rendimenti</span>
+            <span class="chart-live-sub">Indice base 100</span>
+          </div>
+          <p class="comparison-chart-note" id="performanceComparisonNote">Caricamento delle quotazioni storiche reali…</p>
+          <div class="chart-canvas-wrap comparison-chart-wrap"><canvas id="performanceComparisonChart" aria-label="Grafico comparativo dei rendimenti di oro, argento e platino" role="img"></canvas></div>
+        </section>
       </div>
 
       <div class="tab-content" id="new">
@@ -3705,6 +3809,145 @@
     let goldChartInstance = null;
     let silverChartInstance = null;
     let platinumChartInstance = null;
+    let performanceComparisonChartInstance = null;
+
+    // Restituisce una serie a indice 100 dalla prima quotazione reale disponibile.
+    // I valori assoluti non vengono confrontati: un grammo d'oro, argento e platino
+    // ha prezzi molto diversi, mentre l'indice rappresenta solo la variazione percentuale.
+    function normalizedMetalPerformanceSeries(rows, field, label, color) {
+      const actual = (rows || []).map(function(row) {
+        const value = Number(row && row[field]);
+        const ts = Number(row && row.ts);
+        return Number.isFinite(ts) && Number.isFinite(value) && value > 0 ? { x: ts, value: value } : null;
+      }).filter(Boolean);
+      if (actual.length < 2) return null;
+      const baseline = actual[0].value;
+      return {
+        label: label,
+        data: actual.map(function(point) {
+          return { x: point.x, y: Number((point.value / baseline * 100).toFixed(4)) };
+        }),
+        borderColor: color,
+        backgroundColor: color,
+        borderWidth: 2.25,
+        tension: state.selectedPeriod === 1 ? 0 : 0.12,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointHitRadius: 10,
+        fill: false,
+        spanGaps: false
+      };
+    }
+
+    function updatePerformanceComparisonChart() {
+      const overview = document.getElementById('overview');
+      if (overview && !overview.classList.contains('active')) return;
+      const canvas = document.getElementById('performanceComparisonChart');
+      const note = document.getElementById('performanceComparisonNote');
+      if (!canvas || !window.Chart) return;
+      if (performanceComparisonChartInstance) {
+        performanceComparisonChartInstance.destroy();
+        performanceComparisonChartInstance = null;
+      }
+
+      const chartData = getChartData();
+      const rows = (chartData.data || []).filter(function(row) { return row && Number.isFinite(Number(row.ts)); });
+      const code = marketPeriodCode(state.selectedPeriod);
+      const datasets = [
+        normalizedMetalPerformanceSeries(rows, 'gold', 'Oro', '#C5952A'),
+        normalizedMetalPerformanceSeries(rows, 'silver', 'Argento', '#808080'),
+        normalizedMetalPerformanceSeries(rows, 'platinum', 'Platino', '#6E7C85')
+      ].filter(Boolean);
+
+      if (note) {
+        if (!rows.length) {
+          note.textContent = state.marketHistoryErrors[code]
+            ? 'Quotazioni storiche non disponibili per il periodo selezionato.'
+            : 'Caricamento delle quotazioni storiche reali…';
+        } else if (datasets.length < 2) {
+          note.textContent = 'Per il periodo selezionato non sono ancora disponibili almeno due serie complete da confrontare.';
+        } else {
+          note.textContent = 'Ogni linea parte da 100 alla sua prima quotazione reale disponibile. Tocca una voce della legenda per mostrarla o nasconderla. Gli orologi non sono inclusi: non esiste una serie storica di valutazioni verificabili.';
+        }
+      }
+
+      const ctx = canvas.getContext('2d');
+      performanceComparisonChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: { datasets: datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 650, easing: 'easeOutQuart' },
+          normalized: true,
+          interaction: { mode: 'nearest', axis: 'x', intersect: false },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'bottom',
+              labels: {
+                usePointStyle: true,
+                pointStyle: 'circle',
+                boxWidth: 8,
+                boxHeight: 8,
+                padding: 16,
+                color: '#375545',
+                font: { size: 12, weight: '600' }
+              }
+            },
+            tooltip: {
+              backgroundColor: '#ffffff',
+              borderColor: '#B7C8BD',
+              borderWidth: 1,
+              titleColor: '#1B3A2D',
+              bodyColor: '#1B3A2D',
+              padding: 12,
+              cornerRadius: 8,
+              displayColors: true,
+              callbacks: {
+                title: function(items) {
+                  const item = items && items[0];
+                  return item ? formatMarketTimestamp(Number(item.parsed.x), code) : '';
+                },
+                label: function(item) {
+                  const value = Number(item.parsed.y);
+                  if (!Number.isFinite(value)) return item.dataset.label;
+                  const change = value - 100;
+                  return item.dataset.label + ': ' + value.toFixed(2) + ' (' + (change >= 0 ? '+' : '') + change.toFixed(2) + '%)';
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              ticks: {
+                color: '#7A8A80',
+                padding: 8,
+                font: { size: 11 },
+                callback: function(value) { return Number(value).toFixed(0); }
+              },
+              title: { display: true, text: 'Indice rendimento', color: '#6B7E73', font: { size: 11, weight: '600' } },
+              grid: { color: 'rgba(160,175,195,0.20)', drawTicks: false },
+              border: { display: false }
+            },
+            x: {
+              type: 'linear',
+              ticks: {
+                color: '#7A8A80',
+                maxTicksLimit: state.selectedPeriod === 1 ? 6 : 7,
+                maxRotation: 0,
+                autoSkip: true,
+                font: { size: 10 },
+                padding: 6,
+                callback: function(value) { return formatMarketTimestamp(Number(value), code); }
+              },
+              grid: { display: false },
+              border: { display: false }
+            }
+          }
+        }
+      });
+    }
 
     // Converte un punto storico in CHF/g (gestisce formato USD/oncia e legacy CHF/g)
     function pointToChfPerG(h) {
@@ -4056,6 +4299,9 @@
           }
         });
       }
+
+      // Confronto normalizzato: solo quotazioni reali dei metalli.
+      updatePerformanceComparisonChart();
 
       // Avvia animazione pallino
       startPulseAnimation();
