@@ -3928,9 +3928,9 @@
         if (platinumChartInstance) platinumChartInstance.destroy();
         // Il grafico Platino inizia dal suo primo dato reale disponibile:
         // le date precedenti, se mancanti, non vengono mostrate né ricostruite.
-        const platinumRows = chartData.data.filter(function(h) { return h.platinum != null && Number.isFinite(h.platinum); });
+        const platinumRows = chartData.data.filter(function(h) { return h.platinum != null && Number.isFinite(Number(h.platinum)) && Number(h.platinum) > 0; });
         const platinumLabels = platinumRows.map(function(h) { return formatMarketTimestamp(h.ts, marketPeriodCode(state.selectedPeriod)); });
-        const platinumDataArr = platinumRows.map(function(h) { return h.platinum / currRate * state.platinumPurity / 1000; });
+        const platinumDataArr = platinumRows.map(function(h) { return Number(h.platinum) / currRate * state.platinumPurity / 1000; });
         const ptc = getTrendColors(platinumDataArr);
         const platinumGrad = platinumCtx.createLinearGradient(0, 0, 0, platinumCtx.canvas.height);
         platinumGrad.addColorStop(0, ptc.gradTop);
