@@ -1457,9 +1457,11 @@
       .mobile-overflow-wrap { display: block; }
       .overflow-menu-btn { width: 36px; height: 36px; }
       .sync-bar {
-        width: auto;
-        margin-inline: max(1.1rem, env(safe-area-inset-left, 0px));
-        padding: 0.55rem 0;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        margin-inline: 0;
+        padding: 0.55rem max(0.75rem, env(safe-area-inset-right, 0px)) 0.55rem max(0.75rem, env(safe-area-inset-left, 0px));
         gap: 0.5rem;
         overflow: hidden;
       }
@@ -1472,7 +1474,7 @@
       .header-controls { gap: 0.12rem; }
       .currency-btn { padding-inline: 0.27rem; font-size: 0.61rem; }
       .shop-header-btn { padding-inline: 0.46rem; font-size: 0.66rem; }
-      .sync-bar { margin-inline: 0.65rem; }
+      .sync-bar { margin-inline: 0; }
       .overflow-menu-btn { width: 34px; height: 34px; }
     }
 
@@ -1504,23 +1506,31 @@
       .document-actions { width:100%; flex-wrap:wrap; }
     }
 
-    /* Margini laterali blindati: solo intestazione e barra Dati live */
-    header {
-      padding-left: 1.1rem;
-      padding-right: 1.1rem;
+
+    /* Testata a piena larghezza e Shop centrale */
+    #fixedTop, #fixedTop > header { width: 100%; max-width: 100%; }
+    #fixedTop > header { position: relative; }
+    #shopBtn {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 112px;
+      padding: 0.68rem 1.5rem;
+      font-size: 1rem;
+      z-index: 3;
     }
-    .sync-bar {
-      margin-left: 1.1rem;
-      margin-right: 1.1rem;
+    #shopBtn:active { transform: translate(-50%, -50%) scale(0.96); }
+    @media (max-width: 900px) {
+      #fixedTop > header { padding-left: max(0.75rem, env(safe-area-inset-left, 0px)); padding-right: max(0.75rem, env(safe-area-inset-right, 0px)); }
+      #shopBtn { min-width: 96px; padding: 0.58rem 1rem; font-size: 0.92rem; }
+      .header-controls { max-width: 72%; }
     }
-    @media (min-width: 601px) and (max-width: 768px) {
-      header { padding-left: 1.5rem; padding-right: 1.5rem; }
-      .sync-bar { margin-left: 1.5rem; margin-right: 1.5rem; }
+    @media (max-width: 420px) {
+      #shopBtn { min-width: 88px; padding: 0.54rem 0.75rem; font-size: 0.88rem; }
+      .header-controls { max-width: 74%; }
     }
-    @media (max-width: 600px) {
-      header { padding-left: 0.75rem; padding-right: 0.75rem; }
-      .sync-bar { margin-left: 0.75rem; margin-right: 0.75rem; }
-    }
+
 </style>
 
 </head>
@@ -3849,7 +3859,9 @@
             else if (h > w && h > maxDim) { w = Math.round(w * maxDim / h); h = maxDim; }
             const canvas = document.createElement('canvas');
             canvas.width = w; canvas.height = h;
-            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            const context = canvas.getContext('2d');
+            if (!context) { reject(new Error('Canvas non disponibile')); return; }
+            context.drawImage(img, 0, 0, w, h);
             resolve(canvas.toDataURL('image/jpeg', quality));
           };
           img.onerror = reject;
@@ -3862,10 +3874,19 @@
 
     async function filesToCompressed(fileList) {
       const out = [];
-      for (const f of Array.from(fileList)) {
-        if (!f.type || !f.type.startsWith('image/')) continue;
-        try { out.push(await compressImage(f, 1024, 0.7)); } catch (err) { console.log('img err', err); }
+      let failed = 0;
+      for (const f of Array.from(fileList || [])) {
+        if (f.type && !f.type.startsWith('image/')) { failed++; continue; }
+        try {
+          out.push(await compressImage(f, 1024, 0.7));
+        } catch (err) {
+          failed++;
+          console.log('img err', err);
+        }
       }
+      if (failed) alert(failed === 1
+        ? 'La foto selezionata non è leggibile. Usa una foto JPG, PNG o WebP.'
+        : failed + ' foto non sono leggibili. Usa immagini JPG, PNG o WebP.');
       return out;
     }
 
@@ -3879,24 +3900,20 @@
       document.body.appendChild(input);
 
       let cleaned = false;
-      let focusHandler = null;
       const cleanup = function () {
         if (cleaned) return;
         cleaned = true;
-        if (focusHandler) window.removeEventListener('focus', focusHandler);
         input.value = '';
         input.remove();
       };
       input.addEventListener('change', async function () {
-        try { await onFiles(input.files); } finally { cleanup(); }
+        try {
+          if (input.files && input.files.length) await onFiles(input.files);
+        } finally {
+          cleanup();
+        }
       }, { once: true });
       input.addEventListener('cancel', cleanup, { once: true });
-      focusHandler = function () {
-        setTimeout(function () {
-          if (!input.files || !input.files.length) cleanup();
-        }, 500);
-      };
-      window.addEventListener('focus', focusHandler, { once: true });
       input.click();
     }
 
