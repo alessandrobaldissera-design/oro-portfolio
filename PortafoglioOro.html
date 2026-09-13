@@ -614,6 +614,7 @@
       text-align: center;
       width: 100%;
     }
+    button.photo-input-label { appearance: none; font-family: inherit; }
     .photo-input-label input { display: none; }
     #lightbox {
       display: none;
@@ -1950,10 +1951,7 @@
           </div>
           <div class="form-group">
             <label>Foto articolo (fotocamera o galleria)</label>
-            <label class="photo-input-label">
-              &#128247; Aggiungi foto
-              <input type="file" id="photos" accept="image/*" multiple onchange="handlePhotoSelect(this)">
-            </label>
+            <button class="photo-input-label" type="button" onclick="requestNewPositionPhotos()">&#128247; Aggiungi foto</button>
             <div class="photo-preview" id="photoPreview"></div>
           </div>
           <button class="btn" type="submit">Aggiungi a storico</button>
@@ -2074,10 +2072,7 @@
           </div>
           <div class="form-group">
             <label>Foto orologio (fotocamera o galleria)</label>
-            <label class="photo-input-label">
-              &#128247; Aggiungi foto
-              <input type="file" id="watchPhotos" accept="image/*" multiple onchange="handleWatchPhotoSelect(this)">
-            </label>
+            <button class="photo-input-label" type="button" onclick="requestNewWatchPhotos()">&#128247; Aggiungi foto</button>
             <div class="photo-preview" id="watchPhotoPreview"></div>
           </div>
           <button class="btn" type="submit">Salva Orologio</button>
@@ -2821,9 +2816,26 @@
     }
 
     // Salva storico prezzi
+    function storeLocalValue(key, value) {
+      try {
+        localStorage.setItem(key, value);
+        return true;
+      } catch (firstError) {
+        // Le vecchie versioni duplicavano tutti i dati in un backup automatico.
+        // Lo rimuoviamo solo se serve spazio, mantenendo le chiavi principali dell'app.
+        try {
+          localStorage.removeItem('portafoglioAssetsLocalBackup');
+          localStorage.setItem(key, value);
+          return true;
+        } catch (secondError) {
+          console.log('local storage err', secondError);
+          return false;
+        }
+      }
+    }
+
     function savePriceHistory() {
-      localStorage.setItem('priceHistory', JSON.stringify(state.priceHistory));
-      saveLocalBackupSilently();
+      return storeLocalValue('priceHistory', JSON.stringify(state.priceHistory));
     }
 
     // Storico ufficiale giornaliero LBMA (fixing oro PM e argento, USD/oncia).
@@ -2888,8 +2900,7 @@
     }
 
     function saveIntradayHistory() {
-      localStorage.setItem('intradayHistory', JSON.stringify(state.intradayHistory));
-      saveLocalBackupSilently();
+      return storeLocalValue('intradayHistory', JSON.stringify(state.intradayHistory));
     }
 
     // Load data from localStorage
@@ -2928,13 +2939,9 @@
 
     // Save data to localStorage
     function saveData() {
-      try {
-        localStorage.setItem('goldPortfolio', JSON.stringify(state.positions));
-        saveLocalBackupSilently();
-      } catch (err) {
-        console.log('save err', err);
-        alert('Spazio di archiviazione pieno: alcune foto potrebbero non essere state salvate. Rimuovi qualche foto o usa immagini piu piccole.');
-      }
+      if (storeLocalValue('goldPortfolio', JSON.stringify(state.positions))) return true;
+      alert('Spazio di archiviazione pieno: le foto non sono state salvate. Rimuovi qualche foto o usa immagini piu piccole.');
+      return false;
     }
 
     // Backup locale portabile: il salvataggio automatico resta interno al browser/app.
@@ -2992,15 +2999,9 @@
       }
     }
     function saveWatches() {
-      try {
-        localStorage.setItem('watchPortfolio', JSON.stringify(state.watches));
-        saveLocalBackupSilently();
-        return true;
-      } catch (err) {
-        console.log('save watches err', err);
-        alert('Spazio di archiviazione insufficiente. I nuovi allegati non sono stati salvati: rimuovi file o foto e riprova.');
-        return false;
-      }
+      if (storeLocalValue('watchPortfolio', JSON.stringify(state.watches))) return true;
+      alert('Spazio di archiviazione insufficiente. I nuovi allegati non sono stati salvati: rimuovi file o foto e riprova.');
+      return false;
     }
 
     // Add position
@@ -3019,7 +3020,10 @@
 
       const itemType = metal === 'other' ? null : (document.getElementById('itemType').value || 'lingotto');
       state.positions.push({ metal, description, quantity, purity, price, priceCurrency, date, photos, itemType, tags, storageLocation });
-      saveData();
+      if (!saveData()) {
+        state.positions.pop();
+        return;
+      }
       pendingPhotos = [];
       document.getElementById('photoPreview').innerHTML = '';
       document.getElementById('new').querySelector('form').reset();
@@ -4109,7 +4113,10 @@
       input.type = 'file';
       input.accept = 'image/*';
       input.multiple = true;
-      input.style.display = 'none';
+      // Invisibile ma non display:none: maggiore compatibilita con WebView Android/OEM.
+      input.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1;';
+      input.tabIndex = -1;
+      input.setAttribute('aria-hidden', 'true');
       input.value = '';
       document.body.appendChild(input);
 
@@ -4131,9 +4138,21 @@
       input.click();
     }
 
+    async function appendCompressedPhotos(fileList, target) {
+      const imgs = await filesToCompressed(fileList);
+      if (imgs.length) target.push(...imgs);
+      return imgs.length > 0;
+    }
+
+    function requestNewPositionPhotos() {
+      openImageFileInput(async function (files) {
+        await appendCompressedPhotos(files, pendingPhotos);
+        renderPhotoPreview();
+      });
+    }
+
     async function handlePhotoSelect(input) {
-      const imgs = await filesToCompressed(input.files);
-      pendingPhotos = pendingPhotos.concat(imgs);
+      await appendCompressedPhotos(input.files, pendingPhotos);
       renderPhotoPreview();
       input.value = '';
     }
@@ -4336,9 +4355,15 @@
       }
     }
 
+    function requestNewWatchPhotos() {
+      openImageFileInput(async function (files) {
+        await appendCompressedPhotos(files, pendingWatchPhotos);
+        renderWatchPhotoPreview();
+      });
+    }
+
     async function handleWatchPhotoSelect(input) {
-      const imgs = await filesToCompressed(input.files);
-      pendingWatchPhotos = pendingWatchPhotos.concat(imgs);
+      await appendCompressedPhotos(input.files, pendingWatchPhotos);
       renderWatchPhotoPreview();
       input.value = '';
     }
@@ -4922,8 +4947,12 @@
       editState.purity = metal === 'other' ? null : parseFloat(document.getElementById('editPurity').value);
       editState.itemType = metal === 'other' ? null : (document.getElementById('editItemType').value || 'lingotto');
       editState.date = document.getElementById('editDate').value;
+      const previousPosition = state.positions[editIndex];
       state.positions[editIndex] = editState;
-      saveData();
+      if (!saveData()) {
+        state.positions[editIndex] = previousPosition;
+        return;
+      }
       closeDetail();
       updateUI();
     }
