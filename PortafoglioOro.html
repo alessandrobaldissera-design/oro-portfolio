@@ -1618,6 +1618,64 @@
       #positionsTable td:last-child { font-weight: 700; }
     }
 
+
+    /* Barra Dati live: griglia compatta e proporzionata su smartphone. */
+    @media (max-width: 600px) {
+      .sync-bar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.38rem 0.5rem;
+        padding-top: 0.48rem;
+        padding-bottom: 0.48rem;
+        font-size: clamp(0.72rem, 3.15vw, 0.84rem);
+      }
+      .sync-status {
+        grid-column: 1 / -1;
+        min-width: 0;
+        gap: 0.38rem;
+        line-height: 1.25;
+      }
+      #syncText {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .rate-info {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.38rem;
+        width: 100%;
+      }
+      .rate-box {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        padding: 0.3rem 0.34rem;
+        border-radius: 8px;
+        font-size: clamp(0.64rem, 2.7vw, 0.78rem);
+        line-height: 1.2;
+        text-align: center;
+        white-space: nowrap;
+      }
+      .refresh-btn {
+        grid-column: 2;
+        margin-left: 0;
+        justify-self: end;
+        padding: 0.36rem 0.66rem;
+        font-size: clamp(0.7rem, 2.85vw, 0.82rem);
+        line-height: 1.2;
+      }
+    }
+    @media (max-width: 340px) {
+      .sync-bar { gap: 0.32rem; padding-inline: 0.55rem; }
+      .rate-info { gap: 0.28rem; }
+      .rate-box { padding-inline: 0.2rem; font-size: 0.60rem; }
+      .refresh-btn { padding: 0.32rem 0.52rem; font-size: 0.68rem; }
+    }
+
   </style>
 
 </head>
