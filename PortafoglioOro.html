@@ -353,8 +353,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #7a8a80;
+      color: var(--text-primary);
       font-size: 0.85rem;
+      font-weight: 700;
       text-align: center;
       padding: 1rem;
     }
@@ -410,6 +411,40 @@
       outline: none;
       border-color: #2d5a41;
       box-shadow: 0 0 0 3px rgba(27, 58, 45, 0.12);
+    }
+
+    /* Data acquisto: selezione rapida dell'anno, senza cambiare il formato della data salvata. */
+    .purchase-date-control {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(104px, 0.38fr);
+      gap: 0.5rem;
+      align-items: stretch;
+    }
+
+    .purchase-date-control input[type="date"],
+    .purchase-date-control .purchase-year-select {
+      width: 100%;
+      min-width: 0;
+      margin: 0;
+    }
+
+    .purchase-date-control .purchase-year-select {
+      color: #17251e;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    @media (max-width: 360px) {
+      .purchase-date-control {
+        grid-template-columns: minmax(0, 1fr) minmax(86px, 0.34fr);
+        gap: 0.4rem;
+      }
+
+      .purchase-date-control .purchase-year-select {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        font-size: 0.92rem;
+      }
     }
 
     button.btn {
@@ -552,7 +587,7 @@
       color: #1B3A2D;
       line-height: 1;
     }
-    .chart-live-sub { font-size: 0.85rem; color: #7a8a80; }
+    .chart-live-sub { font-size: 0.85rem; color: var(--text-primary); font-weight: 700; }
     .chart-live-change {
       font-size: 0.95rem;
       font-weight: 700;
@@ -568,8 +603,9 @@
     }
     .comparison-chart-note {
       margin: -0.2rem 0 0.9rem;
-      color: #667a70;
+      color: var(--text-primary);
       font-size: 0.82rem;
+      font-weight: 700;
       line-height: 1.45;
     }
     .comparison-chart-wrap { height: 310px; }
@@ -2141,7 +2177,10 @@
           </div>
           <div class="form-group">
             <label>Data Acquisto</label>
-            <input type="date" id="date" required>
+            <div class="purchase-date-control">
+              <input type="date" id="date" required>
+              <select id="datePurchaseYear" class="purchase-year-select" data-date-input="date" onchange="applyQuickPurchaseYear(this)" aria-label="Seleziona rapidamente l'anno di acquisto" title="Seleziona rapidamente l'anno di acquisto"><option value="">Anno</option></select>
+            </div>
           </div>
           <div class="form-group">
             <label>Tag <span style="color:#888;font-weight:400;">(facoltativi, separati da virgola)</span></label>
@@ -2217,7 +2256,10 @@
           </div>
           <div class="form-group">
             <label>Data Acquisto</label>
-            <input type="date" id="watchPurchaseDate" required>
+            <div class="purchase-date-control">
+              <input type="date" id="watchPurchaseDate" required>
+              <select id="watchPurchaseYear" class="purchase-year-select" data-date-input="watchPurchaseDate" onchange="applyQuickPurchaseYear(this)" aria-label="Seleziona rapidamente l'anno di acquisto" title="Seleziona rapidamente l'anno di acquisto"><option value="">Anno</option></select>
+            </div>
           </div>
           <div class="form-group">
             <label>Prezzo di Acquisto</label>
@@ -2518,7 +2560,10 @@
       </div>
       <div class="form-group">
         <label>Data Acquisto</label>
-        <input type="date" id="editDate">
+        <div class="purchase-date-control">
+          <input type="date" id="editDate">
+          <select id="editPurchaseYear" class="purchase-year-select" data-date-input="editDate" onchange="applyQuickPurchaseYear(this)" aria-label="Seleziona rapidamente l'anno di acquisto" title="Seleziona rapidamente l'anno di acquisto"><option value="">Anno</option></select>
+        </div>
       </div>
       <div class="form-group">
         <label>Foto articolo</label>
@@ -2568,7 +2613,10 @@
       </div>
       <div class="form-group">
         <label>Data Acquisto</label>
-        <input type="date" id="editWatchPurchaseDate">
+        <div class="purchase-date-control">
+          <input type="date" id="editWatchPurchaseDate">
+          <select id="editWatchPurchaseYear" class="purchase-year-select" data-date-input="editWatchPurchaseDate" onchange="applyQuickPurchaseYear(this)" aria-label="Seleziona rapidamente l'anno di acquisto" title="Seleziona rapidamente l'anno di acquisto"><option value="">Anno</option></select>
+        </div>
       </div>
       <div class="form-group">
         <label>Prezzo di Acquisto</label>
@@ -3206,6 +3254,83 @@
       return false;
     }
 
+    // Selettore rapido dell'anno di acquisto: il valore memorizzato resta sempre YYYY-MM-DD.
+    const QUICK_PURCHASE_YEAR_FIELDS = [
+      { selectId: 'datePurchaseYear', inputId: 'date' },
+      { selectId: 'watchPurchaseYear', inputId: 'watchPurchaseDate' },
+      { selectId: 'editPurchaseYear', inputId: 'editDate' },
+      { selectId: 'editWatchPurchaseYear', inputId: 'editWatchPurchaseDate' }
+    ];
+
+    function purchaseDateYear(value) {
+      const text = String(value || '');
+      return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text.slice(0, 4) : '';
+    }
+
+    function findQuickPurchaseYearField(inputId) {
+      return QUICK_PURCHASE_YEAR_FIELDS.find(function (field) { return field.inputId === inputId; });
+    }
+
+    function refreshQuickPurchaseYearSelect(selectId, inputId) {
+      const select = document.getElementById(selectId);
+      const input = document.getElementById(inputId);
+      if (!select || !input) return;
+
+      const selectedYear = purchaseDateYear(input.value);
+      const selectedNumber = Number(selectedYear);
+      const hasSelectedYear = /^\d{4}$/.test(selectedYear) && Number.isInteger(selectedNumber);
+      const currentYear = new Date().getFullYear();
+      const maxYear = hasSelectedYear ? Math.max(currentYear, selectedNumber) : currentYear;
+      const minYear = hasSelectedYear ? Math.min(1900, selectedNumber) : 1900;
+      const options = ['<option value="">Anno</option>'];
+      for (let year = maxYear; year >= minYear; year -= 1) {
+        options.push('<option value="' + year + '">' + year + '</option>');
+      }
+      select.innerHTML = options.join('');
+      select.value = selectedYear || '';
+    }
+
+    function syncQuickPurchaseYearSelect(inputId) {
+      const field = findQuickPurchaseYearField(inputId);
+      if (field) refreshQuickPurchaseYearSelect(field.selectId, field.inputId);
+    }
+
+    function setupQuickPurchaseYearSelectors() {
+      QUICK_PURCHASE_YEAR_FIELDS.forEach(function (field) {
+        const input = document.getElementById(field.inputId);
+        if (!input) return;
+        refreshQuickPurchaseYearSelect(field.selectId, field.inputId);
+        input.addEventListener('change', function () {
+          refreshQuickPurchaseYearSelect(field.selectId, field.inputId);
+        });
+      });
+    }
+
+    function applyQuickPurchaseYear(select) {
+      const inputId = select && select.getAttribute('data-date-input');
+      const input = inputId ? document.getElementById(inputId) : null;
+      const year = Number(select && select.value);
+      if (!input || !Number.isInteger(year)) {
+        if (inputId) syncQuickPurchaseYearSelect(inputId);
+        return;
+      }
+
+      const existing = /^\d{4}-(\d{2})-(\d{2})$/.exec(String(input.value || ''));
+      const today = new Date();
+      const month = existing ? Number(existing[1]) : today.getMonth() + 1;
+      const requestedDay = existing ? Number(existing[2]) : today.getDate();
+      const lastDayOfMonth = new Date(year, month, 0).getDate();
+      const day = Math.min(requestedDay, lastDayOfMonth);
+      input.value = String(year).padStart(4, '0') + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      input.focus();
+      try {
+        if (typeof input.showPicker === 'function') input.showPicker();
+      } catch (_) {
+        // Nei browser che non consentono l'apertura programmatica il campo data resta pronto per la selezione manuale.
+      }
+    }
+
     // Add position
     async function addPosition(e) {
       e.preventDefault();
@@ -3230,6 +3355,7 @@
       document.getElementById('photoPreview').innerHTML = '';
       document.getElementById('new').querySelector('form').reset();
       document.getElementById('priceCurrency').value = 'CHF';
+      syncQuickPurchaseYearSelect('date');
       onMetalChange();
       updateUI();
     }
@@ -3993,8 +4119,8 @@
                 boxWidth: 8,
                 boxHeight: 8,
                 padding: 16,
-                color: '#375545',
-                font: { size: 12, weight: '600' }
+                color: '#111816',
+                font: { size: 12, weight: '700' }
               }
             },
             tooltip: {
@@ -4023,23 +4149,23 @@
           scales: {
             y: {
               ticks: {
-                color: '#7A8A80',
+                color: '#111816',
                 padding: 8,
-                font: { size: 11 },
+                font: { size: 11, weight: '700' },
                 callback: function(value) { return Number(value).toFixed(0); }
               },
-              title: { display: true, text: 'Indice rendimento', color: '#6B7E73', font: { size: 11, weight: '600' } },
+              title: { display: true, text: 'Indice rendimento', color: '#111816', font: { size: 11, weight: '700' } },
               grid: { color: 'rgba(160,175,195,0.20)', drawTicks: false },
               border: { display: false }
             },
             x: {
               type: 'linear',
               ticks: {
-                color: '#7A8A80',
+                color: '#111816',
                 maxTicksLimit: state.selectedPeriod === 1 ? 6 : 7,
                 maxRotation: 0,
                 autoSkip: true,
-                font: { size: 10 },
+                font: { size: 10, weight: '700' },
                 padding: 6,
                 callback: function(value) { return formatMarketTimestamp(Number(value), code); }
               },
@@ -4292,8 +4418,8 @@
                 }
               },
               scales: {
-                y: { ticks: { color: '#9aa5b4', font: { size: 11 }, padding: 8 }, grid: { color: 'rgba(160,175,195,0.2)', lineWidth: 1, drawTicks: false }, border: { display: false } },
-                x: { ticks: { color: '#9aa5b4', autoSkip: true, maxTicksLimit: xTickLimit, maxRotation: 0, font: { size: 11 }, padding: 6 }, grid: { display: false }, border: { display: false } }
+                y: { ticks: { color: '#111816', font: { size: 11, weight: '700' }, padding: 8 }, grid: { color: 'rgba(160,175,195,0.2)', lineWidth: 1, drawTicks: false }, border: { display: false } },
+                x: { ticks: { color: '#111816', autoSkip: true, maxTicksLimit: xTickLimit, maxRotation: 0, font: { size: 11, weight: '700' }, padding: 6 }, grid: { display: false }, border: { display: false } }
               }
             }
           });
@@ -4347,8 +4473,8 @@
                 }
               },
               scales: {
-                y: { ticks: { color: '#9aa5b4', font: { size: 11 }, padding: 8 }, grid: { color: 'rgba(160,175,195,0.2)', lineWidth: 1, drawTicks: false }, border: { display: false } },
-                x: { ticks: { color: '#9aa5b4', autoSkip: true, maxTicksLimit: xTickLimit, maxRotation: 0, font: { size: 11 }, padding: 6 }, grid: { display: false }, border: { display: false } }
+                y: { ticks: { color: '#111816', font: { size: 11, weight: '700' }, padding: 8 }, grid: { color: 'rgba(160,175,195,0.2)', lineWidth: 1, drawTicks: false }, border: { display: false } },
+                x: { ticks: { color: '#111816', autoSkip: true, maxTicksLimit: xTickLimit, maxRotation: 0, font: { size: 11, weight: '700' }, padding: 6 }, grid: { display: false }, border: { display: false } }
               }
             }
           });
@@ -4395,8 +4521,8 @@
               }
             },
             scales: {
-              y: { ticks: { color: '#9aa5b4', font: { size: 11 }, padding: 8 }, grid: { color: 'rgba(160,175,195,0.2)', lineWidth: 1, drawTicks: false }, border: { display: false } },
-              x: { ticks: { color: '#9aa5b4', autoSkip: true, maxTicksLimit: xTickLimit, maxRotation: 0, font: { size: 11 }, padding: 6 }, grid: { display: false }, border: { display: false } }
+              y: { ticks: { color: '#111816', font: { size: 11, weight: '700' }, padding: 8 }, grid: { color: 'rgba(160,175,195,0.2)', lineWidth: 1, drawTicks: false }, border: { display: false } },
+              x: { ticks: { color: '#111816', autoSkip: true, maxTicksLimit: xTickLimit, maxRotation: 0, font: { size: 11, weight: '700' }, padding: 6 }, grid: { display: false }, border: { display: false } }
             }
           }
         });
@@ -4760,6 +4886,7 @@
       pendingWatchDocuments = [];
       document.getElementById('watchPhotoPreview').innerHTML = '';
       document.getElementById('watchForm').reset();
+      syncQuickPurchaseYearSelect('watchPurchaseDate');
       document.getElementById('watchDocumentStatus').textContent = 'Massimo 3 file, 1 MB ciascuno e 2 MB totali per orologio. Apertura, download e rimozione sono disponibili solo nel dettaglio.';
       document.getElementById('watchForm').style.display = 'none';
       updateWatchUI();
@@ -4878,6 +5005,7 @@
       document.getElementById('editWatchReference').value = editWatchState.reference || '';
       document.getElementById('editWatchSerial').value = editWatchState.serial || '';
       document.getElementById('editWatchPurchaseDate').value = editWatchState.purchaseDate || '';
+      syncQuickPurchaseYearSelect('editWatchPurchaseDate');
       document.getElementById('editWatchPurchasePrice').value = (editWatchState.purchasePrice != null ? editWatchState.purchasePrice : '');
       document.getElementById('editWatchPurchaseCurrency').value = editWatchState.purchaseCurrency || 'CHF';
       document.getElementById('editWatchMarketValue').value = (editWatchState.marketValue != null ? editWatchState.marketValue : '');
@@ -5144,6 +5272,7 @@
       document.getElementById('editPrice').value = (editState.price != null ? editState.price : '');
       document.getElementById('editCurrency').value = (editState.priceCurrency || 'CHF');
       document.getElementById('editDate').value = editState.date || '';
+      syncQuickPurchaseYearSelect('editDate');
       renderEditPhotos();
       renderEditSales();
       document.getElementById('detailModal').classList.add('open');
@@ -5872,6 +6001,7 @@
     loadMarketHistoryCache();
     onMetalChange();
     populateWatchBrandSelects();
+    setupQuickPurchaseYearSelectors();
     (function () {
       const rb = document.getElementById('refreshBtn');
       if (rb) rb.addEventListener('click', function () {
