@@ -1623,19 +1623,19 @@
       border-left-width: 4px;
     }
 
-    /* La tabella resta interamente nella larghezza disponibile, senza trascinamento laterale. */
-    #positionsContainer {
+    /* Panoramica: le sei colonne restano sul desktop; su tablet e smartphone diventano schede leggibili. */
+    #overview #positionsContainer {
       width: 100%;
       max-width: 100%;
       overflow: hidden;
     }
-    #positionsTable {
+    #overview #positionsTable {
       width: 100%;
       max-width: 100%;
       table-layout: fixed;
     }
-    #positionsTable th,
-    #positionsTable td {
+    #overview #positionsTable th,
+    #overview #positionsTable td {
       min-width: 0;
       overflow-wrap: anywhere;
       word-break: break-word;
@@ -1643,33 +1643,196 @@
       vertical-align: top;
     }
 
+    /* Schede alternative: nessuna duplicazione dei dati, soltanto una presentazione più leggibile. */
+    #overview #positionsCards {
+      display: none;
+      width: 100%;
+      max-width: 100%;
+    }
+    #overview .position-summary-card {
+      min-width: 0;
+      border: 1px solid rgba(27, 58, 45, 0.18);
+      border-left: 4px solid var(--green-dark);
+      border-radius: 14px;
+      padding: clamp(0.82rem, 2vw, 1.05rem);
+      background: linear-gradient(135deg, #FFFFFF 0%, #F6F8F6 100%);
+      box-shadow: 0 3px 12px rgba(27, 58, 45, 0.08);
+    }
+    #overview .position-summary-card.position-summary-gold { border-left-color: var(--gold); }
+    #overview .position-summary-card.position-summary-silver { border-left-color: var(--silver); }
+    #overview .position-summary-card.position-summary-platinum { border-left-color: var(--platinum); }
+    #overview .position-card-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      margin-bottom: 0.7rem;
+    }
+    #overview .position-card-metal {
+      display: inline-flex;
+      align-items: center;
+      min-width: 0;
+      border-radius: 999px;
+      padding: 0.24rem 0.66rem;
+      background: var(--green-tint);
+      color: var(--text-primary);
+      font-size: clamp(0.82rem, 2.1vw, 0.96rem);
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    #overview .position-summary-gold .position-card-metal { background: var(--gold-bg); color: #7D5B12; }
+    #overview .position-summary-silver .position-card-metal { background: var(--silver-bg); color: #274B69; }
+    #overview .position-summary-platinum .position-card-metal { background: var(--platinum-bg); color: #4D3768; }
+    #overview .position-card-caption {
+      min-width: 0;
+      color: var(--text-secondary);
+      font-size: clamp(0.68rem, 1.8vw, 0.78rem);
+      font-weight: 700;
+      text-align: right;
+      line-height: 1.2;
+    }
+    #overview .position-card-total {
+      margin-bottom: 0.76rem;
+      padding: 0.72rem 0.78rem;
+      border-radius: 10px;
+      background: rgba(27, 58, 45, 0.055);
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.7rem;
+    }
+    #overview .position-card-total span,
+    #overview .position-card-metric dt,
+    #overview .position-type-title {
+      color: var(--text-secondary);
+      font-size: clamp(0.64rem, 1.75vw, 0.74rem);
+      font-weight: 800;
+      letter-spacing: 0.025em;
+      line-height: 1.2;
+    }
+    #overview .position-card-total strong {
+      min-width: 0;
+      color: var(--text-primary);
+      font-size: clamp(0.98rem, 2.85vw, 1.18rem);
+      font-weight: 800;
+      line-height: 1.18;
+      overflow-wrap: anywhere;
+      text-align: right;
+    }
+    #overview .position-card-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.58rem;
+      margin: 0;
+    }
+    #overview .position-card-metric {
+      min-width: 0;
+      padding: 0.58rem 0.62rem;
+      border: 1px solid rgba(27, 58, 45, 0.11);
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.78);
+    }
+    #overview .position-card-metric dt { margin-bottom: 0.22rem; }
+    #overview .position-card-metric dd {
+      min-width: 0;
+      margin: 0;
+      color: var(--text-primary);
+      font-size: clamp(0.76rem, 2.25vw, 0.9rem);
+      font-weight: 750;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+    #overview .position-card-metric.position-card-gain {
+      grid-column: 1 / -1;
+      background: rgba(27, 58, 45, 0.045);
+    }
+    #overview .position-card-metric.position-card-gain.gain dd,
+    #overview .position-type-meta .gain { color: #23834D; }
+    #overview .position-card-metric.position-card-gain.loss dd,
+    #overview .position-type-meta .loss { color: #C74646; }
+    #overview .position-card-type-list {
+      display: grid;
+      gap: 0.45rem;
+      margin-top: 0.75rem;
+      padding-top: 0.72rem;
+      border-top: 1px solid rgba(27, 58, 45, 0.14);
+    }
+    #overview .position-type-title { margin-bottom: 0.02rem; }
+    #overview .position-type-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.14rem 0.55rem;
+      align-items: baseline;
+      min-width: 0;
+      padding: 0.48rem 0.54rem;
+      border-radius: 8px;
+      background: rgba(27, 58, 45, 0.04);
+    }
+    #overview .position-type-name,
+    #overview .position-type-value,
+    #overview .position-type-meta {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      line-height: 1.25;
+    }
+    #overview .position-type-name {
+      color: var(--text-primary);
+      font-size: clamp(0.74rem, 2vw, 0.86rem);
+      font-weight: 750;
+    }
+    #overview .position-type-value {
+      color: var(--text-primary);
+      font-size: clamp(0.72rem, 1.95vw, 0.84rem);
+      font-weight: 750;
+      text-align: right;
+    }
+    #overview .position-type-meta {
+      grid-column: 1 / -1;
+      color: var(--text-secondary);
+      font-size: clamp(0.68rem, 1.8vw, 0.78rem);
+      font-weight: 650;
+    }
+    #overview .position-type-meta .gain,
+    #overview .position-type-meta .loss { font-weight: 800; }
+    #overview .positions-empty {
+      padding: 1.1rem;
+      border: 1px solid rgba(27, 58, 45, 0.16);
+      border-radius: 12px;
+      color: var(--text-secondary);
+      background: var(--card-bg);
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    /* Tablet: due schede affiancate, con valori completi e spazi adeguati. */
+    @media (min-width: 601px) and (max-width: 1024px) {
+      #overview #positionsTable { display: none; }
+      #overview #positionsCards {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: clamp(0.75rem, 1.8vw, 1rem);
+        margin-top: 0.55rem;
+      }
+    }
+
+    /* Smartphone: una scheda alla volta, mai una tabella a colonne microscopiche. */
     @media (max-width: 600px) {
-      #positionsTable {
-        margin-top: 0.7rem;
-        font-size: clamp(0.54rem, 2.05vw, 0.72rem);
+      #overview #positionsTable { display: none; }
+      #overview #positionsCards {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: clamp(0.7rem, 3vw, 0.9rem);
+        margin-top: 0.5rem;
       }
-      #positionsTable th,
-      #positionsTable td {
-        padding: clamp(0.24rem, 1vw, 0.42rem) clamp(0.12rem, 0.7vw, 0.3rem);
-      }
-      #positionsTable th {
-        font-size: clamp(0.50rem, 1.82vw, 0.65rem);
-        letter-spacing: 0;
-        text-transform: none;
-      }
-      #positionsTable th:nth-child(1),
-      #positionsTable td:nth-child(1) { width: 17%; }
-      #positionsTable th:nth-child(2),
-      #positionsTable td:nth-child(2) { width: 12%; }
-      #positionsTable th:nth-child(3),
-      #positionsTable td:nth-child(3),
-      #positionsTable th:nth-child(4),
-      #positionsTable td:nth-child(4),
-      #positionsTable th:nth-child(5),
-      #positionsTable td:nth-child(5) { width: 17%; }
-      #positionsTable th:nth-child(6),
-      #positionsTable td:nth-child(6) { width: 20%; }
-      #positionsTable td:last-child { font-weight: 700; }
+    }
+    @media (max-width: 340px) {
+      #overview .position-summary-card { padding: 0.72rem; }
+      #overview .position-card-heading { gap: 0.42rem; }
+      #overview .position-card-total { padding: 0.62rem; gap: 0.45rem; }
+      #overview .position-card-metric { padding: 0.5rem; }
+      #overview .position-type-row { padding: 0.45rem; gap: 0.12rem 0.38rem; }
     }
 
 
@@ -2109,6 +2272,7 @@
             </thead>
             <tbody id="positionsTableBody"></tbody>
           </table>
+          <div id="positionsCards" aria-live="polite"></div>
         </div>
         <button class="export-btn" onclick="exportCSV()">Esporta CSV</button>
         <div class="sync-container" id="syncControls" style="display: none;">
@@ -3598,16 +3762,25 @@
 
     function updatePositionsTable() {
       const tbody = document.getElementById('positionsTableBody');
+      const cards = document.getElementById('positionsCards');
       tbody.innerHTML = '';
+      if (cards) cards.innerHTML = '';
 
       const rate = state.exchangeRates[state.currentCurrency] || 1;
       const groups = [['gold', 'Oro'], ['silver', 'Argento'], ['platinum', 'Platino'], ['other', 'Altro']];
       let any = false;
+
+      function metric(label, value, className) {
+        return '<div class="position-card-metric' + (className ? ' ' + className : '') + '">' +
+          '<dt>' + label + '</dt><dd>' + value + '</dd></div>';
+      }
+
       groups.forEach(function (g) {
         const m = g[0], label = g[1];
         const ps = state.positions.filter(p => p.metal === m);
         if (ps.length === 0) return;
         any = true;
+
         const weight = ps.reduce((s, p) => s + remainingQty(p), 0);
         const cost = ps.reduce((s, p) => s + costChfRemaining(p), 0) / rate;
         const val = ps.reduce((s, p) => s + currentValueChf(p), 0) / rate;
@@ -3616,14 +3789,24 @@
         const costAvg = weight > 0 ? (cost / weight) : 0;
         const priceNow = weight > 0 ? (val / weight) : 0;
         const cur = state.currentCurrency;
-        tbody.innerHTML += `<tr>
-          <td><b>${label}</b></td>
-          <td>${weight > 0 ? weight.toFixed(2) + 'g' : '&ndash;'}</td>
-          <td>${m === 'other' ? 'n/d' : (state.currentPriceConfirmed[m] && Number.isFinite(priceNow) && priceNow > 0 ? priceNow.toFixed(2) + ' ' + cur + '/g' : 'N/D')}</td>
-          <td>${val.toFixed(2)} ${cur}</td>
-          <td>${m === 'other' ? '&ndash;' : costAvg.toFixed(2) + ' ' + cur + '/g'}</td>
-          <td class="${gain >= 0 ? 'gain' : 'loss'}">${m === 'other' ? '&ndash;' : gain.toFixed(2) + ' (' + gainPct + '%)'}</td>
-        </tr>`;
+        const weightText = weight > 0 ? weight.toFixed(2) + 'g' : '&ndash;';
+        const priceNowText = m === 'other' ? 'n/d' : (state.currentPriceConfirmed[m] && Number.isFinite(priceNow) && priceNow > 0 ? priceNow.toFixed(2) + ' ' + cur + '/g' : 'N/D');
+        const valueText = val.toFixed(2) + ' ' + cur;
+        const costAvgText = m === 'other' ? '&ndash;' : costAvg.toFixed(2) + ' ' + cur + '/g';
+        const gainText = m === 'other' ? '&ndash;' : gain.toFixed(2) + ' (' + gainPct + '%)';
+        const gainClass = gain >= 0 ? 'gain' : 'loss';
+
+        /* Desktop: la tabella originale resta invariata. */
+        tbody.innerHTML += '<tr>' +
+          '<td><b>' + label + '</b></td>' +
+          '<td>' + weightText + '</td>' +
+          '<td>' + priceNowText + '</td>' +
+          '<td>' + valueText + '</td>' +
+          '<td>' + costAvgText + '</td>' +
+          '<td class="' + gainClass + '">' + gainText + '</td>' +
+        '</tr>';
+
+        let typeRows = '';
         if (m !== 'other') {
           const types = [['moneta', 'Monete'], ['lingotto', 'Lingotti'], ['lavorato', 'Lavorato'], ['oro_virtuale', 'Oro Virtuale']];
           types.forEach(function (t) {
@@ -3635,19 +3818,50 @@
             const tVal = typPs.reduce(function (s, p) { return s + currentValueChf(p); }, 0) / rate;
             const tGain = tVal - tCost;
             const tGainPct = tCost > 0 ? ((tGain / tCost) * 100).toFixed(2) : '0.00';
+            const tWeightText = tWeight > 0 ? tWeight.toFixed(2) + 'g' : '&ndash;';
+            const tValueText = tVal.toFixed(2) + ' ' + cur;
+            const tGainText = tGain.toFixed(2) + ' (' + tGainPct + '%)';
+            const tGainClass = tGain >= 0 ? 'gain' : 'loss';
+
             tbody.innerHTML += '<tr style="color:#9aa0b4; font-size:0.85rem;">' +
-              '<td style="padding-left:2rem;">\u203A ' + typeLabel + '</td>' +
-              '<td>' + (tWeight > 0 ? tWeight.toFixed(2) + 'g' : '&ndash;') + '</td>' +
+              '<td style="padding-left:2rem;">› ' + typeLabel + '</td>' +
+              '<td>' + tWeightText + '</td>' +
               '<td></td>' +
-              '<td>' + tVal.toFixed(2) + ' ' + cur + '</td>' +
+              '<td>' + tValueText + '</td>' +
               '<td></td>' +
-              '<td class="' + (tGain >= 0 ? 'gain' : 'loss') + '">' + tGain.toFixed(2) + ' (' + tGainPct + '%)</td>' +
+              '<td class="' + tGainClass + '">' + tGainText + '</td>' +
             '</tr>';
+
+            typeRows += '<div class="position-type-row">' +
+              '<span class="position-type-name">' + typeLabel + '</span>' +
+              '<span class="position-type-value">' + tValueText + '</span>' +
+              '<span class="position-type-meta">' + tWeightText + ' · <span class="' + tGainClass + '">' + tGainText + '</span></span>' +
+            '</div>';
           });
         }
+
+        if (cards) {
+          cards.innerHTML += '<article class="position-summary-card position-summary-' + m + '">' +
+            '<div class="position-card-heading">' +
+              '<span class="position-card-metal">' + label + '</span>' +
+              '<span class="position-card-caption">Posizione aggregata</span>' +
+            '</div>' +
+            '<div class="position-card-total"><span>Valore attuale</span><strong>' + valueText + '</strong></div>' +
+            '<dl class="position-card-metrics">' +
+              metric('Quantità', weightText) +
+              metric('Prezzo attuale', priceNowText) +
+              metric('Costo medio', costAvgText) +
+              metric('Gain/Loss', gainText, 'position-card-gain ' + gainClass) +
+            '</dl>' +
+            (typeRows ? '<div class="position-card-type-list"><span class="position-type-title">Dettaglio per tipologia</span>' + typeRows + '</div>' : '') +
+          '</article>';
+        }
       });
+
       if (!any) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#888;">Nessuna posizione. Aggiungi un nuovo acquisto dal tab "Nuovo Acquisto".</td></tr>';
+        const message = 'Nessuna posizione. Aggiungi un nuovo acquisto dal tab "Nuovo Acquisto".';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#888;">' + message + '</td></tr>';
+        if (cards) cards.innerHTML = '<div class="positions-empty">' + message + '</div>';
       }
     }
 
