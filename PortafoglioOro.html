@@ -817,6 +817,65 @@
       text-decoration: none;
     }
     .chrono24-btn:hover { background: rgba(27,58,45,0.12); }
+
+    /* Conferma di uscita verso Chrono24: il sito non viene più caricato nella WebView. */
+    .chrono24-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10002;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(27,58,45,0.38);
+    }
+    .chrono24-modal.is-open { display: flex; }
+    .chrono24-dialog {
+      width: min(92vw, 360px);
+      box-sizing: border-box;
+      padding: 1.2rem;
+      border-radius: 16px;
+      background: #FAFBFC;
+      box-shadow: 0 14px 42px rgba(0,0,0,0.24);
+      text-align: center;
+    }
+    .chrono24-dialog h2 {
+      margin: 0 0 0.65rem;
+      color: #1B3A2D;
+      font-size: 1.12rem;
+      line-height: 1.3;
+    }
+    .chrono24-dialog p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+    .chrono24-dialog-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+      margin-top: 1rem;
+    }
+    .chrono24-dialog-actions button {
+      min-height: 42px;
+      border-radius: 12px;
+      padding: 0.55rem 0.7rem;
+      font: inherit;
+      font-size: 0.87rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .chrono24-cancel-btn {
+      color: #1B3A2D;
+      background: #E9EFEC;
+      border: 1px solid rgba(27,58,45,0.18);
+    }
+    .chrono24-confirm-btn {
+      color: #FFFFFF;
+      background: #1B3A2D;
+      border: 1px solid #1B3A2D;
+    }
     .add-watch-btn { margin-top: 1.5rem; margin-bottom: 1rem; }
     /* Orologi: la barra di ricerca sta appena sopra il tasto Aggiungi Orologio */
     #watches .app-search-wrap { margin: 2rem 0 1rem; }
@@ -2661,6 +2720,17 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="chrono24Modal" class="chrono24-modal" aria-hidden="true" onclick="if (event.target === this) closeChrono24Prompt()">
+    <div class="chrono24-dialog" role="dialog" aria-modal="true" aria-labelledby="chrono24DialogTitle" aria-describedby="chrono24DialogDescription" onclick="event.stopPropagation()">
+      <h2 id="chrono24DialogTitle">Aprire Chrono24?</h2>
+      <p id="chrono24DialogDescription">Uscirai temporaneamente da Portafoglio Assets. Se Chrono24 è installata sul dispositivo, verrà aperta l’app; altrimenti si aprirà il sito nel browser.</p>
+      <div class="chrono24-dialog-actions">
+        <button id="chrono24CancelBtn" class="chrono24-cancel-btn" type="button" onclick="closeChrono24Prompt()">Annulla</button>
+        <button id="chrono24ConfirmBtn" class="chrono24-confirm-btn" type="button" onclick="confirmChrono24Open()">Apri Chrono24</button>
       </div>
     </div>
   </div>
@@ -5144,6 +5214,142 @@
       }
     }
 
+    // Chrono24: usa il Paese configurato sul dispositivo quando disponibile; nessuna geolocalizzazione viene richiesta.
+    const CHRONO24_LOCALE_HOSTS = {
+      IT: 'www.chrono24.it',
+      CH: 'www.chrono24.ch',
+      DE: 'www.chrono24.de',
+      AT: 'www.chrono24.at',
+      FR: 'www.chrono24.fr',
+      GB: 'www.chrono24.co.uk',
+      ES: 'www.chrono24.es',
+      NL: 'www.chrono24.nl',
+      BE: 'www.chrono24.be',
+      SE: 'www.chrono24.se',
+      DK: 'www.chrono24.dk',
+      PL: 'www.chrono24.pl',
+      JP: 'www.chrono24.jp',
+      AU: 'www.chrono24.com.au',
+      HK: 'www.chrono24.com.hk',
+      DEFAULT: 'www.chrono24.com'
+    };
+    const CHRONO24_ALLOWED_HOSTS = Object.keys(CHRONO24_LOCALE_HOSTS).map(function(key) {
+      return CHRONO24_LOCALE_HOSTS[key];
+    });
+    let pendingChrono24Url = '';
+    let chrono24TriggerElement = null;
+
+    function chrono24DeviceCountry() {
+      // Nell'app Android la regione è letta dal sistema; nel browser si usa la lingua/regione impostata.
+      try {
+        if (window.PortafoglioAndroid && window.PortafoglioAndroid.getDeviceCountry) {
+          const nativeCountry = String(window.PortafoglioAndroid.getDeviceCountry() || '').toUpperCase();
+          if (CHRONO24_LOCALE_HOSTS[nativeCountry]) return nativeCountry;
+        }
+      } catch (error) {
+        console.warn('Paese dispositivo Chrono24 non disponibile', error);
+      }
+
+      const locales = [];
+      if (Array.isArray(navigator.languages)) locales.push.apply(locales, navigator.languages);
+      if (navigator.language) locales.push(navigator.language);
+      try { locales.push(Intl.DateTimeFormat().resolvedOptions().locale); } catch (error) {}
+      for (let i = 0; i < locales.length; i++) {
+        const match = String(locales[i] || '').match(/(?:^|[-_])([A-Za-z]{2})(?:[-_]|$)/);
+        const country = match ? match[1].toUpperCase() : '';
+        if (CHRONO24_LOCALE_HOSTS[country]) return country;
+      }
+
+      // Fallback utile quando il dispositivo espone solo la lingua, senza regione.
+      try {
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const timeZoneCountries = {
+          'Europe/Rome': 'IT', 'Europe/Zurich': 'CH', 'Europe/Berlin': 'DE', 'Europe/Vienna': 'AT',
+          'Europe/Paris': 'FR', 'Europe/Madrid': 'ES', 'Europe/London': 'GB', 'Europe/Amsterdam': 'NL',
+          'Europe/Brussels': 'BE', 'Europe/Stockholm': 'SE', 'Europe/Copenhagen': 'DK', 'Europe/Warsaw': 'PL',
+          'Asia/Tokyo': 'JP', 'Australia/Sydney': 'AU', 'Australia/Melbourne': 'AU', 'Asia/Hong_Kong': 'HK'
+        };
+        if (timeZoneCountries[timeZone]) return timeZoneCountries[timeZone];
+      } catch (error) {}
+      return 'DEFAULT';
+    }
+
+    function chrono24SearchUrl(searchText) {
+      const country = chrono24DeviceCountry();
+      const host = CHRONO24_LOCALE_HOSTS[country] || CHRONO24_LOCALE_HOSTS.DEFAULT;
+      const query = encodeURIComponent(String(searchText || '').trim()).replace(/%20/g, '+');
+      return 'https://' + host + '/search/index.htm?query=' + query;
+    }
+
+    function isAllowedChrono24SearchUrl(urlValue) {
+      try {
+        const url = new URL(urlValue, window.location.href);
+        return url.protocol === 'https:' &&
+          CHRONO24_ALLOWED_HOSTS.indexOf(url.hostname.toLowerCase()) !== -1 &&
+          url.pathname === '/search/index.htm' &&
+          url.searchParams.has('query');
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function requestChrono24Open(urlValue, clickEvent) {
+      if (clickEvent) {
+        clickEvent.preventDefault();
+        clickEvent.stopPropagation();
+      }
+      if (!isAllowedChrono24SearchUrl(urlValue)) return false;
+      pendingChrono24Url = urlValue;
+      chrono24TriggerElement = clickEvent && clickEvent.currentTarget ? clickEvent.currentTarget : document.activeElement;
+      const modal = document.getElementById('chrono24Modal');
+      if (!modal) return false;
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      window.setTimeout(function() {
+        const confirmButton = document.getElementById('chrono24ConfirmBtn');
+        if (confirmButton) confirmButton.focus();
+      }, 0);
+      return false;
+    }
+
+    function closeChrono24Prompt(restoreFocus) {
+      const modal = document.getElementById('chrono24Modal');
+      if (modal) {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+      pendingChrono24Url = '';
+      const trigger = chrono24TriggerElement;
+      chrono24TriggerElement = null;
+      if (restoreFocus !== false && trigger && typeof trigger.focus === 'function') trigger.focus();
+    }
+
+    function confirmChrono24Open() {
+      const url = pendingChrono24Url;
+      closeChrono24Prompt(false);
+      if (!isAllowedChrono24SearchUrl(url)) return;
+
+      // Nell'app usa un Intent Android: Chrono24 si apre se installata, altrimenti il browser esterno.
+      try {
+        if (window.PortafoglioAndroid && window.PortafoglioAndroid.openChrono24) {
+          window.PortafoglioAndroid.openChrono24(url);
+          return;
+        }
+      } catch (error) {
+        console.warn('Apertura nativa Chrono24 non disponibile', error);
+      }
+
+      // Nel browser resta una normale nuova scheda esterna all'app web.
+      const externalLink = document.createElement('a');
+      externalLink.href = url;
+      externalLink.target = '_blank';
+      externalLink.rel = 'noopener noreferrer';
+      externalLink.style.display = 'none';
+      document.body.appendChild(externalLink);
+      externalLink.click();
+      externalLink.remove();
+    }
+
     function renderWatchCards() {
       const c = document.getElementById('watchListContainer');
       if (!c) return;
@@ -5166,7 +5372,7 @@
         const up = gainPct != null ? gainPct >= 0 : gainChf >= 0;
         const soldBadge = w.sale ? '<span class="sold-badge">VENDUTO</span>' : '';
         const strike = w.sale ? 'watch-sold-strike' : '';
-        const chrono24Query = encodeURIComponent((w.brand + ' ' + w.model + ' ' + w.reference).trim()).replace(/%20/g, '+');
+        const chrono24Url = chrono24SearchUrl((w.brand + ' ' + w.model + ' ' + w.reference).trim());
         const previewPhotoHtml = firstPhotoPreview(w, (w.brand + ' ' + w.model).trim());
         html += '<div class="watch-card" data-idx="' + i + '" data-tags="' + escapeAttr(tagList(w.tags).map(function(t){return t.toLocaleLowerCase('it-IT');}).join('|')) + '" data-location="' + escapeAttr(String(w.storageLocation || '').toLocaleLowerCase('it-IT')) + '">' +
           '<div class="watch-brand-circle">' + (isRolex ? '<img src="' + COIN_ROLEX_IMG + '" alt="Rolex">' : escapeHtml(initial)) + '</div>' +
@@ -5182,7 +5388,7 @@
             '<div class="watch-card-footer">' +
               '<span class="metric-label">Rendimento: <strong class="metric-value andamento-badge" style="margin:0; color:' + (gainPct != null ? (up ? '#4ade80' : '#f87171') : '#687a70') + '; background:' + (gainPct != null ? (up ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)') : 'rgba(27,58,45,0.08)') + ';">' + (gainPct != null ? ((up ? '\u25b2 +' : '\u25bc ') + gainPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
               soldBadge +
-              '<a class="chrono24-btn" href="https://www.chrono24.ch/search/index.htm?query=' + chrono24Query + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Chrono24</a>' +
+              '<a class="chrono24-btn" href="' + escapeAttr(chrono24Url) + '" rel="noopener" onclick="return requestChrono24Open(this.href, event)">Chrono24</a>' +
             '</div>' +
           '</div>' +
           previewPhotoHtml +
@@ -5757,6 +5963,8 @@
     function closeOverflowMenu() { setOverflowMenu(false); }
 
     function closeTransientUi() {
+      var chrono24Modal = document.getElementById('chrono24Modal');
+      if (chrono24Modal && chrono24Modal.classList.contains('is-open')) { closeChrono24Prompt(); return true; }
       var menu = document.getElementById('overflowMenu');
       if (menu && menu.classList.contains('is-open')) { closeOverflowMenu(); return true; }
       var backup = document.getElementById('localBackupModal');
@@ -5865,8 +6073,17 @@
       var wrap = document.getElementById('mobileOverflowWrap');
       if (wrap && !wrap.contains(e.target)) closeOverflowMenu();
     });
+    document.addEventListener('keydown', function(e) {
+      var chrono24Modal = document.getElementById('chrono24Modal');
+      if (e.key === 'Escape' && chrono24Modal && chrono24Modal.classList.contains('is-open')) {
+        e.preventDefault();
+        closeChrono24Prompt();
+      }
+    });
 
     window.addEventListener('popstate', function(event) {
+      var chrono24Modal = document.getElementById('chrono24Modal');
+      if (chrono24Modal && chrono24Modal.classList.contains('is-open')) closeChrono24Prompt(false);
       var view = event.state && event.state.portafoglioApp ? event.state : { tab: 'home', shopDetail: null };
       var tab = view.tab || 'home';
       renderAppTab(tab, { fromHistory: true, preserveShopDetail: view.shopDetail != null });
