@@ -596,24 +596,6 @@
     }
     .chart-canvas-wrap { height: 260px; position: relative; }
 
-    /* Confronto rendimenti: indice comune, senza sommare prezzi assoluti diversi. */
-    .comparison-section {
-      border-left: 4px solid #1B3A2D;
-      background: linear-gradient(135deg, var(--card-bg) 65%, rgba(27,58,45,0.09) 130%);
-    }
-    .comparison-chart-note {
-      margin: -0.2rem 0 0.9rem;
-      color: var(--text-primary);
-      font-size: 0.82rem;
-      font-weight: 700;
-      line-height: 1.45;
-    }
-    .comparison-chart-wrap { height: 310px; }
-    @media (max-width: 600px) {
-      .comparison-chart-wrap { height: 255px; }
-      .comparison-chart-note { font-size: 0.76rem; }
-    }
-
     /* Foto articoli */
     .photo-preview { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.75rem; }
     .photo-thumb {
@@ -1720,6 +1702,7 @@
     #overview .position-summary-card.position-summary-gold { border-left-color: var(--gold); }
     #overview .position-summary-card.position-summary-silver { border-left-color: var(--silver); }
     #overview .position-summary-card.position-summary-platinum { border-left-color: var(--platinum); }
+    #overview .position-summary-card.position-summary-watches { border-left-color: #4C6558; }
     #overview .position-card-heading {
       display: flex;
       align-items: center;
@@ -1742,6 +1725,7 @@
     #overview .position-summary-gold .position-card-metal { background: var(--gold-bg); color: #7D5B12; }
     #overview .position-summary-silver .position-card-metal { background: var(--silver-bg); color: #274B69; }
     #overview .position-summary-platinum .position-card-metal { background: var(--platinum-bg); color: #4D3768; }
+    #overview .position-summary-watches .position-card-metal { background: rgba(76, 101, 88, 0.13); color: #1B3A2D; }
     #overview .position-card-caption {
       min-width: 0;
       color: var(--text-secondary);
@@ -2168,6 +2152,7 @@
           <div id="overflowMenu" class="overflow-menu" role="menu" aria-hidden="true">
             <button id="mobilePrivacyBtn" type="button" role="menuitem" aria-pressed="false" title="Mascheramento solo visuale; i dati non sono cifrati">Nascondi valori</button>
             <button id="mobileBackupBtn" type="button" role="menuitem">Backup</button>
+            <button id="mobileCsvExportBtn" type="button" role="menuitem">Esporta CSV</button>
             <button id="mobileDriveBtn" type="button" role="menuitem">Google Drive</button>
             <button id="mobileNewsBtn" type="button" role="menuitem">Notizie</button>
           </div>
@@ -2321,7 +2306,7 @@
           <table id="positionsTable">
             <thead>
               <tr>
-                <th>Metallo</th>
+                <th>Categoria</th>
                 <th>Quantità</th>
                 <th>Prezzo Attuale</th>
                 <th>Valore Attuale</th>
@@ -2333,7 +2318,6 @@
           </table>
           <div id="positionsCards" aria-live="polite"></div>
         </div>
-        <button class="export-btn" onclick="exportCSV()">Esporta CSV</button>
         <div class="sync-container" id="syncControls" style="display: none;">
           <div class="section-navigation drive-panel-navigation">
             <button class="section-back-btn" type="button" onclick="navigateAppBack()"><span aria-hidden="true">&#8249;</span> Indietro</button>
@@ -2345,14 +2329,6 @@
           <span id="driveSyncStatus" class="sync-status"></span>
         </div>
 
-        <section class="chart-card comparison-section" aria-labelledby="performanceComparisonTitle">
-          <div class="chart-live-header">
-            <span class="chart-metal-name" id="performanceComparisonTitle">Confronto rendimenti</span>
-            <span class="chart-live-sub">Indice base 100</span>
-          </div>
-          <p class="comparison-chart-note" id="performanceComparisonNote">Caricamento delle quotazioni storiche reali…</p>
-          <div class="chart-canvas-wrap comparison-chart-wrap"><canvas id="performanceComparisonChart" aria-label="Grafico comparativo dei rendimenti di oro, argento e platino" role="img"></canvas></div>
-        </section>
       </div>
 
       <div class="tab-content" id="new">
@@ -2546,7 +2522,6 @@
         </form>
 
         <div id="watchListContainer"></div>
-        <button class="export-btn" onclick="exportWatchesCSV()">Esporta CSV Orologi</button>
       </div>
 
       <div class="tab-content" id="news">
@@ -3928,6 +3903,51 @@
         }
       });
 
+      // Orologi attivi: gli orologi venduti restano nello storico e non sono inclusi nel portafoglio.
+      const activeWatches = (state.watches || []).filter(function(w) { return w && !w.sale; });
+      if (activeWatches.length > 0) {
+        any = true;
+        const watchCount = activeWatches.length;
+        const cost = activeWatches.reduce(function(sum, w) { return sum + costChfWatch(w); }, 0) / rate;
+        const value = activeWatches.reduce(function(sum, w) { return sum + marketValueChfWatch(w); }, 0) / rate;
+        const gain = value - cost;
+        const gainPct = cost > 0 ? ((gain / cost) * 100).toFixed(2) : '0.00';
+        const averageValue = value / watchCount;
+        const averageCost = cost / watchCount;
+        const cur = state.currentCurrency;
+        const countText = watchCount + (watchCount === 1 ? ' pz.' : ' pz.');
+        const valueText = value.toFixed(2) + ' ' + cur;
+        const averageValueText = averageValue.toFixed(2) + ' ' + cur;
+        const averageCostText = averageCost.toFixed(2) + ' ' + cur;
+        const gainText = gain.toFixed(2) + ' (' + gainPct + '%)';
+        const gainClass = gain >= 0 ? 'gain' : 'loss';
+
+        tbody.innerHTML += '<tr>' +
+          '<td><b>Orologi</b></td>' +
+          '<td>' + countText + '</td>' +
+          '<td>' + averageValueText + '</td>' +
+          '<td>' + valueText + '</td>' +
+          '<td>' + averageCostText + '</td>' +
+          '<td class="' + gainClass + '">' + gainText + '</td>' +
+        '</tr>';
+
+        if (cards) {
+          cards.innerHTML += '<article class="position-summary-card position-summary-watches">' +
+            '<div class="position-card-heading">' +
+              '<span class="position-card-metal">Orologi</span>' +
+              '<span class="position-card-caption">Posizione aggregata</span>' +
+            '</div>' +
+            '<div class="position-card-total"><span>Valore attuale</span><strong>' + valueText + '</strong></div>' +
+            '<dl class="position-card-metrics">' +
+              metric('Numero orologi', countText) +
+              metric('Valore medio', averageValueText) +
+              metric('Costo medio', averageCostText) +
+              metric('Gain/Loss', gainText, 'position-card-gain ' + gainClass) +
+            '</dl>' +
+          '</article>';
+        }
+      }
+
       if (!any) {
         const message = 'Nessuna posizione. Aggiungi un nuovo acquisto dal tab "Nuovo Acquisto".';
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#888;">' + message + '</td></tr>';
@@ -4317,149 +4337,6 @@
     let goldChartInstance = null;
     let silverChartInstance = null;
     let platinumChartInstance = null;
-    let performanceComparisonChartInstance = null;
-
-    // Restituisce una serie a indice 100 dalla prima quotazione reale disponibile.
-    // I valori assoluti non vengono confrontati: un grammo d'oro, argento e platino
-    // ha prezzi molto diversi, mentre l'indice rappresenta solo la variazione percentuale.
-    function normalizedMetalPerformanceSeries(rows, field, label, color, lineDash, pointStyle) {
-      const actual = (rows || []).map(function(row) {
-        const value = Number(row && row[field]);
-        const ts = Number(row && row.ts);
-        return Number.isFinite(ts) && Number.isFinite(value) && value > 0 ? { x: ts, value: value } : null;
-      }).filter(Boolean);
-      if (actual.length < 2) return null;
-      const baseline = actual[0].value;
-      return {
-        label: label,
-        data: actual.map(function(point) {
-          return { x: point.x, y: Number((point.value / baseline * 100).toFixed(4)) };
-        }),
-        borderColor: color,
-        backgroundColor: color,
-        borderWidth: 2.5,
-        borderDash: lineDash || [],
-        borderCapStyle: 'round',
-        borderJoinStyle: 'round',
-        pointStyle: pointStyle || 'circle',
-        tension: state.selectedPeriod === 1 ? 0 : 0.12,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        pointHitRadius: 10,
-        fill: false,
-        spanGaps: false
-      };
-    }
-
-    function updatePerformanceComparisonChart() {
-      const overview = document.getElementById('overview');
-      if (overview && !overview.classList.contains('active')) return;
-      const canvas = document.getElementById('performanceComparisonChart');
-      const note = document.getElementById('performanceComparisonNote');
-      if (!canvas || !window.Chart) return;
-      if (performanceComparisonChartInstance) {
-        performanceComparisonChartInstance.destroy();
-        performanceComparisonChartInstance = null;
-      }
-
-      const chartData = getChartData();
-      const rows = (chartData.data || []).filter(function(row) { return row && Number.isFinite(Number(row.ts)); });
-      const code = marketPeriodCode(state.selectedPeriod);
-      const datasets = [
-        normalizedMetalPerformanceSeries(rows, 'gold', 'Oro', '#C5952A', [], 'circle'),
-        normalizedMetalPerformanceSeries(rows, 'silver', 'Argento', '#3F6E94', [8, 4], 'rectRot'),
-        normalizedMetalPerformanceSeries(rows, 'platinum', 'Platino', '#5F477B', [2, 4], 'triangle')
-      ].filter(Boolean);
-
-      if (note) {
-        if (!rows.length) {
-          note.textContent = state.marketHistoryErrors[code]
-            ? 'Quotazioni storiche non disponibili per il periodo selezionato.'
-            : 'Caricamento delle quotazioni storiche reali…';
-        } else if (datasets.length < 2) {
-          note.textContent = 'Per il periodo selezionato non sono ancora disponibili almeno due serie complete da confrontare.';
-        } else {
-          note.textContent = 'Ogni linea parte da 100 alla sua prima quotazione reale disponibile. Tocca una voce della legenda per mostrarla o nasconderla. Gli orologi non sono inclusi: non esiste una serie storica di valutazioni verificabili.';
-        }
-      }
-
-      const ctx = canvas.getContext('2d');
-      performanceComparisonChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: { datasets: datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: { duration: 650, easing: 'easeOutQuart' },
-          normalized: true,
-          interaction: { mode: 'nearest', axis: 'x', intersect: false },
-          plugins: {
-            legend: {
-              display: true,
-              position: 'bottom',
-              labels: {
-                usePointStyle: true,
-                pointStyle: 'circle',
-                boxWidth: 8,
-                boxHeight: 8,
-                padding: 16,
-                color: '#111816',
-                font: { size: 12, weight: '700' }
-              }
-            },
-            tooltip: {
-              backgroundColor: '#ffffff',
-              borderColor: '#B7C8BD',
-              borderWidth: 1,
-              titleColor: '#1B3A2D',
-              bodyColor: '#1B3A2D',
-              padding: 12,
-              cornerRadius: 8,
-              displayColors: true,
-              callbacks: {
-                title: function(items) {
-                  const item = items && items[0];
-                  return item ? formatMarketTimestamp(Number(item.parsed.x), code) : '';
-                },
-                label: function(item) {
-                  const value = Number(item.parsed.y);
-                  if (!Number.isFinite(value)) return item.dataset.label;
-                  const change = value - 100;
-                  return item.dataset.label + ': ' + value.toFixed(2) + ' (' + (change >= 0 ? '+' : '') + change.toFixed(2) + '%)';
-                }
-              }
-            }
-          },
-          scales: {
-            y: {
-              ticks: {
-                color: '#111816',
-                padding: 8,
-                font: { size: 11, weight: '700' },
-                callback: function(value) { return Number(value).toFixed(0); }
-              },
-              title: { display: true, text: 'Indice rendimento', color: '#111816', font: { size: 11, weight: '700' } },
-              grid: { color: 'rgba(160,175,195,0.20)', drawTicks: false },
-              border: { display: false }
-            },
-            x: {
-              type: 'linear',
-              ticks: {
-                color: '#111816',
-                maxTicksLimit: state.selectedPeriod === 1 ? 6 : 7,
-                maxRotation: 0,
-                autoSkip: true,
-                font: { size: 10, weight: '700' },
-                padding: 6,
-                callback: function(value) { return formatMarketTimestamp(Number(value), code); }
-              },
-              grid: { display: false },
-              border: { display: false }
-            }
-          }
-        }
-      });
-    }
 
     // Converte un punto storico in CHF/g (gestisce formato USD/oncia e legacy CHF/g)
     function pointToChfPerG(h) {
@@ -4811,9 +4688,6 @@
           }
         });
       }
-
-      // Confronto normalizzato: solo quotazioni reali dei metalli.
-      updatePerformanceComparisonChart();
 
       // Avvia animazione pallino
       startPulseAnimation();
@@ -5400,16 +5274,6 @@
       markPrivateValues(c);
     }
 
-    // Esporta CSV orologi: include i nuovi campi testuali e solo i nomi degli allegati (mai i blob/data URL).
-    function exportWatchesCSV() {
-      var header = ['Marca','Modello','Referenza','Numero Serie','Data Acquisto','Prezzo Acquisto','Valuta Acquisto','Valore Mercato','Valuta Mercato','Data Aggiornamento','Corredo','Valore Assicurativo','Valuta Assicurativa','Manutenzioni','Tag','Luogo deposito','Allegati','Venduto','Prezzo Vendita','Valuta Vendita','Data Vendita','Note'];
-      var rows = [header.map(csvCell).join(',')];
-      state.watches.forEach(function (w) {
-        rows.push([w.brand,w.model,w.reference,w.serial || '',formatDate(w.purchaseDate),w.purchasePrice,w.purchaseCurrency,w.marketValue,w.marketValueCurrency,formatDate(w.marketValueDate),w.setContents || '',w.insuranceValue == null ? '' : w.insuranceValue,w.insuranceCurrency || '',w.maintenance || '',w.tags || '',w.storageLocation || '',(w.documents || []).map(function(d){return d.name;}).join('; '),w.sale ? 'SI' : 'NO',w.sale ? w.sale.price : '',w.sale ? w.sale.currency : '',w.sale ? formatDate(w.sale.date) : '',w.notes || ''].map(csvCell).join(','));
-      });
-      var link = document.createElement('a'); link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.join('\n') + '\n'); link.download = 'orologi.csv'; link.click();
-    }
-
     // ===== Dettaglio / modifica orologio =====
     let editWatchIndex = null;
     let editWatchState = null;
@@ -5656,15 +5520,40 @@
       updateUI();
     }
 
-    function exportCSV() {
-      var rows = [['Data','Metallo','Descrizione','Titolo','Peso(g)','Prezzo Totale','Valuta','Costo/g CHF','Valore Attuale CHF','Tag','Luogo deposito'].map(csvCell).join(',')];
-      state.positions.slice().sort(function(a,b){ return new Date(a.date || 0) - new Date(b.date || 0); }).forEach(function(pos) {
-        var costInChf = costChf(pos), w = pos.quantity || 0, costPerG = w > 0 ? costInChf / w : 0, valChf = currentValueChf(pos);
-        var purVal = pos.purity || (pos.metal === 'gold' ? 24 : (pos.metal === 'platinum' ? 999.5 : 999));
-        var titolo = pos.metal === 'gold' ? (pos.itemType === 'moneta' && purVal > 24 ? purVal + '/1000' : purVal + 'k') : ((pos.metal === 'silver' || pos.metal === 'platinum') ? String(purVal) + '/1000' : '');
-        rows.push([formatDate(pos.date),pos.metal,pos.description || '',titolo,w,pos.price,pos.priceCurrency,costPerG.toFixed(2),valChf.toFixed(2),pos.tags || '',pos.storageLocation || ''].map(csvCell).join(','));
+    // Esportazione unica: un solo CSV con metalli e orologi; foto e documenti restano nel backup JSON.
+    function exportPortfolioCSV() {
+      var header = ['Categoria','Data acquisto','Metallo','Descrizione','Titolo','Peso (g)','Prezzo acquisto','Valuta acquisto','Costo/g CHF','Valore attuale CHF','Marca','Modello','Referenza','Numero serie','Valore mercato','Valuta mercato','Data aggiornamento','Corredo','Valore assicurativo','Valuta assicurativa','Manutenzioni','Tag','Luogo deposito','Allegati','Venduto','Prezzo vendita','Valuta vendita','Data vendita','Note'];
+      var rows = [header.map(csvCell).join(',')];
+      function addRow(values) {
+        if (values.length !== header.length) throw new Error('Riga CSV non valida');
+        rows.push(values.map(csvCell).join(','));
+      }
+      var metalLabels = { gold: 'Oro', silver: 'Argento', platinum: 'Platino', other: 'Altro' };
+      (state.positions || []).slice().sort(function(a,b){ return new Date(a.date || 0) - new Date(b.date || 0); }).forEach(function(pos) {
+        var costInChf = costChf(pos), weight = pos.quantity || 0, costPerG = weight > 0 ? costInChf / weight : 0, valueChf = currentValueChf(pos);
+        var purity = pos.purity || (pos.metal === 'gold' ? 24 : (pos.metal === 'platinum' ? 999.5 : 999));
+        var title = pos.metal === 'gold' ? (pos.itemType === 'moneta' && purity > 24 ? purity + '/1000' : purity + 'k') : ((pos.metal === 'silver' || pos.metal === 'platinum') ? String(purity) + '/1000' : '');
+        addRow(['Metallo',formatDate(pos.date),metalLabels[pos.metal] || pos.metal || '',pos.description || '',title,weight,pos.price,pos.priceCurrency,costPerG.toFixed(2),valueChf.toFixed(2),'','','','','','','','','','','',pos.tags || '',pos.storageLocation || '','','','','','',pos.notes || '']);
       });
-      var link = document.createElement('a'); link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.join('\n') + '\n'); link.download = 'portafoglio-oro.csv'; link.click();
+      (state.watches || []).slice().sort(function(a,b){ return new Date(a.purchaseDate || 0) - new Date(b.purchaseDate || 0); }).forEach(function(w) {
+        addRow(['Orologio',formatDate(w.purchaseDate),'','','','',w.purchasePrice,w.purchaseCurrency,'','',w.brand || '',w.model || '',w.reference || '',w.serial || '',w.marketValue,w.marketValueCurrency,formatDate(w.marketValueDate),w.setContents || '',w.insuranceValue == null ? '' : w.insuranceValue,w.insuranceCurrency || '',w.maintenance || '',w.tags || '',w.storageLocation || '',(w.documents || []).map(function(d){ return d.name; }).join('; '),w.sale ? 'SI' : 'NO',w.sale ? w.sale.price : '',w.sale ? w.sale.currency : '',w.sale ? formatDate(w.sale.date) : '',w.notes || '']);
+      });
+      var csvContent = '\uFEFF' + rows.join('\n') + '\n';
+      // Nell'app Android il bridge salva il file nella cartella Download; nel browser usa il download standard.
+      if (window.PortafoglioAndroid && typeof window.PortafoglioAndroid.saveCsv === 'function') {
+        try {
+          window.PortafoglioAndroid.saveCsv('portafoglio-assets.csv', csvContent);
+          return;
+        } catch (err) {
+          console.warn('Salvataggio CSV Android non disponibile, uso il download del browser.', err);
+        }
+      }
+      var link = document.createElement('a');
+      link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
+      link.download = 'portafoglio-assets.csv';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
     }
 
     // === Dettaglio / modifica posizione (v9) ===
@@ -6059,6 +5948,10 @@
     document.getElementById('mobileBackupBtn')?.addEventListener('click', function() {
       closeOverflowMenu();
       openLocalBackupMenu();
+    });
+    document.getElementById('mobileCsvExportBtn')?.addEventListener('click', function() {
+      closeOverflowMenu();
+      exportPortfolioCSV();
     });
     document.getElementById('mobileNewsBtn')?.addEventListener('click', function() {
       closeOverflowMenu();
