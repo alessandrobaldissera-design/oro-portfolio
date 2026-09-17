@@ -287,6 +287,13 @@
       border-radius: 6px;
       margin-top: 0.5rem;
     }
+    .andamento-currency {
+      margin-top: 0.45rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+    }
 
 
 
@@ -2218,6 +2225,25 @@
     #home .summary > .card:nth-child(2) { background: linear-gradient(160deg, #E6F4EA 0%, #C8E4D2 100%); border-left: 5px solid #2F7A52; }
     #home .summary > .card:nth-child(3) { background: linear-gradient(160deg, #E7F1F9 0%, #CADEEE 100%); border-left: 5px solid #527A9E; }
 
+    /* Smartphone e tablet: le tre schede della Home restano chiaramente separate. */
+    @media (max-width: 1024px) {
+      #home .summary > .card:nth-child(1) {
+        background: linear-gradient(160deg, #FFF1C9 0%, #EAC664 100%);
+        border-left: 7px solid #E1A91B;
+        box-shadow: -3px 0 12px rgba(225, 169, 27, 0.34), var(--shadow);
+      }
+      #home .summary > .card:nth-child(2) {
+        background: linear-gradient(160deg, #F4F7F8 0%, #BFCED5 100%);
+        border-left: 7px solid #5B707B;
+        box-shadow: -3px 0 12px rgba(91, 112, 123, 0.30), var(--shadow);
+      }
+      #home .summary > .card:nth-child(3) {
+        background: linear-gradient(160deg, #EEF8FF 0%, #A9D2EE 100%);
+        border-left: 7px solid #367FAF;
+        box-shadow: -3px 0 12px rgba(54, 127, 175, 0.32), var(--shadow);
+      }
+    }
+
     #watches .summary > .card:nth-child(1) { background: linear-gradient(160deg, #FCF1D5 0%, #F1DEAE 100%); border-left: 5px solid #C5952A; }
     #watches .summary > .card:nth-child(2) { background: linear-gradient(160deg, #E6F4EA 0%, #C8E4D2 100%); border-left: 5px solid #2F7A52; }
 
@@ -2275,6 +2301,21 @@
         margin: 0;
         font-size: 0.78rem;
         padding: 0.1rem 0.4rem;
+      }
+      /* Andamento: percentuale in alto; valuta prima dell'importo nella riga sottostante. */
+      #home .summary > .card:nth-child(2) > .andamento-badge {
+        grid-column: 2 / -1; grid-row: 1;
+      }
+      #home .summary > .card:nth-child(2) > .andamento-currency {
+        grid-column: 2; grid-row: 2;
+        justify-self: end;
+      }
+      #home .summary > .card:nth-child(2) > .value {
+        grid-column: 3; grid-row: 2;
+        font-size: 1.15rem;
+      }
+      #home .summary > .card:nth-child(2) > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) {
+        grid-row: 3;
       }
       /* Riquadro interno con i totali Metalli e Orologi: da colonna a due caselle affiancate. */
       #home .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar),
@@ -2508,8 +2549,9 @@
           </div>
           <div class="card" style="position:relative;overflow:hidden;display:flex;flex-direction:column;">
             <h3>Andamento</h3>
-            <div class="value" id="gainLoss">0.00</div>
             <span class="andamento-badge" id="gainLossPct"></span>
+            <div class="currency andamento-currency" id="gainLossCurrency">CHF</div>
+            <div class="value" id="gainLoss">0.00</div>
             <div style="margin-top:auto;border-top:1px solid rgba(27,58,45,0.12);padding-top:0.75rem;display:flex;flex-direction:column;gap:0.9rem;position:relative;z-index:1;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
                 <span style="font-size:0.92rem;font-weight:600;color:#5a7a68;">Metalli</span>
@@ -4118,7 +4160,7 @@
     function markPrivateValues(root) {
       var scope = root && root.querySelectorAll ? root : document;
       scope.querySelectorAll('[data-private-value="true"]').forEach(function(el) { el.removeAttribute('data-private-value'); });
-      var fixed = '#totalValue,#totalCurrency,#totalMetals,#totalWatches,#gainLoss,#gainLossPct,#metalsGainVal,#watchesGainVal,#positionCount,#positionBreakdown .breakdown-detail';
+      var fixed = '#totalValue,#totalCurrency,#totalMetals,#totalWatches,#gainLoss,#gainLossCurrency,#gainLossPct,#metalsGainVal,#watchesGainVal,#positionCount,#positionBreakdown .breakdown-detail';
       scope.querySelectorAll(fixed).forEach(function(el) { el.setAttribute('data-private-value', 'true'); });
     }
     function applyPrivacyMode() {
@@ -4557,7 +4599,7 @@
             '</div>' +
             '<div class="history-card-footer">' +
               '<span class="metric-label">Rendimento: <strong class="metric-value andamento-badge" style="margin:0; color:' + (metrics.valid ? (up ? '#14713F' : '#B93636') : '#687a70') + '; background:' + (metrics.valid ? (up ? 'rgba(20,113,63,0.14)' : 'rgba(185,54,54,0.14)') : 'rgba(27,58,45,0.08)') + ';">' + (metrics.valid ? ((up ? '\u25b2 +' : '\u25bc ') + metrics.returnPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
-              '<span class="metric-label">Premio spot: <strong class="metric-value">' + (metrics.valid ? ((metrics.premiumPct >= 0 ? '+' : '') + metrics.premiumPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
+              '<span class="metric-label">Differenza dal prezzo di mercato: <strong class="metric-value">' + (metrics.valid ? ((metrics.premiumPct >= 0 ? '+' : '') + metrics.premiumPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
               soldBadge +
             '</div>' +
           '</div>' +
@@ -4674,11 +4716,13 @@
       const gainLossPct = grandCost > 0 ? ((gainLoss / grandCost) * 100).toFixed(2) : 0;
       document.getElementById('totalValue').textContent = grandTotal.toFixed(2);
       const tmEl = document.getElementById('totalMetals');
-      if (tmEl) tmEl.textContent = (metalsTotalChf / rate).toFixed(2);
+      if (tmEl) tmEl.textContent = (metalsTotalChf / rate).toFixed(2) + ' ' + state.currentCurrency;
       const twEl = document.getElementById('totalWatches');
-      if (twEl) twEl.textContent = (watchesTotalChf / rate).toFixed(2);
+      if (twEl) twEl.textContent = (watchesTotalChf / rate).toFixed(2) + ' ' + state.currentCurrency;
       document.getElementById('totalCurrency').textContent = state.currentCurrency;
       const glUp = gainLoss >= 0;
+      const glCurrencyEl = document.getElementById('gainLossCurrency');
+      if (glCurrencyEl) glCurrencyEl.textContent = state.currentCurrency;
       const glEl = document.getElementById('gainLoss');
       glEl.textContent = (glUp ? '+' : '') + gainLoss.toFixed(2);
       glEl.className = 'value ' + (glUp ? 'gain' : 'loss');
@@ -4692,7 +4736,7 @@
       const mUp = metalsGainLoss >= 0;
       const mValEl = document.getElementById('metalsGainVal');
       if (mValEl) {
-        mValEl.textContent = (mUp ? '+' : '') + metalsGainLoss.toFixed(2);
+        mValEl.textContent = (mUp ? '+' : '') + metalsGainLoss.toFixed(2) + ' ' + state.currentCurrency;
         mValEl.style.color = '#1B3A2D';
       }
 
@@ -4703,7 +4747,7 @@
       const wUp = watchesGainLoss >= 0;
       const wValEl = document.getElementById('watchesGainVal');
       if (wValEl) {
-        wValEl.textContent = (wUp ? '+' : '') + watchesGainLoss.toFixed(2);
+        wValEl.textContent = (wUp ? '+' : '') + watchesGainLoss.toFixed(2) + ' ' + state.currentCurrency;
         wValEl.style.color = '#1B3A2D';
       }
 
