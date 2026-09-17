@@ -3470,11 +3470,103 @@
       return storeLocalValue('intradayHistory', JSON.stringify(state.intradayHistory));
     }
 
-    // Load data from localStorage
+    // Archivio locale degli allegati e del portafoglio.
+    // IndexedDB resta sul singolo dispositivo, ma evita il piccolo limite di localStorage
+    // che rendeva impossibile conservare molte foto e documenti. Nessun dato viene inviato online.
+    const PORTFOLIO_VAULT_DB = 'PortafoglioAssetsLocalVault';
+    const PORTFOLIO_VAULT_STORE = 'portfolio';
+    let portfolioVaultDb = null;
+    let portfolioVaultReady = false;
+    let portfolioVaultQueue = Promise.resolve();
+
+    function openPortfolioVault() {
+      if (portfolioVaultDb) return Promise.resolve(portfolioVaultDb);
+      if (!window.indexedDB) return Promise.reject(new Error('Archivio locale avanzato non disponibile'));
+      return new Promise(function(resolve, reject) {
+        var request = window.indexedDB.open(PORTFOLIO_VAULT_DB, 1);
+        request.onupgradeneeded = function() {
+          var db = request.result;
+          if (!db.objectStoreNames.contains(PORTFOLIO_VAULT_STORE)) db.createObjectStore(PORTFOLIO_VAULT_STORE);
+        };
+        request.onsuccess = function() { portfolioVaultDb = request.result; resolve(portfolioVaultDb); };
+        request.onerror = function() { reject(request.error || new Error('Impossibile aprire l’archivio locale')); };
+      });
+    }
+
+    function readPortfolioVault(key) {
+      return openPortfolioVault().then(function(db) {
+        return new Promise(function(resolve, reject) {
+          var request = db.transaction(PORTFOLIO_VAULT_STORE, 'readonly').objectStore(PORTFOLIO_VAULT_STORE).get(key);
+          request.onsuccess = function() { resolve(request.result); };
+          request.onerror = function() { reject(request.error || new Error('Impossibile leggere l’archivio locale')); };
+        });
+      });
+    }
+
+    function cloneForLocalVault(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function writePortfolioVault(key, value) {
+      var snapshot = cloneForLocalVault(value);
+      // Se un vecchio salvataggio è fallito, i successivi restano comunque utilizzabili.
+      portfolioVaultQueue = portfolioVaultQueue.catch(function() {}).then(function() {
+        return openPortfolioVault().then(function(db) {
+          return new Promise(function(resolve, reject) {
+            var transaction = db.transaction(PORTFOLIO_VAULT_STORE, 'readwrite');
+            transaction.objectStore(PORTFOLIO_VAULT_STORE).put(snapshot, key);
+            transaction.oncomplete = function() { resolve(true); };
+            transaction.onerror = function() { reject(transaction.error || new Error('Spazio locale insufficiente')); };
+            transaction.onabort = function() { reject(transaction.error || new Error('Spazio locale insufficiente')); };
+          });
+        });
+      });
+      return portfolioVaultQueue;
+    }
+
+    function savePortfolioToVault(key, value) {
+      if (!portfolioVaultReady) return false;
+      writePortfolioVault(key, value).catch(function(err) {
+        console.error('Archivio locale insufficiente:', err);
+        alert('Spazio locale insufficiente: l’ultima modifica non è stata salvata. Libera spazio sul dispositivo o rimuovi alcuni allegati e riprova.');
+      });
+      return true;
+    }
+
+    async function initializePortfolioVault() {
+      if (!window.indexedDB) return;
+      try {
+        var savedPositions = await readPortfolioVault('positions');
+        var savedWatches = await readPortfolioVault('watches');
+        var hasVaultData = Array.isArray(savedPositions) || Array.isArray(savedWatches);
+        if (Array.isArray(savedPositions)) state.positions = migratePositions(savedPositions);
+        if (Array.isArray(savedWatches)) state.watches = migrateWatches(savedWatches);
+        portfolioVaultReady = true;
+        // Salva subito le copie complete nel nuovo archivio, anche al primo avvio dopo l’aggiornamento.
+        await writePortfolioVault('positions', state.positions);
+        await writePortfolioVault('watches', state.watches);
+        // Dopo una migrazione riuscita, libera il vecchio localStorage e la sua eventuale copia duplicata.
+        if (!hasVaultData || localStorage.getItem('goldPortfolio') || localStorage.getItem('watchPortfolio')) {
+          localStorage.removeItem('goldPortfolio');
+          localStorage.removeItem('watchPortfolio');
+          localStorage.removeItem('portafoglioAssetsLocalBackup');
+        }
+        try {
+          if (navigator.storage && navigator.storage.persist) await navigator.storage.persist();
+        } catch (_) {}
+        updateUI();
+        applyPrivacyMode();
+      } catch (err) {
+        console.error('Archivio IndexedDB non disponibile:', err);
+        portfolioVaultReady = false;
+      }
+    }
+
+    // Migrazione iniziale: legge soltanto i dati delle versioni precedenti.
     function loadData() {
       const saved = localStorage.getItem('goldPortfolio');
       if (saved) {
-        state.positions = migratePositions(JSON.parse(saved));
+        try { state.positions = migratePositions(JSON.parse(saved)); } catch (err) { console.log('loadData err', err); state.positions = []; }
       }
     }
 
@@ -3506,8 +3598,9 @@
       });
     }
 
-    // Save data to localStorage
+    // Salvataggio del portafoglio: foto e documenti restano nel database locale del dispositivo.
     function saveData() {
+      if (savePortfolioToVault('positions', state.positions)) return true;
       if (storeLocalValue('goldPortfolio', JSON.stringify(state.positions))) return true;
       alert('Spazio di archiviazione pieno: foto o documenti non sono stati salvati. Rimuovi qualche allegato e riprova.');
       return false;
@@ -3560,7 +3653,7 @@
       } catch (err) { alert('Impossibile importare il backup: ' + err.message); }
     }
 
-    // Load/save orologi da localStorage
+    // Migrazione iniziale degli orologi dalle versioni che usavano localStorage.
     function loadWatches() {
       const saved = localStorage.getItem('watchPortfolio');
       if (saved) {
@@ -3568,6 +3661,7 @@
       }
     }
     function saveWatches() {
+      if (savePortfolioToVault('watches', state.watches)) return true;
       if (storeLocalValue('watchPortfolio', JSON.stringify(state.watches))) return true;
       alert('Spazio di archiviazione insufficiente. I nuovi allegati non sono stati salvati: rimuovi file o foto e riprova.');
       return false;
@@ -4886,6 +4980,11 @@
 
     async function appendCompressedPhotos(fileList, target) {
       const imgs = await filesToCompressed(fileList);
+      const chars = imgs.reduce(function(sum, src) { return sum + String(src || '').length; }, 0);
+      if (imgs.length && !(await storageAllows(chars))) {
+        alert('Spazio locale insufficiente per queste foto. Libera spazio sul dispositivo o seleziona meno immagini.');
+        return false;
+      }
       if (imgs.length) target.push(...imgs);
       return imgs.length > 0;
     }
@@ -6548,6 +6647,8 @@
     // Initialize
     loadData();
     loadWatches();
+    // Sposta automaticamente dati, foto e documenti dal vecchio spazio limitato all’archivio locale capiente.
+    initializePortfolioVault();
     loadMeta();
     loadPriceHistory();
     loadIntradayHistory();
