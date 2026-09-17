@@ -2228,8 +2228,10 @@
 
     /* ===== Smartphone: schede compatte, senza spazi vuoti e con grafici meno sviluppati in verticale ===== */
     @media (max-width: 600px) {
-      #home .summary { gap: 0.6rem; }
-      #home .summary > .card {
+      #home .summary,
+      #watches .summary { gap: 0.6rem; }
+      #home .summary > .card,
+      #watches .summary > .card {
         display: grid !important;
         grid-template-columns: minmax(0, 1fr) auto auto;
         align-items: baseline;
@@ -2238,21 +2240,24 @@
         padding: 0.72rem 0.8rem;
         text-align: left;
       }
-      #home .summary > .card > h3 {
+      #home .summary > .card > h3,
+      #watches .summary > .card > h3 {
         grid-column: 1; grid-row: 1;
         margin: 0;
         font-size: 0.72rem;
         font-weight: 700;
         letter-spacing: 0.06em;
       }
-      #home .summary > .card > .value {
+      #home .summary > .card > .value,
+      #watches .summary > .card > .value {
         grid-column: 2; grid-row: 1;
         justify-self: end;
         font-size: 1.35rem;
         font-weight: 800;
         line-height: 1.1;
       }
-      #home .summary > .card > .currency {
+      #home .summary > .card > .currency,
+      #watches .summary > .card > .currency {
         grid-column: 3; grid-row: 1;
         justify-self: end;
         margin: 0;
@@ -2260,7 +2265,8 @@
         font-weight: 700;
         color: var(--text-secondary);
       }
-      #home .summary > .card > .andamento-badge {
+      #home .summary > .card > .andamento-badge,
+      #watches .summary > .card > .andamento-badge {
         grid-column: 3; grid-row: 1;
         justify-self: end;
         margin: 0;
@@ -2268,7 +2274,8 @@
         padding: 0.1rem 0.4rem;
       }
       /* Riquadro interno con i totali Metalli e Orologi: da colonna a due caselle affiancate. */
-      #home .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) {
+      #home .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar),
+      #watches .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) {
         grid-column: 1 / -1; grid-row: 2;
         margin-top: 0 !important;
         border-top: 0 !important;
@@ -2276,7 +2283,8 @@
         flex-direction: row !important;
         gap: 0.4rem !important;
       }
-      #home .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div {
+      #home .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div,
+      #watches .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div {
         flex: 1;
         min-width: 0;
         display: block !important;
@@ -2284,7 +2292,8 @@
         border-radius: 8px;
         padding: 0.3rem 0.45rem;
       }
-      #home .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div > span:first-child {
+      #home .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div > span:first-child,
+      #watches .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div > span:first-child {
         display: block;
         font-size: 0.66rem !important;
         font-weight: 700 !important;
@@ -2292,22 +2301,26 @@
         text-transform: uppercase;
         color: #4A6357 !important;
       }
-      #home .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div > span:last-child {
+      #home .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div > span:last-child,
+      #watches .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div > span:last-child {
         display: block;
         font-size: 0.92rem !important;
         font-weight: 800 !important;
       }
-      #home .summary > .card > .position-breakdown {
+      #home .summary > .card > .position-breakdown,
+      #watches .summary > .card > .position-breakdown {
         grid-column: 1 / -1; grid-row: 2;
         margin-top: 0;
         gap: 0.28rem;
       }
-      #home .summary > .card > .position-breakdown .breakdown-row {
+      #home .summary > .card > .position-breakdown .breakdown-row,
+      #watches .summary > .card > .position-breakdown .breakdown-row {
         padding: 0.24rem 0.45rem;
         border-radius: 7px;
         background: rgba(255, 255, 255, 0.62);
       }
-      #home .summary > .card > .breakdown-bar {
+      #home .summary > .card > .breakdown-bar,
+      #watches .summary > .card > .breakdown-bar {
         grid-column: 1 / -1; grid-row: 3;
         margin-top: 0.1rem;
         height: 7px;
@@ -2349,6 +2362,37 @@
       #home .period-btn[data-period="90"]::after { content: "90 g"; }
       #home .period-btn[data-period="365"]::after { content: "1 a"; }
       #home .period-btn[data-period="all"]::after { content: "Tutto"; }
+    }
+
+    /* ===== Scheda Andamento: mini-linea in fascia dedicata, colore deciso ===== */
+    .andamento-spark {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: block;
+      width: 100%;
+      height: 46px;
+      pointer-events: none;
+    }
+    #home .summary > .card:nth-child(2) { padding-bottom: 3.6rem; }
+
+    /* ===== Storico: fondo della scheda in linea con il metallo ===== */
+    .history-card.metal-gold { background: linear-gradient(135deg, #FCF3DC 0%, #F1DEAE 100%); border-left: 5px solid #C5952A; }
+    .history-card.metal-silver { background: linear-gradient(135deg, #E6F1FA 0%, #CADEEE 100%); border-left: 5px solid #527A9E; }
+    .history-card.metal-platinum { background: linear-gradient(135deg, #F2EBFA 0%, #E0D4EF 100%); border-left: 5px solid #765D93; }
+    .history-card.metal-other { background: linear-gradient(135deg, #E9F4ED 0%, #CFE5D8 100%); border-left: 5px solid #2F7A52; }
+    .history-card .history-card-cols span,
+    .history-card .metric-value { color: var(--text-primary); }
+
+    @media (max-width: 600px) {
+      .andamento-spark { height: 34px; }
+      #home .summary > .card:nth-child(2) { padding-bottom: 2.6rem; }
+      /* Orologi: titoli su una riga, come in Home; la sezione è già quella degli orologi. */
+      #watches .summary > .card > h3 { font-size: 0; }
+      #watches .summary > .card > h3::after { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; }
+      #watches .summary > .card:nth-child(1) > h3::after { content: "VALORE"; }
+      #watches .summary > .card:nth-child(2) > h3::after { content: "ANDAMENTO"; }
     }
 
 </style>
@@ -2445,7 +2489,7 @@
                 <span id="watchesGainVal" style="font-size:1.05rem;font-weight:800;color:#1B3A2D;">0.00</span>
               </div>
             </div>
-            <canvas id="sparklineCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:55%;pointer-events:none;"></canvas>
+            <canvas id="sparklineCanvas" class="andamento-spark" aria-hidden="true"></canvas>
           </div>
           <div class="card">
             <h3>Posizioni Attive</h3>
@@ -4490,7 +4534,7 @@
         // Nella scheda si mostra soltanto la prima foto; gestione e cancellazione restano nel dettaglio.
         const previewPhotoHtml = firstPhotoPreview(pos, descSafe);
 
-        html += '<div class="history-card" data-idx="' + i + '" data-tags="' + escapeAttr(tagList(pos.tags).map(function(t){return t.toLocaleLowerCase('it-IT');}).join('|')) + '" data-location="' + escapeAttr(String(pos.storageLocation || '').toLocaleLowerCase('it-IT')) + '">' +
+        html += '<div class="history-card metal-' + metalClass + '" data-idx="' + i + '" data-tags="' + escapeAttr(tagList(pos.tags).map(function(t){return t.toLocaleLowerCase('it-IT');}).join('|')) + '" data-location="' + escapeAttr(String(pos.storageLocation || '').toLocaleLowerCase('it-IT')) + '">' +
           '<div class="history-metal-circle ' + metalClass + '">' +
             (pos.metal === 'gold' ? (isIngot ? '<img class="ingot" src="' + INGOT_GOLD_IMG + '" alt="Lingotto oro">' : '<img src="' + COIN_GOLD_IMG + '" alt="Au">') :
              pos.metal === 'silver' ? (isIngot ? '<img class="ingot" src="' + INGOT_SILVER_IMG + '" alt="Lingotto argento">' : '<img src="' + COIN_SILVER_IMG + '" alt="Ag">') :
@@ -4506,7 +4550,7 @@
               '<span>Valore: ' + cur + ' ' + (valChf / rate).toFixed(2) + '</span>' +
             '</div>' +
             '<div class="history-card-footer">' +
-              '<span class="metric-label">Rendimento: <strong class="metric-value andamento-badge" style="margin:0; color:' + (metrics.valid ? (up ? '#4ade80' : '#f87171') : '#687a70') + '; background:' + (metrics.valid ? (up ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)') : 'rgba(27,58,45,0.08)') + ';">' + (metrics.valid ? ((up ? '\u25b2 +' : '\u25bc ') + metrics.returnPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
+              '<span class="metric-label">Rendimento: <strong class="metric-value andamento-badge" style="margin:0; color:' + (metrics.valid ? (up ? '#14713F' : '#B93636') : '#687a70') + '; background:' + (metrics.valid ? (up ? 'rgba(20,113,63,0.14)' : 'rgba(185,54,54,0.14)') : 'rgba(27,58,45,0.08)') + ';">' + (metrics.valid ? ((up ? '\u25b2 +' : '\u25bc ') + metrics.returnPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
               '<span class="metric-label">Premio spot: <strong class="metric-value">' + (metrics.valid ? ((metrics.premiumPct >= 0 ? '+' : '') + metrics.premiumPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
               soldBadge +
             '</div>' +
@@ -4524,10 +4568,11 @@
     function drawAndamentoSparkline() {
       const canvas = document.getElementById('sparklineCanvas');
       if (!canvas) return;
-      const parentRect = canvas.parentElement.getBoundingClientRect();
-      canvas.width = Math.max(parentRect.width, 1) * 2;  // retina
-      canvas.height = Math.max(parentRect.height * 0.55, 90) * 2;
-      canvas.style.height = Math.max(parentRect.height * 0.55, 90) + 'px';
+      // La mini-linea occupa una fascia dedicata in fondo alla scheda: non attraversa i dati.
+      const cssWidth = canvas.clientWidth || canvas.parentElement.clientWidth || 1;
+      const cssHeight = canvas.clientHeight || 44;
+      canvas.width = Math.max(cssWidth, 1) * 2;  // retina
+      canvas.height = Math.max(cssHeight, 1) * 2;
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -4559,7 +4604,7 @@
       const paddingBottom = 5;
       const drawH = h - paddingTop - paddingBottom;
       const isUp = values[values.length - 1] >= values[0];
-      const trendColor = isUp ? '76, 175, 80' : '244, 67, 54';
+      const trendColor = isUp ? '20, 113, 63' : '185, 54, 54';  // verde e rosso scuri, ben visibili
 
       const points = values.map((v, i) => ({
         x: (i / (values.length - 1)) * w,
@@ -4588,13 +4633,15 @@
       ctx.lineTo(0, h);
       ctx.closePath();
       const gradient = ctx.createLinearGradient(0, 0, 0, h);
-      gradient.addColorStop(0, 'rgba(' + trendColor + ', 0.20)');
-      gradient.addColorStop(1, 'rgba(' + trendColor + ', 0.02)');
+      gradient.addColorStop(0, 'rgba(' + trendColor + ', 0.38)');
+      gradient.addColorStop(1, 'rgba(' + trendColor + ', 0.06)');
       ctx.fillStyle = gradient;
       ctx.fill();
       catmullRomPath(points, 0.35);
-      ctx.strokeStyle = 'rgba(' + trendColor + ', 0.45)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(' + trendColor + ', 0.95)';
+      ctx.lineWidth = 5;  // 2,5 px reali
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
       ctx.stroke();
     }
 
@@ -4631,8 +4678,8 @@
       glEl.className = 'value ' + (glUp ? 'gain' : 'loss');
       const glBadge = document.getElementById('gainLossPct');
       glBadge.textContent = (glUp ? '\u25b2 +' : '\u25bc ') + gainLossPct + '%';
-      glBadge.style.color = glUp ? '#4ade80' : '#f87171';
-      glBadge.style.background = glUp ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
+      glBadge.style.color = glUp ? '#14713F' : '#B93636';
+      glBadge.style.background = glUp ? 'rgba(20,113,63,0.16)' : 'rgba(185,54,54,0.16)';
 
       // Andamento Metalli (in valuta) — colore fisso come Patrimonio
       const metalsGainLoss = totalValue - totalCost;
@@ -5522,8 +5569,8 @@
       const glBadge = document.getElementById('watchGainLossPct');
       if (glBadge) {
         glBadge.textContent = (up ? '\u25b2 +' : '\u25bc ') + gainPct.toFixed(2) + '%';
-        glBadge.style.color = up ? '#4ade80' : '#f87171';
-        glBadge.style.background = up ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)';
+        glBadge.style.color = up ? '#14713F' : '#B93636';
+        glBadge.style.background = up ? 'rgba(20,113,63,0.16)' : 'rgba(185,54,54,0.16)';
       }
     }
 
@@ -5699,7 +5746,7 @@
             '</div>' +
             '<div class="watch-card-updated">Aggiornato: ' + formatDate(w.marketValueDate) + '</div>' +
             '<div class="watch-card-footer">' +
-              '<span class="metric-label">Rendimento: <strong class="metric-value andamento-badge" style="margin:0; color:' + (gainPct != null ? (up ? '#4ade80' : '#f87171') : '#687a70') + '; background:' + (gainPct != null ? (up ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)') : 'rgba(27,58,45,0.08)') + ';">' + (gainPct != null ? ((up ? '\u25b2 +' : '\u25bc ') + gainPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
+              '<span class="metric-label">Rendimento: <strong class="metric-value andamento-badge" style="margin:0; color:' + (gainPct != null ? (up ? '#14713F' : '#B93636') : '#687a70') + '; background:' + (gainPct != null ? (up ? 'rgba(20,113,63,0.14)' : 'rgba(185,54,54,0.14)') : 'rgba(27,58,45,0.08)') + ';">' + (gainPct != null ? ((up ? '\u25b2 +' : '\u25bc ') + gainPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
               soldBadge +
               '<a class="chrono24-btn" href="' + escapeAttr(chrono24Url) + '" rel="noopener" onclick="return requestChrono24Open(this.href, event)">Chrono24</a>' +
             '</div>' +
