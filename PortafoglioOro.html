@@ -2426,149 +2426,6 @@
     #overview .portfolio-pie-card::before,
     #overview .portfolio-pie-card::after { content: none; }
 
-    /* ===== Blocco superiore: cruscotto verde scuro con tessere distinte ===== */
-    #home .summary,
-    #watches .summary {
-      background: linear-gradient(160deg, #0C1B13 0%, #06100A 100%);
-      border: 1px solid rgba(212, 168, 67, 0.20);
-      border-radius: 16px;
-      padding: 0.6rem;
-      gap: 0.55rem;
-      box-shadow: 0 5px 18px rgba(8, 20, 13, 0.34);
-    }
-    #home .summary > .card,
-    #watches .summary > .card {
-      border-radius: 12px;
-      border-top: 0;
-      border-right: 0;
-      border-bottom: 0;
-      border-left-style: solid;
-      border-left-width: 6px !important;
-      box-shadow: 0 3px 9px rgba(0, 0, 0, 0.38);
-    }
-    /* Tinte delle tessere: oro, ardesia, ametista — i tre metalli del portafoglio. */
-    #home .summary > .card:nth-child(1),
-    #watches .summary > .card:nth-child(1) {
-      background: linear-gradient(150deg, #8A6420 0%, #5C4311 100%);
-      border-left-color: #F0CE7E;
-    }
-    #home .summary > .card:nth-child(2),
-    #watches .summary > .card:nth-child(2) {
-      background: linear-gradient(150deg, #333F52 0%, #202836 100%);
-      border-left-color: #A8B8D4;
-    }
-    #home .summary > .card:nth-child(3) {
-      background: linear-gradient(150deg, #4F3670 0%, #35234D 100%);
-      border-left-color: #BC9FEA;
-    }
-    /* Testi su fondo scuro: titoli bianchi, valori bianchi, valuta attenuata. */
-    #home .summary > .card > h3,
-    #watches .summary > .card > h3 { color: #FFFFFF; }
-    #home .summary > .card > .value,
-    #watches .summary > .card > .value { color: #FFFFFF; }
-    #home .summary > .card > .value.gain,
-    #watches .summary > .card > .value.gain { color: #9DEBBB; }
-    #home .summary > .card > .value.loss,
-    #watches .summary > .card > .value.loss { color: #F3A6A6; }
-    #home .summary > .card > .currency,
-    #watches .summary > .card > .currency { color: rgba(255, 255, 255, 0.74); }
-    /* Riquadro interno Metalli/Orologi. */
-    #home .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar),
-    #watches .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) {
-      border-top-color: rgba(255, 255, 255, 0.18) !important;
-    }
-    #home .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div > span:first-child,
-    #watches .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div > span:first-child {
-      color: rgba(255, 255, 255, 0.74) !important;
-    }
-    #home .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div > span:last-child,
-    #watches .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div > span:last-child {
-      color: #FFFFFF !important;
-    }
-    /* Elenco delle posizioni e barra di distribuzione. */
-    #home .summary > .card > .position-breakdown .breakdown-row {
-      background: rgba(0, 0, 0, 0.22) !important;
-    }
-    #home .summary > .card > .position-breakdown .breakdown-label { color: #FFFFFF; }
-    #home .summary > .card > .position-breakdown .breakdown-detail { color: rgba(255, 255, 255, 0.80); }
-    #home .summary > .card > .breakdown-bar { background: rgba(0, 0, 0, 0.30); }
-    /* Su tablet e desktop la percentuale resta una targhetta compatta, non una fascia. */
-    @media (min-width: 601px) {
-      #home .summary > .card > .andamento-badge,
-      #watches .summary > .card > .andamento-badge { align-self: center; }
-    }
-    /* Mini-linea: fascia dedicata, tratto discreto. */
-    .andamento-spark { height: 34px; }
-    #home .summary > .card:nth-child(2) { padding-bottom: 2.7rem; }
-
-    @media (max-width: 600px) {
-      #home .summary,
-      #watches .summary { padding: 0.5rem; gap: 0.5rem; }
-      #home .summary > .card,
-      #watches .summary > .card { padding: 0.6rem 0.7rem; }
-      #home .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div,
-      #watches .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div {
-        background: rgba(0, 0, 0, 0.22);
-      }
-      .andamento-spark { height: 24px; }
-      #home .summary > .card:nth-child(2) { padding-bottom: 2rem; }
-      /* Andamento: la percentuale precede l'importo, seguito dalla valuta. */
-      #home .summary > .card:nth-child(2),
-      #watches .summary > .card:nth-child(2) {
-        grid-template-columns: minmax(0, 1fr) auto auto auto;
-      }
-      #home .summary > .card:nth-child(2) > .andamento-badge,
-      #watches .summary > .card:nth-child(2) > .andamento-badge {
-        grid-column: 2; grid-row: 1;
-        justify-self: end;
-        font-size: 0.66rem;
-        padding: 0.1rem 0.3rem;
-      }
-      #home .summary > .card:nth-child(2) > .value,
-      #watches .summary > .card:nth-child(2) > .value {
-        grid-column: 3; grid-row: 1;
-        justify-self: end;
-        font-size: 1.2rem;
-      }
-      #home .summary > .card:nth-child(2) > .currency,
-      #watches .summary > .card:nth-child(2) > .currency {
-        grid-column: 4; grid-row: 1;
-        justify-self: end;
-      }
-      /* I titoli non spingono mai la scheda oltre il bordo del display. */
-      #home .summary > .card > h3,
-      #watches .summary > .card > h3 {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    }
-
-    /* Display molto stretti: in Andamento la percentuale resta sopra, importo e valuta sulla riga seguente. */
-    @media (max-width: 360px) {
-      #home .summary > .card:nth-child(2),
-      #watches .summary > .card:nth-child(2) {
-        grid-template-columns: minmax(0, 1fr) auto auto;
-      }
-      #home .summary > .card:nth-child(2) > .andamento-badge,
-      #watches .summary > .card:nth-child(2) > .andamento-badge {
-        grid-column: 2 / -1; grid-row: 1;
-      }
-      #home .summary > .card:nth-child(2) > .value,
-      #watches .summary > .card:nth-child(2) > .value {
-        grid-column: 1 / 3; grid-row: 2;
-        justify-self: end;
-      }
-      #home .summary > .card:nth-child(2) > .currency,
-      #watches .summary > .card:nth-child(2) > .currency {
-        grid-column: 3; grid-row: 2;
-      }
-      #home .summary > .card:nth-child(2) > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar),
-      #watches .summary > .card:nth-child(2) > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) {
-        grid-row: 3;
-      }
-    }
-
 </style>
 
 </head>
@@ -2651,9 +2508,8 @@
           </div>
           <div class="card" style="position:relative;overflow:hidden;display:flex;flex-direction:column;">
             <h3>Andamento</h3>
-            <span class="andamento-badge" id="gainLossPct"></span>
             <div class="value" id="gainLoss">0.00</div>
-            <div class="currency" id="gainCurrency">CHF</div>
+            <span class="andamento-badge" id="gainLossPct"></span>
             <div style="margin-top:auto;border-top:1px solid rgba(27,58,45,0.12);padding-top:0.75rem;display:flex;flex-direction:column;gap:0.9rem;position:relative;z-index:1;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
                 <span style="font-size:0.92rem;font-weight:600;color:#5a7a68;">Metalli</span>
@@ -2875,9 +2731,8 @@
           </div>
           <div class="card">
             <h3>Andamento Orologi</h3>
-            <span class="andamento-badge" id="watchGainLossPct"></span>
             <div class="value" id="watchGainLoss">0.00</div>
-            <div class="currency" id="watchGainCurrency">CHF</div>
+            <span class="andamento-badge" id="watchGainLossPct"></span>
           </div>
         </div>
 
@@ -4755,7 +4610,7 @@
       const paddingBottom = 5;
       const drawH = h - paddingTop - paddingBottom;
       const isUp = values[values.length - 1] >= values[0];
-      const trendColor = isUp ? '157, 235, 187' : '243, 166, 166';  // tinte chiare, discrete sul fondo scuro
+      const trendColor = isUp ? '20, 113, 63' : '185, 54, 54';  // verde e rosso scuri, ben visibili
 
       const points = values.map((v, i) => ({
         x: (i / (values.length - 1)) * w,
@@ -4784,13 +4639,13 @@
       ctx.lineTo(0, h);
       ctx.closePath();
       const gradient = ctx.createLinearGradient(0, 0, 0, h);
-      gradient.addColorStop(0, 'rgba(' + trendColor + ', 0.16)');
-      gradient.addColorStop(1, 'rgba(' + trendColor + ', 0.02)');
+      gradient.addColorStop(0, 'rgba(' + trendColor + ', 0.38)');
+      gradient.addColorStop(1, 'rgba(' + trendColor + ', 0.06)');
       ctx.fillStyle = gradient;
       ctx.fill();
       catmullRomPath(points, 0.35);
-      ctx.strokeStyle = 'rgba(' + trendColor + ', 0.70)';
-      ctx.lineWidth = 2.6;  // 1,3 px reali: linea discreta, non invadente
+      ctx.strokeStyle = 'rgba(' + trendColor + ', 0.95)';
+      ctx.lineWidth = 5;  // 2,5 px reali
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
       ctx.stroke();
@@ -4823,18 +4678,14 @@
       const twEl = document.getElementById('totalWatches');
       if (twEl) twEl.textContent = (watchesTotalChf / rate).toFixed(2);
       document.getElementById('totalCurrency').textContent = state.currentCurrency;
-      // La valuta compare anche nella scheda Andamento, come nella scheda Patrimonio.
-      const gainCurEl = document.getElementById('gainCurrency');
-      if (gainCurEl) gainCurEl.textContent = state.currentCurrency;
       const glUp = gainLoss >= 0;
       const glEl = document.getElementById('gainLoss');
       glEl.textContent = (glUp ? '+' : '') + gainLoss.toFixed(2);
       glEl.className = 'value ' + (glUp ? 'gain' : 'loss');
       const glBadge = document.getElementById('gainLossPct');
       glBadge.textContent = (glUp ? '\u25b2 +' : '\u25bc ') + gainLossPct + '%';
-      // Tinte chiare: la scheda Andamento ha fondo scuro.
-      glBadge.style.color = glUp ? '#9DEBBB' : '#F3A6A6';
-      glBadge.style.background = glUp ? 'rgba(157,235,187,0.22)' : 'rgba(243,166,166,0.20)';
+      glBadge.style.color = glUp ? '#14713F' : '#B93636';
+      glBadge.style.background = glUp ? 'rgba(20,113,63,0.16)' : 'rgba(185,54,54,0.16)';
 
       // Andamento Metalli (in valuta) — colore fisso come Patrimonio
       const metalsGainLoss = totalValue - totalCost;
@@ -4842,7 +4693,7 @@
       const mValEl = document.getElementById('metalsGainVal');
       if (mValEl) {
         mValEl.textContent = (mUp ? '+' : '') + metalsGainLoss.toFixed(2);
-        mValEl.style.color = '#FFFFFF';
+        mValEl.style.color = '#1B3A2D';
       }
 
       // Andamento Orologi (in valuta) — colore fisso come Patrimonio
@@ -4853,7 +4704,7 @@
       const wValEl = document.getElementById('watchesGainVal');
       if (wValEl) {
         wValEl.textContent = (wUp ? '+' : '') + watchesGainLoss.toFixed(2);
-        wValEl.style.color = '#FFFFFF';
+        wValEl.style.color = '#1B3A2D';
       }
 
       document.getElementById('positionCount').textContent = state.positions.length;
@@ -5714,9 +5565,6 @@
       if (valEl) valEl.textContent = formatSwissAmount(totalMarket);
       const curEl = document.getElementById('watchTotalCurrency');
       if (curEl) curEl.textContent = state.currentCurrency;
-      // Anche in Orologi la scheda Andamento mostra la valuta.
-      const gainCurEl = document.getElementById('watchGainCurrency');
-      if (gainCurEl) gainCurEl.textContent = state.currentCurrency;
 
       const up = gainChf >= 0;
       const glEl = document.getElementById('watchGainLoss');
@@ -5727,8 +5575,8 @@
       const glBadge = document.getElementById('watchGainLossPct');
       if (glBadge) {
         glBadge.textContent = (up ? '\u25b2 +' : '\u25bc ') + gainPct.toFixed(2) + '%';
-        glBadge.style.color = up ? '#9DEBBB' : '#F3A6A6';
-        glBadge.style.background = up ? 'rgba(157,235,187,0.22)' : 'rgba(243,166,166,0.20)';
+        glBadge.style.color = up ? '#14713F' : '#B93636';
+        glBadge.style.background = up ? 'rgba(20,113,63,0.16)' : 'rgba(185,54,54,0.16)';
       }
     }
 
