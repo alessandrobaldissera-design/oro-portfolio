@@ -998,7 +998,10 @@
     .silver-section .chart-live-price,
     .platinum-section .chart-live-price { color: var(--text-primary); }
     .chart-card .karat-selector .karat-label { color: var(--text-primary); }
-    .chart-card .karat-btn { color: #4A6357; }
+    .chart-card .karat-btn:not(.active) { color: #33443C; }
+    /* Il valore selezionato resta bianco sul fondo verde scuro, così la scelta è sempre leggibile. */
+    .chart-card .karat-btn.active,
+    .karat-selector .karat-btn.active { background: #1B3A2D; color: #ffffff; }
 
 
     /* Breakdown posizioni */
@@ -2394,6 +2397,34 @@
       #watches .summary > .card:nth-child(1) > h3::after { content: "VALORE"; }
       #watches .summary > .card:nth-child(2) > h3::after { content: "ANDAMENTO"; }
     }
+
+    /* ===== Scheda Andamento: tinta grafite, neutra rispetto a verde e rosso della mini-linea ===== */
+    #home .summary > .card:nth-child(2),
+    #watches .summary > .card:nth-child(2) {
+      background: linear-gradient(160deg, #F5F7F8 0%, #DCE3E7 100%);
+      border-left: 5px solid #4B5A63;
+    }
+
+    /* ===== Barra Dati live: nessuna fascia grigia sotto la barra e nessun taglio delle schede ===== */
+    #fixedTop { background: var(--page-bg); }
+    #fixedTop > .sync-bar { margin-bottom: 0; }
+
+    /* ===== Schede di tutte le sezioni: stesso stile della Home, senza bordo perimetrale ===== */
+    .history-card,
+    .watch-card,
+    #overview .position-summary-card,
+    #overview .portfolio-pie-card,
+    .shop-cat-card,
+    .shop-card {
+      border-top: 0;
+      border-right: 0;
+      border-bottom: 0;
+      border-left-style: solid;
+      border-left-width: 5px;
+      box-shadow: var(--shadow);
+    }
+    #overview .portfolio-pie-card::before,
+    #overview .portfolio-pie-card::after { content: none; }
 
 </style>
 
@@ -6850,11 +6881,20 @@
       var fixedTop = document.getElementById('fixedTop');
       var content = document.querySelector('.content');
       if (fixedTop && content) {
-        content.style.paddingTop = fixedTop.offsetHeight + 'px';
+        // Altezza reale della barra fissa + spazio, così nessuna scheda resta tagliata sotto la barra.
+        var barHeight = Math.ceil(fixedTop.getBoundingClientRect().height);
+        content.style.paddingTop = (barHeight + 12) + 'px';
       }
     }
     window.addEventListener('load', adjustContentPadding);
     window.addEventListener('resize', adjustContentPadding);
+    window.addEventListener('orientationchange', function () { setTimeout(adjustContentPadding, 120); });
+    if (window.ResizeObserver) {
+      try {
+        var fixedTopEl = document.getElementById('fixedTop');
+        if (fixedTopEl) new ResizeObserver(adjustContentPadding).observe(fixedTopEl);
+      } catch (e) {}
+    }
     document.addEventListener('DOMContentLoaded', adjustContentPadding);
     adjustContentPadding();
 
