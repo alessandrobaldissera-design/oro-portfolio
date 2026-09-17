@@ -2121,6 +2121,89 @@
     .portfolio-legend-row { font-weight: 600; }
     .portfolio-legend-value { font-weight: 800; }
 
+
+    /* Documenti allegati: anteprima leggibile nel browser e apertura nativa dei PDF su Android. */
+    .document-picker-label {
+      display: inline-flex;
+      width: 100%;
+      min-height: 46px;
+      align-items: center;
+      justify-content: center;
+      border: 1px dashed var(--green-muted);
+      border-radius: 8px;
+      background: rgba(27, 58, 45, 0.08);
+      color: #1B3A2D;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .document-picker-label input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+    .document-item { align-items:flex-start; }
+    .document-item-meta { min-width:0; flex:1; display:flex; flex-direction:column; gap:0.1rem; }
+    .document-name { font-weight:700; color:var(--text-primary); }
+    .document-type { color:var(--text-secondary); font-size:0.73rem; font-weight:600; }
+    #documentPreviewModal {
+      display:none;
+      position:fixed;
+      inset:0;
+      z-index:2200;
+      padding:max(0.75rem, env(safe-area-inset-top, 0px)) 0.75rem max(0.75rem, env(safe-area-inset-bottom, 0px));
+      background:rgba(8, 20, 15, 0.76);
+      align-items:center;
+      justify-content:center;
+    }
+    #documentPreviewModal.open { display:flex; }
+    .document-preview-card {
+      width:min(960px, 100%);
+      height:min(760px, 100%);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+      border-radius:16px;
+      background:#fff;
+      box-shadow:0 18px 55px rgba(0,0,0,0.35);
+    }
+    .document-preview-head {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:0.75rem;
+      min-height:56px;
+      padding:0.65rem 0.75rem 0.65rem 1rem;
+      border-bottom:1px solid rgba(27,58,45,0.14);
+    }
+    .document-preview-title { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#111816; font-size:0.96rem; font-weight:800; }
+    .document-preview-close { flex:0 0 auto; width:38px; height:38px; border:0; border-radius:50%; background:#1B3A2D; color:#fff; font-size:1.4rem; font-weight:700; cursor:pointer; }
+    .document-preview-body { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; background:#eef2ef; }
+    .document-preview-body iframe { width:100%; height:100%; border:0; background:#fff; }
+    .document-preview-body img { max-width:100%; max-height:100%; object-fit:contain; }
+    .document-preview-fallback { margin:1rem; padding:1rem; text-align:center; color:#111816; font-weight:600; }
+    .document-preview-fallback a { color:#1B3A2D; font-weight:800; }
+    .document-preview-actions { display:flex; justify-content:flex-end; gap:0.5rem; padding:0.65rem 0.75rem; border-top:1px solid rgba(27,58,45,0.14); }
+    .document-preview-actions button { border:0; border-radius:8px; padding:0.55rem 0.8rem; background:#1B3A2D; color:#fff; font:inherit; font-size:0.82rem; font-weight:700; cursor:pointer; }
+    @media (max-width:420px) {
+      .document-preview-card { height:calc(100% - 1rem); border-radius:12px; }
+      .document-actions button { min-height:36px; }
+    }
+
+
+    /* Su smartphone e tablet, anche ruotati in orizzontale, Panoramica mantiene sempre le schede leggibili. */
+    @media (orientation: landscape) and (hover: none), (orientation: landscape) and (pointer: coarse) {
+      #overview #positionsTable { display: none !important; }
+      #overview #positionsCards {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: clamp(0.75rem, 1.8vw, 1rem);
+        margin-top: 0.55rem;
+      }
+    }
+    @media (orientation: landscape) and (max-width: 600px) {
+      #overview #positionsCards { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    /* Notizie è un comando secondario: resta esclusivamente nel menu a tre puntini. */
+    #newsBtn { display: none !important; }
+
 </style>
 
 </head>
@@ -2388,6 +2471,13 @@
           <div class="form-group">
             <label>Luogo deposito <span style="color:#888;font-weight:400;">(facoltativo)</span></label>
             <input type="text" id="storageLocation" placeholder="Es. Cassaforte, cassetta di sicurezza">
+          </div>
+          <div class="form-group">
+            <label>Documenti (PDF o immagini)</label>
+            <label class="document-picker-label">Allega documenti
+              <input type="file" id="positionDocuments" accept="application/pdf,image/*" multiple onchange="handlePositionDocumentSelect(this)">
+            </label>
+            <div id="positionDocumentStatus" class="document-note">Massimo 3 file, 1 MB ciascuno e 2 MB totali. Dopo il salvataggio potrai aprire l’anteprima dal dettaglio.</div>
           </div>
           <div class="form-group">
             <label>Foto articolo (fotocamera o galleria)</label>
@@ -2716,6 +2806,18 @@
     <img id="lightboxImg" src="" alt="Foto articolo" onclick="event.stopPropagation()">
   </div>
 
+
+  <div id="documentPreviewModal" aria-hidden="true" onclick="if (event.target === this) closeDocumentPreview()">
+    <div class="document-preview-card" role="dialog" aria-modal="true" aria-labelledby="documentPreviewTitle" onclick="event.stopPropagation()">
+      <div class="document-preview-head">
+        <div id="documentPreviewTitle" class="document-preview-title">Documento allegato</div>
+        <button type="button" class="document-preview-close" onclick="closeDocumentPreview()" aria-label="Chiudi anteprima">&times;</button>
+      </div>
+      <div id="documentPreviewBody" class="document-preview-body"></div>
+      <div class="document-preview-actions"><button type="button" onclick="downloadActiveDocument()">Scarica documento</button></div>
+    </div>
+  </div>
+
   <div id="detailModal" onclick="closeDetail()">
     <div class="detail-card" onclick="event.stopPropagation()">
       <button class="detail-close" onclick="closeDetail()" title="Chiudi">&times;</button>
@@ -2773,6 +2875,12 @@
           <input type="date" id="editDate">
           <select id="editPurchaseYear" class="purchase-year-select" data-date-input="editDate" onchange="applyQuickPurchaseYear(this)" aria-label="Seleziona rapidamente l'anno di acquisto" title="Seleziona rapidamente l'anno di acquisto"><option value="">Anno</option></select>
         </div>
+      </div>
+      <div class="form-group">
+        <label>Documenti</label>
+        <div id="editPositionDocumentList" class="document-list"></div>
+        <button type="button" class="btn-secondary" style="margin-top:0.5rem;" onclick="editAddPositionDocuments()">Aggiungi documenti</button>
+        <div class="document-note">PDF o immagini; massimo 3 file, 1 MB ciascuno e 2 MB totali. Anteprima nel browser e apertura con il lettore PDF del dispositivo nell’app.</div>
       </div>
       <div class="form-group">
         <label>Foto articolo</label>
@@ -3382,6 +3490,8 @@
         if (p.metal === 'platinum' && (!Number.isFinite(Number(p.purity)) || Number(p.purity) <= 0)) p.purity = 999.5;
         if (typeof p.tags !== 'string') p.tags = Array.isArray(p.tags) ? p.tags.join(', ') : '';
         if (typeof p.storageLocation !== 'string') p.storageLocation = '';
+        if (!Array.isArray(p.documents)) p.documents = [];
+        p.documents = p.documents.filter(documentRecordIsValid);
         return p;
       });
     }
@@ -3399,7 +3509,7 @@
     // Save data to localStorage
     function saveData() {
       if (storeLocalValue('goldPortfolio', JSON.stringify(state.positions))) return true;
-      alert('Spazio di archiviazione pieno: le foto non sono state salvate. Rimuovi qualche foto o usa immagini piu piccole.');
+      alert('Spazio di archiviazione pieno: foto o documenti non sono stati salvati. Rimuovi qualche allegato e riprova.');
       return false;
     }
 
@@ -3553,15 +3663,18 @@
       const tags = normalizeTags(document.getElementById('tags').value);
       const storageLocation = (document.getElementById('storageLocation').value || '').trim();
       const photos = pendingPhotos.slice();
+      const documents = pendingPositionDocuments.slice();
 
       const itemType = metal === 'other' ? null : (document.getElementById('itemType').value || 'lingotto');
-      state.positions.push({ metal, description, quantity, purity, price, priceCurrency, date, photos, itemType, tags, storageLocation });
+      state.positions.push({ metal, description, quantity, purity, price, priceCurrency, date, photos, documents, itemType, tags, storageLocation });
       if (!saveData()) {
         state.positions.pop();
         return;
       }
       pendingPhotos = [];
+      pendingPositionDocuments = [];
       document.getElementById('photoPreview').innerHTML = '';
+      document.getElementById('positionDocumentStatus').textContent = 'Massimo 3 file, 1 MB ciascuno e 2 MB totali. Dopo il salvataggio potrai aprire l’anteprima dal dettaglio.';
       document.getElementById('new').querySelector('form').reset();
       document.getElementById('priceCurrency').value = 'CHF';
       syncQuickPurchaseYearSelect('date');
@@ -4697,6 +4810,7 @@
 
 // ===== Foto articoli =====
     let pendingPhotos = [];
+    let pendingPositionDocuments = [];
 
     function compressImage(file, maxDim, quality) {
       return new Promise((resolve, reject) => {
@@ -4921,15 +5035,29 @@
 // ===== Orologi: form, foto pendenti, rendering, dettaglio =====
     let pendingWatchPhotos = [];
     let pendingWatchDocuments = [];
-    const WATCH_DOCUMENT_MAX_FILES = 3;
-    const WATCH_DOCUMENT_MAX_BYTES = 1024 * 1024;
-    const WATCH_DOCUMENT_TOTAL_BYTES = 2 * 1024 * 1024;
+    const PORTFOLIO_DOCUMENT_MAX_FILES = 3;
+    const PORTFOLIO_DOCUMENT_MAX_BYTES = 1024 * 1024;
+    const PORTFOLIO_DOCUMENT_TOTAL_BYTES = 2 * 1024 * 1024;
 
     function readFileAsDataUrl(file) {
       return new Promise(function(resolve, reject) { var r = new FileReader(); r.onload = function() { resolve(r.result); }; r.onerror = reject; r.readAsDataURL(file); });
     }
     function documentBytes(d) { return Number(d && d.size) || Math.floor(String(d && d.data || '').length * 0.75); }
-    async function filesToWatchDocuments(fileList, existing) {
+    function documentRecordIsValid(d) {
+      var type = String(d && d.type || '').toLowerCase();
+      var data = String(d && d.data || '');
+      return !!d && typeof d.name === 'string' && data.indexOf('data:') === 0 &&
+        (type === 'application/pdf' || type.indexOf('image/') === 0);
+    }
+    function documentTypeLabel(d) {
+      var type = String(d && d.type || '').toLowerCase();
+      return type === 'application/pdf' ? 'PDF' : 'Immagine';
+    }
+    function isPdfDocument(d) {
+      return String(d && d.type || '').toLowerCase() === 'application/pdf' ||
+        String(d && d.data || '').toLowerCase().indexOf('data:application/pdf;') === 0;
+    }
+    async function filesToPortfolioDocuments(fileList, existing) {
       var docs = (existing || []).slice(), added = [], total = docs.reduce(function(sum, d) { return sum + documentBytes(d); }, 0);
       for (const file of Array.from(fileList || [])) {
         var lowerName = String(file.name || '').toLowerCase();
@@ -4937,9 +5065,9 @@
         var mimeType = file.type || guessedType;
         var validType = mimeType === 'application/pdf' || mimeType.startsWith('image/');
         if (!validType) { alert('Formato non supportato: ' + file.name + '. Usa PDF o immagini.'); continue; }
-        if (file.size > WATCH_DOCUMENT_MAX_BYTES) { alert(file.name + ' supera il limite di 1 MB.'); continue; }
-        if (docs.length + added.length >= WATCH_DOCUMENT_MAX_FILES) { alert('Massimo 3 documenti per orologio.'); break; }
-        if (total + file.size > WATCH_DOCUMENT_TOTAL_BYTES) { alert('I documenti superano il limite totale di 2 MB per orologio.'); break; }
+        if (file.size > PORTFOLIO_DOCUMENT_MAX_BYTES) { alert(file.name + ' supera il limite di 1 MB.'); continue; }
+        if (docs.length + added.length >= PORTFOLIO_DOCUMENT_MAX_FILES) { alert('Massimo 3 documenti per orologio.'); break; }
+        if (total + file.size > PORTFOLIO_DOCUMENT_TOTAL_BYTES) { alert('I documenti superano il limite totale di 2 MB per orologio.'); break; }
         var data = await readFileAsDataUrl(file);
         added.push({ id: Date.now() + '_' + Math.random().toString(36).slice(2, 9), name: file.name, type: mimeType, size: file.size, data: data });
         total += file.size;
@@ -4955,14 +5083,28 @@
       } catch (_) {}
       return true;
     }
-    async function handleWatchDocumentSelect(input) {
-      var added = await filesToWatchDocuments(input.files, pendingWatchDocuments);
+    async function handleNewDocumentSelect(input, target, statusId) {
+      var added = await filesToPortfolioDocuments(input.files, target);
       var chars = added.reduce(function(sum, d) { return sum + d.data.length; }, 0);
-      if (added.length && !(await storageAllows(chars))) alert('Spazio locale insufficiente per questi documenti.');
-      else pendingWatchDocuments = pendingWatchDocuments.concat(added);
-      var status = document.getElementById('watchDocumentStatus');
-      if (status) status.textContent = pendingWatchDocuments.length + ' allegati selezionati. Massimo 3 file, 1 MB ciascuno e 2 MB totali; gestione solo nel dettaglio.';
+      if (added.length && !(await storageAllows(chars))) {
+        alert('Spazio locale insufficiente per questi documenti.');
+      } else if (added.length) {
+        target.push.apply(target, added);
+      }
+      var status = document.getElementById(statusId);
+      if (status) {
+        var names = target.map(function(d) { return d.name; }).join(' · ');
+        status.textContent = target.length
+          ? target.length + ' allegati selezionati: ' + names + '. Dopo il salvataggio potrai aprirli dal dettaglio.'
+          : 'Massimo 3 file, 1 MB ciascuno e 2 MB totali. Dopo il salvataggio potrai aprire l’anteprima dal dettaglio.';
+      }
       input.value = '';
+    }
+    async function handleWatchDocumentSelect(input) {
+      await handleNewDocumentSelect(input, pendingWatchDocuments, 'watchDocumentStatus');
+    }
+    async function handlePositionDocumentSelect(input) {
+      await handleNewDocumentSelect(input, pendingPositionDocuments, 'positionDocumentStatus');
     }
 
     function populateWatchBrandSelects() {
@@ -5308,44 +5450,128 @@
       document.getElementById('watchDetailModal').classList.add('open');
     }
 
-    function renderEditWatchDocuments() {
-      var c = document.getElementById('editWatchDocumentList');
-      if (!c || !editWatchState) return;
-      var docs = editWatchState.documents || [];
+    function documentOwnerState(owner) {
+      return owner === 'watch' ? editWatchState : editState;
+    }
+    function renderEditableDocuments(containerId, owner) {
+      var c = document.getElementById(containerId);
+      var item = documentOwnerState(owner);
+      if (!c || !item) return;
+      var docs = item.documents || [];
       c.innerHTML = docs.length ? docs.map(function(d, idx) {
-        return '<div class="document-item"><span class="document-name" title="' + escapeAttr(d.name) + '">' + escapeHtml(d.name) + ' (' + Math.ceil(documentBytes(d) / 1024) + ' KB)</span><span class="document-actions"><button type="button" onclick="openWatchDocument(' + idx + ')">Apri</button><button type="button" onclick="downloadWatchDocument(' + idx + ')">Scarica</button><button type="button" onclick="removeWatchDocument(' + idx + ')">Rimuovi</button></span></div>';
+        var type = documentTypeLabel(d);
+        return '<div class="document-item"><div class="document-item-meta"><span class="document-name" title="' + escapeAttr(d.name) + '">' + escapeHtml(d.name) + '</span><span class="document-type">' + type + ' · ' + Math.ceil(documentBytes(d) / 1024) + ' KB</span></div><span class="document-actions"><button type="button" onclick="openPortfolioDocument(\'' + owner + '\',' + idx + ')">Apri</button><button type="button" onclick="downloadPortfolioDocument(\'' + owner + '\',' + idx + ')">Scarica</button><button type="button" onclick="removePortfolioDocument(\'' + owner + '\',' + idx + ')">Rimuovi</button></span></div>';
       }).join('') : '<div class="sales-empty">Nessun documento allegato.</div>';
     }
-    function watchDocumentBlob(doc) {
+    function renderEditWatchDocuments() { renderEditableDocuments('editWatchDocumentList', 'watch'); }
+    function renderEditPositionDocuments() { renderEditableDocuments('editPositionDocumentList', 'position'); }
+    function portfolioDocumentBlob(doc) {
       var parts = String(doc.data || '').split(','), match = /^data:([^;]+);base64$/.exec(parts[0]);
       if (!match || !parts[1]) throw new Error('Allegato non valido');
       var binary = atob(parts[1]), bytes = new Uint8Array(binary.length);
       for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       return new Blob([bytes], { type: doc.type || match[1] });
     }
-    function openWatchDocument(idx) {
-      var d = editWatchState && (editWatchState.documents || [])[idx]; if (!d) return;
-      try { var url = URL.createObjectURL(watchDocumentBlob(d)); window.open(url, '_blank', 'noopener'); setTimeout(function(){ URL.revokeObjectURL(url); }, 60000); } catch (e) { alert('Impossibile aprire il documento.'); }
+    var activeDocumentPreview = null;
+    var activeDocumentPreviewUrl = null;
+    function closeDocumentPreview() {
+      var modal = document.getElementById('documentPreviewModal');
+      var body = document.getElementById('documentPreviewBody');
+      if (modal) { modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); }
+      if (body) body.replaceChildren();
+      if (activeDocumentPreviewUrl) URL.revokeObjectURL(activeDocumentPreviewUrl);
+      activeDocumentPreviewUrl = null;
+      activeDocumentPreview = null;
     }
-    function downloadWatchDocument(idx) {
-      var d = editWatchState && (editWatchState.documents || [])[idx]; if (!d) return;
-      try { var url = URL.createObjectURL(watchDocumentBlob(d)), a = document.createElement('a'); a.href = url; a.download = d.name || 'documento'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(url); }, 1000); } catch (e) { alert('Impossibile scaricare il documento.'); }
+    function showDocumentPreview(doc) {
+      var modal = document.getElementById('documentPreviewModal');
+      var title = document.getElementById('documentPreviewTitle');
+      var body = document.getElementById('documentPreviewBody');
+      if (!modal || !title || !body) throw new Error('Anteprima non disponibile');
+      closeDocumentPreview();
+      var blob = portfolioDocumentBlob(doc);
+      activeDocumentPreview = doc;
+      activeDocumentPreviewUrl = URL.createObjectURL(blob);
+      title.textContent = doc.name || 'Documento allegato';
+      if (isPdfDocument(doc)) {
+        var frame = document.createElement('iframe');
+        frame.src = activeDocumentPreviewUrl;
+        frame.title = 'Anteprima PDF: ' + (doc.name || 'Documento allegato');
+        body.appendChild(frame);
+        var fallback = document.createElement('div');
+        fallback.className = 'document-preview-fallback';
+        fallback.hidden = true;
+        var link = document.createElement('a');
+        link.href = activeDocumentPreviewUrl;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = 'Apri il PDF in una nuova scheda';
+        fallback.append('Se il PDF non appare nel browser, ', link, '.');
+        frame.addEventListener('error', function() { fallback.hidden = false; });
+        body.appendChild(fallback);
+      } else {
+        var image = document.createElement('img');
+        image.src = activeDocumentPreviewUrl;
+        image.alt = doc.name || 'Immagine allegata';
+        body.appendChild(image);
+      }
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
     }
-    function removeWatchDocument(idx) {
-      if (!editWatchState || !editWatchState.documents) return;
+    function documentForOwner(owner, idx) {
+      var item = documentOwnerState(owner);
+      var docs = item && item.documents;
+      return Array.isArray(docs) ? docs[idx] : null;
+    }
+    function openPortfolioDocument(owner, idx) {
+      var d = documentForOwner(owner, idx); if (!d) return;
+      if (isPdfDocument(d) && window.PortafoglioAndroid && typeof window.PortafoglioAndroid.openPdfDocument === 'function') {
+        try { window.PortafoglioAndroid.openPdfDocument(d.name || 'documento.pdf', d.data); return; } catch (err) { console.warn('Apertura PDF Android non disponibile', err); }
+      }
+      try { showDocumentPreview(d); } catch (err) { alert('Impossibile aprire il documento.'); }
+    }
+    function downloadDocument(doc) {
+      if (!doc) return;
+      try {
+        var url = URL.createObjectURL(portfolioDocumentBlob(doc));
+        var a = document.createElement('a'); a.href = url; a.download = doc.name || 'documento';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+      } catch (err) { alert('Impossibile scaricare il documento.'); }
+    }
+    function downloadPortfolioDocument(owner, idx) { downloadDocument(documentForOwner(owner, idx)); }
+    function downloadActiveDocument() { downloadDocument(activeDocumentPreview); }
+    function removePortfolioDocument(owner, idx) {
+      var item = documentOwnerState(owner);
+      if (!item || !Array.isArray(item.documents)) return;
       if (!confirm('Rimuovere questo documento?')) return;
-      editWatchState.documents.splice(idx, 1); renderEditWatchDocuments();
+      item.documents.splice(idx, 1);
+      if (owner === 'watch') renderEditWatchDocuments(); else renderEditPositionDocuments();
     }
-    async function editAddWatchDocuments() {
-      var input = document.createElement('input'); input.type = 'file'; input.accept = 'application/pdf,image/*'; input.multiple = true;
-      input.onchange = async function() {
-        var added = await filesToWatchDocuments(input.files, editWatchState.documents || []);
-        var chars = added.reduce(function(sum,d){return sum + d.data.length;},0);
-        if (added.length && !(await storageAllows(chars))) { alert('Spazio locale insufficiente per questi documenti.'); return; }
-        editWatchState.documents = (editWatchState.documents || []).concat(added); renderEditWatchDocuments();
-      };
+    function openDocumentFileInput(onFiles) {
+      var input = document.createElement('input');
+      input.type = 'file'; input.accept = 'application/pdf,image/*'; input.multiple = true;
+      input.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1;';
+      input.tabIndex = -1; input.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(input);
+      var cleaned = false;
+      function cleanup() { if (cleaned) return; cleaned = true; input.value = ''; input.remove(); }
+      input.addEventListener('change', async function() { try { if (input.files && input.files.length) await onFiles(input.files); } finally { cleanup(); } }, { once:true });
+      input.addEventListener('cancel', cleanup, { once:true });
       input.click();
     }
+    async function editAddDocuments(owner) {
+      var item = documentOwnerState(owner); if (!item) return;
+      openDocumentFileInput(async function(files) {
+        var added = await filesToPortfolioDocuments(files, item.documents || []);
+        var chars = added.reduce(function(sum,d) { return sum + d.data.length; }, 0);
+        if (added.length && !(await storageAllows(chars))) { alert('Spazio locale insufficiente per questi documenti.'); return; }
+        item.documents = (item.documents || []).concat(added);
+        if (owner === 'watch') renderEditWatchDocuments(); else renderEditPositionDocuments();
+      });
+    }
+    function editAddWatchDocuments() { editAddDocuments('watch'); }
+    function editAddPositionDocuments() { editAddDocuments('position'); }
 
     function renderEditWatchPhotos() {
       const c = document.getElementById('editWatchPhotoPreview');
@@ -5533,7 +5759,7 @@
         var costInChf = costChf(pos), weight = pos.quantity || 0, costPerG = weight > 0 ? costInChf / weight : 0, valueChf = currentValueChf(pos);
         var purity = pos.purity || (pos.metal === 'gold' ? 24 : (pos.metal === 'platinum' ? 999.5 : 999));
         var title = pos.metal === 'gold' ? (pos.itemType === 'moneta' && purity > 24 ? purity + '/1000' : purity + 'k') : ((pos.metal === 'silver' || pos.metal === 'platinum') ? String(purity) + '/1000' : '');
-        addRow(['Metallo',formatDate(pos.date),metalLabels[pos.metal] || pos.metal || '',pos.description || '',title,weight,pos.price,pos.priceCurrency,costPerG.toFixed(2),valueChf.toFixed(2),'','','','','','','','','','','',pos.tags || '',pos.storageLocation || '','','','','','',pos.notes || '']);
+        addRow(['Metallo',formatDate(pos.date),metalLabels[pos.metal] || pos.metal || '',pos.description || '',title,weight,pos.price,pos.priceCurrency,costPerG.toFixed(2),valueChf.toFixed(2),'','','','','','','','','','','',pos.tags || '',pos.storageLocation || '',(pos.documents || []).map(function(d){ return d.name; }).join('; '),'','','','',pos.notes || '']);
       });
       (state.watches || []).slice().sort(function(a,b){ return new Date(a.purchaseDate || 0) - new Date(b.purchaseDate || 0); }).forEach(function(w) {
         addRow(['Orologio',formatDate(w.purchaseDate),'','','','',w.purchasePrice,w.purchaseCurrency,'','',w.brand || '',w.model || '',w.reference || '',w.serial || '',w.marketValue,w.marketValueCurrency,formatDate(w.marketValueDate),w.setContents || '',w.insuranceValue == null ? '' : w.insuranceValue,w.insuranceCurrency || '',w.maintenance || '',w.tags || '',w.storageLocation || '',(w.documents || []).map(function(d){ return d.name; }).join('; '),w.sale ? 'SI' : 'NO',w.sale ? w.sale.price : '',w.sale ? w.sale.currency : '',w.sale ? formatDate(w.sale.date) : '',w.notes || '']);
@@ -5582,6 +5808,7 @@
       document.getElementById('editCurrency').value = (editState.priceCurrency || 'CHF');
       document.getElementById('editDate').value = editState.date || '';
       syncQuickPurchaseYearSelect('editDate');
+      renderEditPositionDocuments();
       renderEditPhotos();
       renderEditSales();
       document.getElementById('detailModal').classList.add('open');
@@ -5858,6 +6085,8 @@
       if (menu && menu.classList.contains('is-open')) { closeOverflowMenu(); return true; }
       var backup = document.getElementById('localBackupModal');
       if (backup && backup.classList.contains('is-open')) { closeLocalBackupMenu(); return true; }
+      var documentPreview = document.getElementById('documentPreviewModal');
+      if (documentPreview && documentPreview.classList.contains('open')) { closeDocumentPreview(); return true; }
       var detail = document.getElementById('detailModal');
       if (detail && detail.classList.contains('open')) { closeDetail(); return true; }
       var watchDetail = document.getElementById('watchDetailModal');
