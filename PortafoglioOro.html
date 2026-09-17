@@ -11,6 +11,7 @@
     <style>
     :root {
       --bg: #FAFBFC;
+      --page-bg: #EFF3EF;
       --card-bg: #FFFFFF;
       --text-primary: #111816;
       --text-secondary: #314238;
@@ -34,7 +35,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
+      background: var(--page-bg);
       color: var(--text-primary);
       line-height: 1.6;
       overflow-x: hidden;
@@ -166,14 +167,15 @@
       gap: 1.25rem;
     }
 
+    /* Barra dei periodi: fondo verde scuro, così resta immediatamente riconoscibile fra le schede. */
     .period-selector {
       display: flex;
       gap: 0.4rem;
-      background: var(--card-bg);
+      background: var(--green-dark);
       padding: 0.4rem;
       border-radius: 12px;
       border: none;
-      box-shadow: var(--shadow);
+      box-shadow: 0 4px 14px rgba(27, 58, 45, 0.22);
       flex-wrap: wrap;
     }
 
@@ -181,7 +183,7 @@
       flex: 1;
       background: transparent;
       border: none;
-      color: var(--green-muted);
+      color: #D6E2D9;
       padding: 0.5rem 0.3rem;
       cursor: pointer;
       border-radius: 8px;
@@ -191,8 +193,8 @@
     }
 
     .period-btn.active {
-      background: #1B3A2D;
-      color: #ffffff;
+      background: #D4A843;
+      color: #1B3A2D;
     }
 
     .karat-selector {
@@ -980,18 +982,18 @@
     /* Accento laterale sfumato dedicato a ciascun metallo. */
     .chart-card.gold-section {
       border-left: 4px solid var(--gold);
-      background: linear-gradient(135deg, var(--card-bg) 65%, var(--gold-bg) 130%);
+      background: linear-gradient(135deg, #FFFDF6 0%, #F8EFD9 100%);
     }
     .gold-section .chart-metal-name { color: #B8860B; }
     .gold-section .chart-live-price { color: #C5952A; }
     .chart-card.silver-section {
       border-left: 4px solid var(--silver);
-      background: linear-gradient(135deg, var(--card-bg) 65%, var(--silver-bg) 130%);
+      background: linear-gradient(135deg, #F9FCFD 0%, #E5EFF6 100%);
     }
     .silver-section .chart-metal-name { color: #3F6E94; }
     .silver-section .chart-live-price { color: #345E81; }
     /* Terza card fluida, senza immagine o logo aggiuntivi. */
-    .platinum-section { border-left:4px solid var(--platinum); background:linear-gradient(135deg,var(--card-bg) 65%,var(--platinum-bg) 130%); }
+    .platinum-section { border-left:4px solid var(--platinum); background:linear-gradient(135deg,#FCFAFD 0%,#EDE6F3 100%); }
     .platinum-section .chart-metal-name,.platinum-section .chart-live-price { color:#5F477B; }
 
 
@@ -2203,6 +2205,21 @@
 
     /* Notizie è un comando secondario: resta esclusivamente nel menu a tre puntini. */
     #newsBtn { display: none !important; }
+
+    /* ===== Colore di fondo delle schede: tinte tenui e distinte, testi e dati invariati ===== */
+    #home .summary > .card:nth-child(1) { background: linear-gradient(160deg, #FFFDF5 0%, #F8EFD8 100%); }
+    #home .summary > .card:nth-child(2) { background: linear-gradient(160deg, #F7FBF7 0%, #E4EFE7 100%); }
+    #home .summary > .card:nth-child(3) { background: linear-gradient(160deg, #F8FBFD 0%, #E4EEF5 100%); }
+
+    #watches .summary > .card:nth-child(1) { background: linear-gradient(160deg, #FFFDF5 0%, #F4EEE0 100%); }
+    #watches .summary > .card:nth-child(2) { background: linear-gradient(160deg, #F7FBF7 0%, #E4EFE7 100%); }
+
+    #overview .position-summary-card.position-summary-gold { background: linear-gradient(135deg, #FFFDF6 0%, #F8EFD9 100%); }
+    #overview .position-summary-card.position-summary-silver { background: linear-gradient(135deg, #F9FCFD 0%, #E5EFF6 100%); }
+    #overview .position-summary-card.position-summary-platinum { background: linear-gradient(135deg, #FCFAFD 0%, #EDE6F3 100%); }
+    #overview .position-summary-card.position-summary-watches { background: linear-gradient(135deg, #FBFDFB 0%, #E7F0EA 100%); }
+
+    #overview .portfolio-pie-card { background: linear-gradient(145deg, #FFFFFF 0%, #F7FBF8 55%, #E4EFE7 100%); }
 
 </style>
 
