@@ -3279,6 +3279,7 @@
 
     // Storico professionale Gold API tramite servizio Vercel: la chiave resta solo sul server.
     const MARKET_HISTORY_ENDPOINT = 'https://oro-portfolio-seven.vercel.app/api/market-history';
+    const MARKET_CURRENT_ENDPOINT = 'https://oro-portfolio-seven.vercel.app/api/market-current';
     const MARKET_PERIOD_CODES = Object.freeze({ '1': '24h', '7': '7d', '30': '30d', '90': '90d', '365': '1y', 'all': 'all' });
     // V3 invalida esclusivamente la cache precedente, che non conteneva la serie XPT.
     const MARKET_CACHE_KEY = 'portafoglioAssetsMarketHistoryV3';
@@ -3442,73 +3443,47 @@
 
     // Fetch real prices e aggiorna storico
     async function fetchPrices() {
+      // Un solo pacchetto server-side: evita di combinare quotazioni e cambi diversi tra dispositivi.
       state.syncBusy = true;
       updateStatusIndicator();
-      let fxOk = false, metalOk = false;
       state.currentPriceConfirmed = { gold: false, silver: false, platinum: false };
-      let usdToChf = state.exchangeRates.USD || 0.80;
       try {
-        // 1) Tassi di cambio live (base USD) - fonte primaria: frankfurter.dev
-        try {
-          const fxRes = await fetch('https://api.frankfurter.dev/v1/latest?base=USD&symbols=CHF,EUR');
-          const fx = await fxRes.json();
-          if (fx && fx.rates && fx.rates.CHF) {
-            usdToChf = fx.rates.CHF;
-            state.exchangeRates.CHF = 1;
-            state.exchangeRates.USD = usdToChf;                                              // CHF per 1 USD
-            state.exchangeRates.EUR = fx.rates.EUR ? (usdToChf / fx.rates.EUR) : state.exchangeRates.EUR; // CHF per 1 EUR
-            fxOk = true;
-          }
-        } catch (fxErr) {
-          console.log('FX primaria fallita:', fxErr);
-        }
-        // Fonte di riserva: open.er-api.com
-        if (!fxOk) {
-          try {
-            const fx2Res = await fetch('https://open.er-api.com/v6/latest/USD');
-            const fx2 = await fx2Res.json();
-            if (fx2 && fx2.rates && fx2.rates.CHF) {
-              usdToChf = fx2.rates.CHF;
-              state.exchangeRates.CHF = 1;
-              state.exchangeRates.USD = usdToChf;
-              state.exchangeRates.EUR = fx2.rates.EUR ? (usdToChf / fx2.rates.EUR) : state.exchangeRates.EUR;
-              fxOk = true;
-            }
-          } catch (fx2Err) {
-            console.log('FX riserva fallita:', fx2Err);
-          }
-        }
+        const response = await fetch(MARKET_CURRENT_ENDPOINT + '?refresh=' + Date.now(), { cache: 'no-store', mode: 'cors' });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const payload = await response.json();
+        const prices = payload && payload.pricesUsdPerOunce;
+        const rates = payload && payload.exchangeRatesChfPerUnit;
+        const goldUsd = Number(prices && prices.gold), silverUsd = Number(prices && prices.silver), platinumUsd = Number(prices && prices.platinum);
+        const usdToChf = Number(rates && rates.USD), eurToChf = Number(rates && rates.EUR);
+        const timestamp = Number(payload && payload.timestamp);
+        if (![goldUsd, silverUsd, platinumUsd, usdToChf, eurToChf].every(function(value) { return Number.isFinite(value) && value > 0; })) throw new Error('Pacchetto quotazioni non valido');
 
-
-
-        // 3) Richieste isolate: un errore XPT non degrada Oro/Argento.
-        try {
-          const fetchMetal = function(symbol) { return fetch('https://api.gold-api.com/price/' + symbol).then(function(r) { if (!r.ok) throw new Error(symbol + ' HTTP ' + r.status); return r.json(); }).then(function(d) { const v = Number(d && d.price); return Number.isFinite(v) && v > 0 ? v : null; }).catch(function(e) { console.log(symbol + ' non disponibile:', e); return null; }); };
-          const [goldUsd, silverUsd, platinumUsd] = await Promise.all([fetchMetal('XAU'), fetchMetal('XAG'), fetchMetal('XPT')]);
-          let anyMetalOk = false;
-          if (goldUsd != null) { state.currentPrices.gold = goldUsd * usdToChf / OZ_TO_G; state.currentPriceConfirmed.gold = !!fxOk; anyMetalOk = true; }
-          if (silverUsd != null) { state.currentPrices.silver = silverUsd * usdToChf / OZ_TO_G; state.currentPriceConfirmed.silver = !!fxOk; anyMetalOk = true; }
-          if (platinumUsd != null) { state.currentPrices.platinum = platinumUsd * usdToChf / OZ_TO_G; state.currentPriceConfirmed.platinum = !!fxOk; anyMetalOk = true; }
-          metalOk = anyMetalOk;
-          // Nessun prezzo XPT valido: evita di presentare una quotazione obsoleta come live.
-          if (platinumUsd == null) state.currentPrices.platinum = 0;
-          if (anyMetalOk) {
-            const today = localDateKey(new Date()), existing = state.priceHistory.find(function(h) { return h.date === today; });
-            if (existing) { if (goldUsd != null) existing.goldUsd = goldUsd; if (silverUsd != null) existing.silverUsd = silverUsd; if (platinumUsd != null) existing.platinumUsd = platinumUsd; }
-            else state.priceHistory.push({ date: today, goldUsd: goldUsd, silverUsd: silverUsd, platinumUsd: platinumUsd });
-            savePriceHistory(); state.intradayHistory.push({ ts: Date.now(), goldUsd: goldUsd, silverUsd: silverUsd, platinumUsd: platinumUsd });
-            const cutoff365d = Date.now() - 365 * 24 * 60 * 60 * 1000; state.intradayHistory = state.intradayHistory.filter(function(p) { return p.ts >= cutoff365d; }); saveIntradayHistory();
-          }
-        } catch (metErr) { console.log('Metalli falliti:', metErr); }
-      } catch (e) {
-        console.log('API fallback:', e);
+        // Aggiornamento indivisibile: se manca un dato non viene ricalcolato nulla con valori vecchi.
+        state.exchangeRates = { CHF: 1, USD: usdToChf, EUR: eurToChf };
+        state.currentPrices = {
+          gold: goldUsd * usdToChf / OZ_TO_G,
+          silver: silverUsd * usdToChf / OZ_TO_G,
+          platinum: platinumUsd * usdToChf / OZ_TO_G
+        };
+        state.currentPriceConfirmed = { gold: true, silver: true, platinum: true };
+        const today = localDateKey(new Date(timestamp || Date.now()));
+        const existing = state.priceHistory.find(function(h) { return h.date === today; });
+        if (existing) { existing.goldUsd = goldUsd; existing.silverUsd = silverUsd; existing.platinumUsd = platinumUsd; }
+        else state.priceHistory.push({ date: today, goldUsd: goldUsd, silverUsd: silverUsd, platinumUsd: platinumUsd });
+        savePriceHistory();
+        state.intradayHistory.push({ ts: timestamp || Date.now(), goldUsd: goldUsd, silverUsd: silverUsd, platinumUsd: platinumUsd });
+        const cutoff365d = Date.now() - 365 * 24 * 60 * 60 * 1000;
+        state.intradayHistory = state.intradayHistory.filter(function(point) { return point.ts >= cutoff365d; });
+        saveIntradayHistory();
+        state.lastUpdate = timestamp || Date.now();
+        state.lastUpdateOk = true;
+        saveMeta();
+      } catch (error) {
+        // Conserva esclusivamente l'ultima quotazione completa verificata; non usa cambi locali di riserva.
+        console.log('Quotazioni live non aggiornate:', error);
+        state.lastUpdateOk = false;
       }
       state.syncBusy = false;
-      if (metalOk || fxOk) {
-        state.lastUpdate = Date.now();
-        state.lastUpdateOk = (fxOk && metalOk);
-        saveMeta();
-      }
       updateUI();
     }
 
