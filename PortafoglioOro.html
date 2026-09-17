@@ -2529,7 +2529,8 @@
         <form id="watchForm" style="display:none;" onsubmit="addWatch(event)">
           <div class="form-group">
             <label>Marca</label>
-            <select id="watchBrand" required></select>
+            <select id="watchBrand" required onchange="toggleCustomWatchBrand('new')"></select>
+            <input type="text" id="watchBrandCustom" maxlength="80" placeholder="Inserisci la marca" style="display:none; margin-top:0.5rem;" aria-label="Marca personalizzata">
           </div>
           <div class="form-group">
             <label>Modello</label>
@@ -2800,6 +2801,17 @@
     </div>
   </div>
 
+  <div id="documentExternalModal" class="chrono24-modal" aria-hidden="true" onclick="if (event.target === this) closeExternalDocumentPrompt()">
+    <div class="chrono24-dialog" role="dialog" aria-modal="true" aria-labelledby="documentExternalDialogTitle" aria-describedby="documentExternalDialogDescription" onclick="event.stopPropagation()">
+      <h2 id="documentExternalDialogTitle">Aprire il documento?</h2>
+      <p id="documentExternalDialogDescription">Uscirai temporaneamente da Portafoglio Assets. Il documento verrà aperto nell’app predisposta sul dispositivo oppure nel browser esterno.</p>
+      <div class="chrono24-dialog-actions">
+        <button id="documentExternalCancelBtn" class="chrono24-cancel-btn" type="button" onclick="closeExternalDocumentPrompt()">Annulla</button>
+        <button id="documentExternalConfirmBtn" class="chrono24-confirm-btn" type="button" onclick="confirmExternalDocumentOpen()">Apri documento</button>
+      </div>
+    </div>
+  </div>
+
   <div id="pressClock"></div>
   <div id="lightbox" onclick="closeLightbox()">
     <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
@@ -2914,7 +2926,8 @@
       <h2 class="detail-title">Dettaglio orologio</h2>
       <div class="form-group">
         <label>Marca</label>
-        <select id="editWatchBrand"></select>
+        <select id="editWatchBrand" onchange="toggleCustomWatchBrand('edit')"></select>
+        <input type="text" id="editWatchBrandCustom" maxlength="80" placeholder="Inserisci la marca" style="display:none; margin-top:0.5rem;" aria-label="Marca personalizzata">
       </div>
       <div class="form-group">
         <label>Modello</label>
@@ -5206,15 +5219,47 @@
       await handleNewDocumentSelect(input, pendingPositionDocuments, 'positionDocumentStatus');
     }
 
+    const WATCH_BRAND_OTHER_VALUE = '__PORTAFOGLIO_ASSETS_OTHER_BRAND__';
     function populateWatchBrandSelects() {
       const opts = WATCH_BRANDS.map(function (b) {
         const safe = b.replace(/&/g, '&amp;');
         return '<option value="' + safe + '">' + safe + '</option>';
-      }).join('');
+      }).join('') + '<option value="' + WATCH_BRAND_OTHER_VALUE + '">Altro</option>';
       const s1 = document.getElementById('watchBrand');
       const s2 = document.getElementById('editWatchBrand');
       if (s1 && !s1.options.length) s1.innerHTML = opts;
       if (s2 && !s2.options.length) s2.innerHTML = opts;
+    }
+    function watchBrandControls(kind) {
+      return kind === 'edit'
+        ? { select: document.getElementById('editWatchBrand'), custom: document.getElementById('editWatchBrandCustom') }
+        : { select: document.getElementById('watchBrand'), custom: document.getElementById('watchBrandCustom') };
+    }
+    function toggleCustomWatchBrand(kind) {
+      const controls = watchBrandControls(kind);
+      if (!controls.select || !controls.custom) return;
+      const isOther = controls.select.value === WATCH_BRAND_OTHER_VALUE;
+      controls.custom.style.display = isOther ? '' : 'none';
+      controls.custom.required = isOther;
+      if (!isOther) controls.custom.value = '';
+      if (isOther) controls.custom.focus();
+    }
+    function setWatchBrandControl(kind, brand) {
+      const controls = watchBrandControls(kind);
+      if (!controls.select || !controls.custom) return;
+      const value = String(brand || '').trim();
+      const known = WATCH_BRANDS.indexOf(value) !== -1;
+      controls.select.value = known ? value : WATCH_BRAND_OTHER_VALUE;
+      controls.custom.value = known ? '' : value;
+      toggleCustomWatchBrand(kind);
+    }
+    function selectedWatchBrand(kind) {
+      const controls = watchBrandControls(kind);
+      if (!controls.select) return '';
+      if (controls.select.value !== WATCH_BRAND_OTHER_VALUE) return String(controls.select.value || '').trim();
+      const customBrand = String(controls.custom && controls.custom.value || '').trim();
+      if (!customBrand) { alert('Inserisci la marca dell’orologio.'); controls.custom && controls.custom.focus(); return ''; }
+      return customBrand;
     }
 
     function toggleWatchForm() {
@@ -5257,7 +5302,8 @@
     // Aggiungi orologio
     async function addWatch(e) {
       e.preventDefault();
-      const brand = document.getElementById('watchBrand').value;
+      const brand = selectedWatchBrand('new');
+      if (!brand) return;
       const model = (document.getElementById('watchModel').value || '').trim();
       const reference = (document.getElementById('watchReference').value || '').trim();
       const serial = (document.getElementById('watchSerial').value || '').trim();
@@ -5285,6 +5331,7 @@
       pendingWatchDocuments = [];
       document.getElementById('watchPhotoPreview').innerHTML = '';
       document.getElementById('watchForm').reset();
+      setWatchBrandControl('new', WATCH_BRANDS[0]);
       syncQuickPurchaseYearSelect('watchPurchaseDate');
       document.getElementById('watchDocumentStatus').textContent = 'Massimo 3 file, 1 MB ciascuno e 2 MB totali per orologio. Apertura, download e rimozione sono disponibili solo nel dettaglio.';
       document.getElementById('watchForm').style.display = 'none';
@@ -5525,7 +5572,7 @@
       editWatchIndex = index;
       editWatchState = JSON.parse(JSON.stringify(w));
       populateWatchBrandSelects();
-      document.getElementById('editWatchBrand').value = editWatchState.brand || '';
+      setWatchBrandControl('edit', editWatchState.brand || '');
       document.getElementById('editWatchModel').value = editWatchState.model || '';
       document.getElementById('editWatchReference').value = editWatchState.reference || '';
       document.getElementById('editWatchSerial').value = editWatchState.serial || '';
@@ -5559,7 +5606,7 @@
       var docs = item.documents || [];
       c.innerHTML = docs.length ? docs.map(function(d, idx) {
         var type = documentTypeLabel(d);
-        return '<div class="document-item"><div class="document-item-meta"><span class="document-name" title="' + escapeAttr(d.name) + '">' + escapeHtml(d.name) + '</span><span class="document-type">' + type + ' · ' + Math.ceil(documentBytes(d) / 1024) + ' KB</span></div><span class="document-actions"><button type="button" onclick="openPortfolioDocument(\'' + owner + '\',' + idx + ')">Apri</button><button type="button" onclick="downloadPortfolioDocument(\'' + owner + '\',' + idx + ')">Scarica</button><button type="button" onclick="removePortfolioDocument(\'' + owner + '\',' + idx + ')">Rimuovi</button></span></div>';
+        return '<div class="document-item"><div class="document-item-meta"><span class="document-name" title="' + escapeAttr(d.name) + '">' + escapeHtml(d.name) + '</span><span class="document-type">' + type + ' · ' + Math.ceil(documentBytes(d) / 1024) + ' KB</span></div><span class="document-actions"><button type="button" onclick="return requestPortfolioDocumentOpen(\'' + owner + '\',' + idx + ', event)">Apri</button><button type="button" onclick="downloadPortfolioDocument(\'' + owner + '\',' + idx + ')">Scarica</button><button type="button" onclick="removePortfolioDocument(\'' + owner + '\',' + idx + ')">Rimuovi</button></span></div>';
       }).join('') : '<div class="sales-empty">Nessun documento allegato.</div>';
     }
     function renderEditWatchDocuments() { renderEditableDocuments('editWatchDocumentList', 'watch'); }
@@ -5622,12 +5669,45 @@
       var docs = item && item.documents;
       return Array.isArray(docs) ? docs[idx] : null;
     }
-    function openPortfolioDocument(owner, idx) {
-      var d = documentForOwner(owner, idx); if (!d) return;
-      if (isPdfDocument(d) && window.PortafoglioAndroid && typeof window.PortafoglioAndroid.openPdfDocument === 'function') {
-        try { window.PortafoglioAndroid.openPdfDocument(d.name || 'documento.pdf', d.data); return; } catch (err) { console.warn('Apertura PDF Android non disponibile', err); }
-      }
-      try { showDocumentPreview(d); } catch (err) { alert('Impossibile aprire il documento.'); }
+    var pendingExternalDocument = null;
+    var externalDocumentTriggerElement = null;
+    function requestPortfolioDocumentOpen(owner, idx, event) {
+      if (event) { event.preventDefault(); event.stopPropagation(); }
+      var d = documentForOwner(owner, idx); if (!d) return false;
+      pendingExternalDocument = d;
+      externalDocumentTriggerElement = event && event.currentTarget ? event.currentTarget : null;
+      var modal = document.getElementById('documentExternalModal');
+      if (modal) { modal.classList.add('is-open'); modal.setAttribute('aria-hidden', 'false'); }
+      setTimeout(function() { document.getElementById('documentExternalConfirmBtn')?.focus(); }, 0);
+      return false;
+    }
+    function closeExternalDocumentPrompt(restoreFocus) {
+      var modal = document.getElementById('documentExternalModal');
+      if (modal) { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); }
+      pendingExternalDocument = null;
+      var trigger = externalDocumentTriggerElement;
+      externalDocumentTriggerElement = null;
+      if (restoreFocus !== false && trigger && typeof trigger.focus === 'function') trigger.focus();
+    }
+    function openDocumentInExternalBrowser(d) {
+      var url = URL.createObjectURL(portfolioDocumentBlob(d));
+      var link = document.createElement('a');
+      link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.style.display = 'none';
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+    }
+    function confirmExternalDocumentOpen() {
+      var d = pendingExternalDocument;
+      closeExternalDocumentPrompt(false);
+      if (!d) return;
+      // Android usa un Intent: il documento si apre nell'app scelta dal dispositivo, mai nella WebView.
+      try {
+        if (window.PortafoglioAndroid && typeof window.PortafoglioAndroid.openPortfolioDocument === 'function') {
+          window.PortafoglioAndroid.openPortfolioDocument(d.name || 'documento', d.type || '', d.data || '');
+          return;
+        }
+      } catch (err) { console.warn('Apertura esterna Android non disponibile', err); }
+      try { openDocumentInExternalBrowser(d); } catch (err) { alert('Impossibile aprire il documento.'); }
     }
     function downloadDocument(doc) {
       if (!doc) return;
@@ -5750,7 +5830,9 @@
 
     function saveWatchDetail() {
       if (editWatchIndex == null || !editWatchState) return;
-      editWatchState.brand = document.getElementById('editWatchBrand').value;
+      const brand = selectedWatchBrand('edit');
+      if (!brand) return;
+      editWatchState.brand = brand;
       editWatchState.model = (document.getElementById('editWatchModel').value || '').trim();
       editWatchState.reference = (document.getElementById('editWatchReference').value || '').trim();
       editWatchState.serial = (document.getElementById('editWatchSerial').value || '').trim();
@@ -6180,6 +6262,8 @@
     function closeTransientUi() {
       var chrono24Modal = document.getElementById('chrono24Modal');
       if (chrono24Modal && chrono24Modal.classList.contains('is-open')) { closeChrono24Prompt(); return true; }
+      var documentExternalModal = document.getElementById('documentExternalModal');
+      if (documentExternalModal && documentExternalModal.classList.contains('is-open')) { closeExternalDocumentPrompt(); return true; }
       var menu = document.getElementById('overflowMenu');
       if (menu && menu.classList.contains('is-open')) { closeOverflowMenu(); return true; }
       var backup = document.getElementById('localBackupModal');
