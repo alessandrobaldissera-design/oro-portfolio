@@ -1055,31 +1055,51 @@
       }
       #home .summary > .card:nth-child(1) #totalCurrency {
         align-self: center;
-        margin-top: 0.45rem;
-        padding: 0.2rem 0.6rem;
+        margin-top: 0.42rem;
+        padding: 0.26rem 0.72rem;
         border-radius: 999px;
-        background: rgba(255,255,255,0.42);
-        border: 1px solid rgba(126,89,10,0.18);
-        color: #5E4510;
-        font-size: 0.72rem;
-        font-weight: 800;
-        letter-spacing: 0.08em;
+        background: rgba(255,255,255,0.48);
+        border: 1px solid rgba(126,89,10,0.2);
+        box-shadow: 0 3px 8px rgba(93,69,16,0.1);
+        color: #523B0B;
+        font-size: 0.92rem;
+        line-height: 1;
+        font-weight: 850;
+        letter-spacing: 0.09em;
       }
       #home .summary > .card:nth-child(1) > div:last-child {
         margin-top: auto !important;
-        padding-top: 0.62rem !important;
+        padding-top: 0.72rem !important;
         gap: 0 !important;
-        border-top: 1px solid rgba(126,89,10,0.26) !important;
-        background: rgba(255,255,255,0.14);
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        border-top: 1px solid rgba(126,89,10,0.24) !important;
+        background: transparent;
       }
       #home .summary > .card:nth-child(1) > div:last-child > div {
-        padding: 0.52rem 0.1rem;
+        min-width: 0;
+        padding: 0.12rem 0.62rem 0.04rem;
+        display: flex !important;
+        flex-direction: column;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.16rem;
       }
       #home .summary > .card:nth-child(1) > div:last-child > div + div {
-        border-top: 1px solid rgba(126,89,10,0.18);
+        border-top: 0;
+        border-left: 1px solid rgba(126,89,10,0.22);
       }
-      #home .summary > .card:nth-child(1) > div:last-child span:first-child { font-weight: 700 !important; color: #705617 !important; }
-      #home .summary > .card:nth-child(1) > div:last-child span:last-child { font-size: 1.1rem !important; }
+      #home .summary > .card:nth-child(1) > div:last-child span:first-child {
+        font-weight: 700 !important;
+        color: #705617 !important;
+        font-size: 0.78rem !important;
+        letter-spacing: 0.025em;
+      }
+      #home .summary > .card:nth-child(1) > div:last-child span:last-child {
+        max-width: 100%;
+        font-size: 1.02rem !important;
+        white-space: nowrap;
+      }
     }
 
     /* ===== Small phone ===== */
