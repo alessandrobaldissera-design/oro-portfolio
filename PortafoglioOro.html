@@ -1043,6 +1043,43 @@
       .summary.summary-watches { grid-template-columns: 1fr 1fr; }
       table { font-size: 0.82rem; }
       th, td { padding: 0.6rem 0.5rem; }
+
+      /* Tablet: Patrimonio più pieno e gerarchico, senza alterare l'altezza della riga. */
+      #home .summary > .card:nth-child(1) { padding: 1rem 1.05rem 1.08rem; }
+      #home .summary > .card:nth-child(1) > h3 { margin-bottom: 0.28rem; }
+      #home .summary > .card:nth-child(1) #totalValue {
+        font-size: clamp(2rem, 3.7vw, 2.35rem);
+        line-height: 1;
+        letter-spacing: -0.04em;
+        font-weight: 800;
+      }
+      #home .summary > .card:nth-child(1) #totalCurrency {
+        align-self: center;
+        margin-top: 0.45rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.42);
+        border: 1px solid rgba(126,89,10,0.18);
+        color: #5E4510;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+      #home .summary > .card:nth-child(1) > div:last-child {
+        margin-top: auto !important;
+        padding-top: 0.62rem !important;
+        gap: 0 !important;
+        border-top: 1px solid rgba(126,89,10,0.26) !important;
+        background: rgba(255,255,255,0.14);
+      }
+      #home .summary > .card:nth-child(1) > div:last-child > div {
+        padding: 0.52rem 0.1rem;
+      }
+      #home .summary > .card:nth-child(1) > div:last-child > div + div {
+        border-top: 1px solid rgba(126,89,10,0.18);
+      }
+      #home .summary > .card:nth-child(1) > div:last-child span:first-child { font-weight: 700 !important; color: #705617 !important; }
+      #home .summary > .card:nth-child(1) > div:last-child span:last-child { font-size: 1.1rem !important; }
     }
 
     /* ===== Small phone ===== */
@@ -2395,18 +2432,29 @@
       #home .period-btn[data-period="all"]::after { content: "Tutto"; }
     }
 
-    /* ===== Scheda Andamento: mini-linea in fascia dedicata, colore deciso ===== */
+    /* ===== Scheda Andamento: grafico esteso sul fondo, coerente con Oro/Argento/Platino ===== */
+    #home .summary > .card:nth-child(2) {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+      padding-bottom: 3.6rem;
+    }
+    #home .summary > .card:nth-child(2) > :not(.andamento-spark) {
+      position: relative;
+      z-index: 1;
+    }
     .andamento-spark {
       position: absolute;
       left: 0;
       right: 0;
+      top: 42%;
       bottom: 0;
       display: block;
       width: 100%;
-      height: 56px;
+      height: auto;
+      z-index: 0;
       pointer-events: none;
     }
-    #home .summary > .card:nth-child(2) { padding-bottom: 3.6rem; }
 
     /* ===== Storico: fondo della scheda in linea con il metallo ===== */
     .history-card.metal-gold { background: linear-gradient(135deg, #FCF3DC 0%, #F1DEAE 100%); border-left: 5px solid #C5952A; }
@@ -2417,7 +2465,7 @@
     .history-card .metric-value { color: var(--text-primary); }
 
     @media (max-width: 600px) {
-      .andamento-spark { height: 42px; }
+      .andamento-spark { top: 40%; bottom: 0; height: auto; }
       #home .summary > .card:nth-child(2) { padding-bottom: 2.6rem; }
       /* Orologi: titoli su una riga, come in Home; la sezione è già quella degli orologi. */
       #watches .summary > .card > h3 { font-size: 0; }
@@ -4966,7 +5014,7 @@
       ctx.fill();
       catmullRomPath(points, 0.35);
       ctx.strokeStyle = 'rgba(' + trendColor + ', 0.95)';
-      ctx.lineWidth = 6;  // 3 px reali: più visibile senza ingrandire la scheda
+      ctx.lineWidth = 3;  // 1,5 px reali: stesso spessore dei grafici Oro, Argento e Platino
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
       ctx.stroke();
