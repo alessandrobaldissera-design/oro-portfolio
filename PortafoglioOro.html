@@ -2475,22 +2475,38 @@
       pointer-events: none;
     }
 
-    /* Tablet: il grafico è una trama sul fondo, sotto ogni contenuto.
-       Copre la metà inferiore senza partire dalla colonna destra della griglia. */
+    /* Tablet: canvas realmente esteso all'intera scheda; il disegno occupa la metà inferiore. */
     @media (min-width: 601px) and (max-width: 900px) {
       #home .summary > .card:nth-child(2) > .andamento-spark {
         grid-column: 1 / -1;
         grid-row: 1 / -1;
-        left: 0;
-        right: 0;
-        top: auto;
-        bottom: 0;
+        inset: 0;
         width: 100%;
-        height: 50%;
-        max-height: 50%;
-        opacity: 0.46;
+        height: 100%;
+        max-height: none;
+        opacity: 0.50;
+      }
+      #home .summary > .card:nth-child(2) .home-summary-legacy > div {
+        background: rgba(255, 255, 255, 0.72);
       }
     }
+
+    .instruction-hint {
+      position: fixed; left: 50%; bottom: calc(76px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+      z-index: 10020; display: none; width: min(92vw, 520px); padding: 0.72rem 2.8rem 0.72rem 0.9rem;
+      border-radius: 12px; background: #1B3A2D; color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,.24);
+      font-size: .84rem; font-weight: 700;
+    }
+    body.instruction-mode .instruction-hint { display: block; }
+    .instruction-hint button { position:absolute; right:.45rem; top:50%; transform:translateY(-50%); border:0; border-radius:8px; padding:.35rem .55rem; background:#D4A843; color:#1B3A2D; font-weight:800; }
+    body.instruction-mode [data-help], body.instruction-mode .card, body.instruction-mode .period-selector,
+    body.instruction-mode .chart-card, body.instruction-mode .bottom-nav-btn { cursor: help; }
+    .instruction-modal { position:fixed; inset:0; z-index:10030; display:none; align-items:center; justify-content:center; padding:1rem; background:rgba(10,24,18,.48); }
+    .instruction-modal.is-open { display:flex; }
+    .instruction-dialog { width:min(92vw,520px); border-radius:16px; padding:1.15rem; background:#FAFBFC; color:#1B3A2D; box-shadow:0 16px 40px rgba(0,0,0,.25); }
+    .instruction-dialog h2 { margin:0 0 .55rem; font-size:1.15rem; }
+    .instruction-dialog p { margin:0 0 1rem; color:#40584d; line-height:1.5; }
+    .instruction-dialog button { width:100%; border:0; border-radius:10px; padding:.7rem; background:#1B3A2D; color:#fff; font-weight:800; }
 
     /* ===== Storico: fondo della scheda in linea con il metallo ===== */
     .history-card.metal-gold { background: linear-gradient(135deg, #FCF3DC 0%, #F1DEAE 100%); border-left: 5px solid #C5952A; }
@@ -2731,6 +2747,15 @@
             <button id="mobileCsvExportBtn" type="button" role="menuitem">Esporta CSV</button>
             <button id="mobileDriveBtn" type="button" role="menuitem">Google Drive</button>
             <button id="mobileNewsBtn" type="button" role="menuitem">Notizie</button>
+            <button id="mobileInstructionsBtn" type="button" role="menuitem">Istruzioni</button>
+          </div>
+        </div>
+        <div id="instructionHint" class="instruction-hint">Tocchi ciò che desidera comprendere.<button id="instructionExitBtn" type="button">Fine</button></div>
+        <div id="instructionModal" class="instruction-modal" aria-hidden="true">
+          <div class="instruction-dialog" role="dialog" aria-modal="true" aria-labelledby="instructionTitle">
+            <h2 id="instructionTitle">Istruzioni</h2>
+            <p id="instructionText"></p>
+            <button id="instructionCloseBtn" type="button">Ho capito</button>
           </div>
         </div>
         <div id="localBackupModal" class="backup-modal" aria-hidden="true">
@@ -5015,21 +5040,20 @@
       const range = maxV - minV || 1;
       const w = canvas.width;
       const h = canvas.height;
-      // Solo su tablet: margini reali, così la curva non viene tagliata dai bordi.
-      // Su smartphone restano esattamente le quote precedenti.
+      // Su tablet il canvas è grande quanto la scheda, ma la curva resta nella metà inferiore.
       const isTabletBackdrop = window.matchMedia('(min-width: 601px) and (max-width: 900px)').matches;
-      const paddingLeft = isTabletBackdrop ? 24 : 0;
-      const paddingRight = isTabletBackdrop ? 24 : 0;
-      const paddingTop = isTabletBackdrop ? 22 : 15;
-      const paddingBottom = isTabletBackdrop ? 10 : 5;
-      const drawW = w - paddingLeft - paddingRight;
-      const drawH = h - paddingTop - paddingBottom;
+      const paddingLeft = isTabletBackdrop ? 18 : 0;
+      const paddingRight = isTabletBackdrop ? 18 : 0;
+      const plotTop = isTabletBackdrop ? Math.round(h * 0.50) : 15;
+      const paddingBottom = isTabletBackdrop ? 8 : 5;
+      const drawW = Math.max(1, w - paddingLeft - paddingRight);
+      const drawH = Math.max(1, h - plotTop - paddingBottom);
       const isUp = values[values.length - 1] >= values[0];
       const trendColor = isUp ? '76, 175, 80' : '229, 57, 53';  // stessi verde e rosso dei grafici principali
 
       const points = values.map((v, i) => ({
         x: paddingLeft + (i / (values.length - 1)) * drawW,
-        y: paddingTop + drawH - ((v - minV) / range) * drawH
+        y: plotTop + drawH - ((v - minV) / range) * drawH
       }));
 
       function catmullRomPath(pts, tension) {
@@ -5053,7 +5077,7 @@
       ctx.lineTo(w - paddingRight, h);
       ctx.lineTo(paddingLeft, h);
       ctx.closePath();
-      const gradient = ctx.createLinearGradient(0, 0, 0, h);
+      const gradient = ctx.createLinearGradient(0, plotTop, 0, h);
       gradient.addColorStop(0, 'rgba(' + trendColor + ', 0.40)');
       gradient.addColorStop(0.7, 'rgba(' + trendColor + ', 0.10)');
       gradient.addColorStop(1, 'rgba(' + trendColor + ', 0.02)');
@@ -6902,6 +6926,48 @@
       document.querySelectorAll('#watchListContainer .watch-card').forEach(function(card){ card.style.display = cardMatchesFilters(card,query,tag,loc) ? '' : 'none'; });
     }
 
+    // Modalità Istruzioni: l'utente attiva la guida e tocca l'elemento da comprendere.
+    var instructionMode = false;
+    var instructionHelp = [
+      ['.currency-selector','Valuta','Seleziona la valuta usata per tutti gli importi e per le conversioni automatiche.'],
+      ['#shopBtn','Shop','Apre la sezione dedicata ai prodotti e ai servizi collegati.'],
+      ['#home .summary > .card:nth-child(1)','Patrimonio','Mostra il valore complessivo del portafoglio e la ripartizione tra metalli e orologi.'],
+      ['#home .summary > .card:nth-child(2)','Andamento','Mostra guadagno o perdita del portafoglio nel periodo scelto. Il grafico sullo sfondo segue i dati reali disponibili.'],
+      ['#home .summary > .card:nth-child(3)','Posizioni attive','Indica quante posizioni sono presenti e come sono distribuite.'],
+      ['.period-selector','Periodo dei grafici','Cambia l’intervallo temporale visualizzato nei grafici dei metalli.'],
+      ['.chart-card','Grafico del metallo','Mostra quotazione, variazione e andamento reale del metallo selezionato.'],
+      ['#historicalValueCard','Consulta valore storico','Calcola il valore del metallo nella valuta scelta alla data indicata.'],
+      ['.bottom-nav-btn[data-tab="overview"]','Panoramica','Apre il riepilogo completo delle posizioni in portafoglio.'],
+      ['.bottom-nav-btn[data-tab="history"]','Storico','Mostra acquisti, vendite e allegati dei metalli.'],
+      ['.bottom-nav-btn[data-tab="watches"]','Orologi','Gestisce gli orologi, i loro valori, fotografie e documenti.'],
+      ['#refreshBtn','Aggiorna ora','Richiede l’ultimo pacchetto completo di quotazioni e cambi.'],
+      ['#overflowMenuBtn','Menu','Raccoglie privacy, backup, CSV, Google Drive, Notizie e Istruzioni.']
+    ];
+    function setInstructionMode(active) {
+      instructionMode = !!active;
+      document.body.classList.toggle('instruction-mode', instructionMode);
+      closeOverflowMenu();
+      if (!instructionMode) closeInstructionModal();
+    }
+    function closeInstructionModal() {
+      var modal=document.getElementById('instructionModal');
+      if (modal) { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); }
+    }
+    function showInstruction(title,text) {
+      document.getElementById('instructionTitle').textContent=title;
+      document.getElementById('instructionText').textContent=text;
+      var modal=document.getElementById('instructionModal');
+      modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false');
+    }
+    document.addEventListener('click', function(e) {
+      if (!instructionMode || e.target.closest('#instructionHint,#instructionModal,#mobileOverflowWrap')) return;
+      for (var i=0;i<instructionHelp.length;i++) {
+        var hit=e.target.closest(instructionHelp[i][0]);
+        if (hit) { e.preventDefault(); e.stopPropagation(); showInstruction(instructionHelp[i][1],instructionHelp[i][2]); return; }
+      }
+      e.preventDefault(); e.stopPropagation(); showInstruction('Istruzioni','Per questo elemento non è necessaria un’azione particolare. Tocchi un riquadro, un grafico, un periodo o un comando principale.');
+    }, true);
+
     // Navigazione interna: supporta freccia, gesto laterale e tasto Indietro Android.
     function activeAppTab() {
       var current = document.querySelector('.tab-content.active');
@@ -6920,6 +6986,9 @@
     function closeOverflowMenu() { setOverflowMenu(false); }
 
     function closeTransientUi() {
+      var instructionModal = document.getElementById('instructionModal');
+      if (instructionModal && instructionModal.classList.contains('is-open')) { closeInstructionModal(); return true; }
+      if (instructionMode) { setInstructionMode(false); return true; }
       var chrono24Modal = document.getElementById('chrono24Modal');
       if (chrono24Modal && chrono24Modal.classList.contains('is-open')) { closeChrono24Prompt(); return true; }
       var documentExternalModal = document.getElementById('documentExternalModal');
@@ -7029,6 +7098,10 @@
       closeOverflowMenu();
       showAppTab('news');
     });
+    document.getElementById('mobileInstructionsBtn')?.addEventListener('click', function() { setInstructionMode(true); });
+    document.getElementById('instructionExitBtn')?.addEventListener('click', function() { setInstructionMode(false); });
+    document.getElementById('instructionCloseBtn')?.addEventListener('click', closeInstructionModal);
+    document.getElementById('instructionModal')?.addEventListener('click', function(e) { if (e.target === this) closeInstructionModal(); });
     document.getElementById('mobileDriveBtn')?.addEventListener('click', function() {
       closeOverflowMenu();
       if (googleAccessToken) showAppTab('overview');
