@@ -2520,6 +2520,24 @@
     #home .summary > .card:nth-child(2) > .value { grid-column: 1; justify-self: end; align-self: baseline; }
     #home .summary > .card:nth-child(2) > .andamento-currency { grid-column: 2; justify-self: start; align-self: baseline; margin-top: 0; }
 
+    /* Tablet: i contenuti inferiori delle tre schede Home condividono la stessa linea visiva. */
+    @media (min-width: 601px) and (max-width: 900px) {
+      #home .summary > .card:nth-child(1) > .home-summary-breakdown {
+        transform: translateY(-1.1rem);
+      }
+      #home .summary > .card:nth-child(2) > .home-summary-breakdown {
+        transform: translateY(1.35rem);
+      }
+      #home .summary > .card:nth-child(1) > .home-summary-breakdown .breakdown-row,
+      #home .summary > .card:nth-child(2) > .home-summary-breakdown .breakdown-row {
+        padding-top: 0.34rem;
+        padding-bottom: 0.34rem;
+      }
+      #home .summary > .card:nth-child(2) > .home-summary-breakdown .breakdown-row {
+        background: rgba(255, 255, 255, 0.80);
+      }
+    }
+
     /* Stessa base verde, con accenti metallici distinti sul lato sinistro e profondità dedicata. */
     #home .chart-card.gold-section,
     #home .chart-card.silver-section,
