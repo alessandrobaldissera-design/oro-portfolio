@@ -110,16 +110,54 @@ function utcDateKey(timestamp) {
   return new Date(timestamp).toISOString().slice(0, 10);
 }
 
-async function fetchExchangeRatesForDate(dateKey) {
-  const response = await fetch(`${FRANKFURTER_BASE}/${dateKey}?base=USD&symbols=CHF,EUR`, { cache: 'no-store' });
-  if (!response.ok) throw new Error(`Cambio storico: HTTP ${response.status}`);
-  const payload = await response.json();
-  const chf = Number(payload?.rates?.CHF);
-  const eur = Number(payload?.rates?.EUR);
-  if (!Number.isFinite(chf) || chf <= 0 || !Number.isFinite(eur) || eur <= 0) {
-    throw new Error('Cambio storico: risposta non valida');
+const FRED_GRAPH_BASE = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=';
+const EUR_PER_DEM = 1 / 1.95583;
+let preEuroRatesPromise = null;
+
+function csvRows(csv) {
+  return String(csv || '').trim().split(/\r?\n/).slice(1).map(line => {
+    const comma = line.indexOf(',');
+    return comma > 0 ? { date: line.slice(0, comma), value: Number(line.slice(comma + 1)) } : null;
+  }).filter(row => row && /^\d{4}-\d{2}-\d{2}$/.test(row.date) && Number.isFinite(row.value) && row.value > 0);
+}
+
+async function preEuroRates() {
+  if (!preEuroRatesPromise) {
+    preEuroRatesPromise = Promise.all([
+      fetch(FRED_GRAPH_BASE + 'DEXSZUS', { cache: 'force-cache' }).then(r => r.ok ? r.text() : Promise.reject(new Error('Cambio CHF non disponibile'))),
+      fetch(FRED_GRAPH_BASE + 'EXGEUS', { cache: 'force-cache' }).then(r => r.ok ? r.text() : Promise.reject(new Error('Cambio EUR storico non disponibile')))
+    ]).then(([chfCsv, demCsv]) => ({ chf: csvRows(chfCsv), dem: csvRows(demCsv) }));
   }
-  return { date: String(payload.date || dateKey), USD: 1, CHF: chf, EUR: eur };
+  return preEuroRatesPromise;
+}
+
+function lastRateOnOrBefore(rows, dateKey) {
+  let result = null;
+  for (const row of rows) {
+    if (row.date > dateKey) break;
+    result = row;
+  }
+  return result;
+}
+
+async function fetchExchangeRatesForDate(dateKey) {
+  if (dateKey >= '1999-01-04') {
+    const response = await fetch(FRANKFURTER_BASE + '/' + dateKey + '?base=USD&symbols=CHF,EUR', { cache: 'no-store' });
+    if (!response.ok) throw new Error('Cambio storico: HTTP ' + response.status);
+    const payload = await response.json();
+    const chf = Number(payload?.rates?.CHF);
+    const eur = Number(payload?.rates?.EUR);
+    if (!Number.isFinite(chf) || chf <= 0 || !Number.isFinite(eur) || eur <= 0) throw new Error('Cambio storico: risposta non valida');
+    return { date: String(payload.date || dateKey), USD: 1, CHF: chf, EUR: eur };
+  }
+
+  // Prima dell'euro: CHF giornaliero Fed; EUR equivalente calcolato dal marco tedesco storico
+  // con il tasso irrevocabile DEM/EUR. Il risultato è sempre restituito nella valuta attiva.
+  const rates = await preEuroRates();
+  const chf = lastRateOnOrBefore(rates.chf, dateKey);
+  const dem = lastRateOnOrBefore(rates.dem, dateKey.slice(0, 7) + '-31') || lastRateOnOrBefore(rates.dem, dateKey);
+  if (!chf || !dem) throw new Error('Cambio storico non disponibile per la data richiesta');
+  return { date: dateKey, USD: 1, CHF: chf.value, EUR: dem.value * EUR_PER_DEM };
 }
 
 const HISTORICAL_METALS = Object.freeze({
@@ -147,15 +185,14 @@ async function historicalDatePackage(dateValue, metalValue, apiKey) {
     throw error;
   }
 
-  // Quattordici giorni consentono di trovare l'ultima seduta reale anche dopo chiusure prolungate.
-  const startTimestamp = Math.floor((parsed.timestamp - 14 * 24 * 60 * 60 * 1000) / 1000);
+  // Richiesta puntuale: la data scelta non viene sostituita con un giorno precedente.
+  const startTimestamp = Math.floor((parsed.timestamp - 2 * 24 * 60 * 60 * 1000) / 1000);
   const requestedEnd = parsed.timestamp + 24 * 60 * 60 * 1000 - 1;
   const endTimestamp = Math.floor(Math.min(requestedEnd, Date.now()) / 1000);
   const series = await fetchSeries(metalConfig.symbol, { groupBy: 'day' }, startTimestamp, endTimestamp, apiKey);
-  const eligible = series.filter(point => point.ts <= requestedEnd && point.price > 0);
-  const point = eligible[eligible.length - 1];
+  const point = series.find(item => item.ts === parsed.timestamp && item.price > 0);
   if (!point) {
-    const error = new Error('Nessuna quotazione disponibile per la data richiesta');
+    const error = new Error('Nessuna quotazione disponibile per il giorno selezionato');
     error.statusCode = 404;
     throw error;
   }
@@ -206,7 +243,7 @@ export default async function handler(req, res) {
       const message = status === 400
         ? 'Data o metallo non validi'
         : status === 404
-          ? 'Nessuna quotazione disponibile per la data richiesta'
+          ? 'Nessuna quotazione disponibile per il giorno selezionato'
           : 'Quotazione storica temporaneamente non disponibile';
       return res.status(status).json({ error: message });
     }
