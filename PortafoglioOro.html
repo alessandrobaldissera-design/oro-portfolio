@@ -2403,7 +2403,7 @@
       bottom: 0;
       display: block;
       width: 100%;
-      height: 46px;
+      height: 56px;
       pointer-events: none;
     }
     #home .summary > .card:nth-child(2) { padding-bottom: 3.6rem; }
@@ -2417,7 +2417,7 @@
     .history-card .metric-value { color: var(--text-primary); }
 
     @media (max-width: 600px) {
-      .andamento-spark { height: 34px; }
+      .andamento-spark { height: 42px; }
       #home .summary > .card:nth-child(2) { padding-bottom: 2.6rem; }
       /* Orologi: titoli su una riga, come in Home; la sezione è già quella degli orologi. */
       #watches .summary > .card > h3 { font-size: 0; }
@@ -2482,26 +2482,26 @@
     #home .summary > .card:nth-child(2) > .value { grid-column: 1; justify-self: end; align-self: baseline; }
     #home .summary > .card:nth-child(2) > .andamento-currency { grid-column: 2; justify-self: start; align-self: baseline; margin-top: 0; }
 
-    /* Stessa base verde, con accenti metallici distinti sul lato destro e profondità dedicata. */
+    /* Stessa base verde, con accenti metallici distinti sul lato sinistro e profondità dedicata. */
     #home .chart-card.gold-section,
     #home .chart-card.silver-section,
     #home .chart-card.platinum-section {
       background: linear-gradient(145deg, #FBFDFB 0%, #ECF5EF 55%, #D8E9DE 100%);
-      border-left: 0;
-      border-right-style: solid;
-      border-right-width: 6px;
+      border-right: 0;
+      border-left-style: solid;
+      border-left-width: 6px;
     }
     #home .chart-card.gold-section {
-      border-right-color: #D6A629;
-      box-shadow: 4px 0 13px rgba(214, 166, 41, 0.34), inset -2px 0 0 rgba(255,255,255,0.48), var(--shadow);
+      border-left-color: #D6A629;
+      box-shadow: -4px 0 13px rgba(214, 166, 41, 0.34), inset 2px 0 0 rgba(255,255,255,0.48), var(--shadow);
     }
     #home .chart-card.silver-section {
-      border-right-color: #8D9AA3;
-      box-shadow: 4px 0 13px rgba(105, 121, 132, 0.32), inset -2px 0 0 rgba(255,255,255,0.62), var(--shadow);
+      border-left-color: #8D9AA3;
+      box-shadow: -4px 0 13px rgba(105, 121, 132, 0.32), inset 2px 0 0 rgba(255,255,255,0.62), var(--shadow);
     }
     #home .chart-card.platinum-section {
-      border-right-color: #80679A;
-      box-shadow: 4px 0 13px rgba(128, 103, 154, 0.34), inset -2px 0 0 rgba(255,255,255,0.48), var(--shadow);
+      border-left-color: #80679A;
+      box-shadow: -4px 0 13px rgba(128, 103, 154, 0.34), inset 2px 0 0 rgba(255,255,255,0.48), var(--shadow);
     }
 
     /* Consultazione quotazione storica per data. */
@@ -2584,7 +2584,7 @@
       #home .chart-live-sub { font-size: 0.74rem; font-weight: 600; }
       #home .chart-card.gold-section,
       #home .chart-card.silver-section,
-      #home .chart-card.platinum-section { border-right-width: 7px; }
+      #home .chart-card.platinum-section { border-left-width: 7px; }
       .historical-value-card > summary { padding: 0.82rem 0.85rem; font-size: 0.92rem; }
       .historical-value-content { padding: 0 0.85rem 0.85rem; }
       .historical-value-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.48rem; }
@@ -3697,6 +3697,7 @@
       if (!daySelect || !monthSelect || !yearSelect) return;
       monthSelect.innerHTML = ITALIAN_MONTHS.map(function(name, index) { return '<option value="' + (index + 1) + '">' + name + '</option>'; }).join('');
       const currentYear = now.getFullYear();
+      // La serie dei metalli parte dal 1980; la conversione nella valuta attiva è eseguita dal servizio.
       yearSelect.innerHTML = Array.from({ length: currentYear - 1979 }, function(_, index) { const year = currentYear - index; return '<option value="' + year + '">' + year + '</option>'; }).join('');
       monthSelect.value = String(now.getMonth() + 1);
       yearSelect.value = String(currentYear);
@@ -3734,14 +3735,10 @@
       const digits = price < 10 ? 3 : 2;
       const formatted = price.toLocaleString('it-IT', { minimumFractionDigits: digits, maximumFractionDigits: digits });
       const actualDate = formatHistoricalDate(payload.actualMetalDate);
-      const requestedDate = formatHistoricalDate(payload.requestedDate);
-      const exchangeDate = formatHistoricalDate(payload.exchangeRateDate);
-      const shifted = payload.actualMetalDate !== payload.requestedDate;
       result.className = 'historical-value-result is-visible';
       result.innerHTML = '<div class="historical-result-heading">' + escapeHtml(historicalMetalLabel(metal, purity)) + '</div>' +
         '<div class="historical-result-price">' + formatted + ' ' + currency + '/g</div>' +
-        '<div class="historical-result-meta">' + (shifted ? ('Nessuna quotazione per la data richiesta ' + requestedDate + ' (ad esempio weekend, festività o mercato chiuso); ultimo dato reale disponibile ' + actualDate + '.') : ('Quotazione media giornaliera del ' + actualDate + '.')) +
-        (payload.exchangeRateDate ? ' Cambio del ' + exchangeDate + '.' : '') + ' Fonte: Gold API.</div>';
+        '<div class="historical-result-meta">Quotazione media giornaliera del ' + actualDate + '. Fonte: Gold API.</div>';
     }
 
     async function searchHistoricalValue() {
@@ -3755,16 +3752,17 @@
       result.className = 'historical-value-result is-visible';
       result.textContent = 'Ricerca della quotazione reale in corso…';
       try {
-        const response = await fetchMarketHistoryWithTimeout(MARKET_HISTORY_ENDPOINT + '?date=' + encodeURIComponent(date) + '&refresh=' + Date.now());
-        if (!response.ok) throw new Error('HTTP ' + response.status);
-        const payload = await response.json();
-        if (!payload || payload.requestedDate !== date || !payload.pricesPerGram) throw new Error('Risposta non valida');
+        const metal = document.getElementById('historicalMetal')?.value || 'gold';
+        const response = await fetchMarketHistoryWithTimeout(MARKET_HISTORY_ENDPOINT + '?date=' + encodeURIComponent(date) + '&metal=' + encodeURIComponent(metal) + '&refresh=' + Date.now());
+        const payload = await response.json().catch(function() { return null; });
+        if (!response.ok) throw new Error(payload && payload.error ? payload.error : ('HTTP ' + response.status));
+        if (!payload || payload.requestedDate !== date || payload.metal !== metal || !payload.pricesPerGram || !payload.pricesPerGram[metal]) throw new Error('Risposta storica non valida');
         lastHistoricalValuePayload = payload;
         renderHistoricalValue(payload);
       } catch (error) {
         lastHistoricalValuePayload = null;
         result.className = 'historical-value-result is-visible is-error';
-        result.textContent = 'Quotazione storica temporaneamente non disponibile. Riprova tra poco.';
+        result.textContent = error && error.message ? error.message : 'Quotazione storica temporaneamente non disponibile. Riprova tra poco.';
       } finally {
         button.disabled = false;
       }
@@ -4932,7 +4930,7 @@
       const paddingBottom = 5;
       const drawH = h - paddingTop - paddingBottom;
       const isUp = values[values.length - 1] >= values[0];
-      const trendColor = isUp ? '20, 113, 63' : '185, 54, 54';  // verde e rosso scuri, ben visibili
+      const trendColor = isUp ? '76, 175, 80' : '229, 57, 53';  // stessi verde e rosso dei grafici principali
 
       const points = values.map((v, i) => ({
         x: (i / (values.length - 1)) * w,
@@ -4961,13 +4959,14 @@
       ctx.lineTo(0, h);
       ctx.closePath();
       const gradient = ctx.createLinearGradient(0, 0, 0, h);
-      gradient.addColorStop(0, 'rgba(' + trendColor + ', 0.38)');
-      gradient.addColorStop(1, 'rgba(' + trendColor + ', 0.06)');
+      gradient.addColorStop(0, 'rgba(' + trendColor + ', 0.40)');
+      gradient.addColorStop(0.7, 'rgba(' + trendColor + ', 0.10)');
+      gradient.addColorStop(1, 'rgba(' + trendColor + ', 0.02)');
       ctx.fillStyle = gradient;
       ctx.fill();
       catmullRomPath(points, 0.35);
       ctx.strokeStyle = 'rgba(' + trendColor + ', 0.95)';
-      ctx.lineWidth = 5;  // 2,5 px reali
+      ctx.lineWidth = 6;  // 3 px reali: più visibile senza ingrandire la scheda
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
       ctx.stroke();
@@ -5311,6 +5310,7 @@
             },
             options: {
               responsive: true, maintainAspectRatio: false,
+              layout: { padding: { right: 16 } },
               animation: { duration: 800, easing: 'easeOutQuart' },
               interaction: { mode: 'index', intersect: false },
               plugins: {
@@ -5366,6 +5366,7 @@
             },
             options: {
               responsive: true, maintainAspectRatio: false,
+              layout: { padding: { right: 16 } },
               animation: { duration: 800, easing: 'easeOutQuart' },
               interaction: { mode: 'index', intersect: false },
               plugins: {
@@ -5422,6 +5423,7 @@
           },
           options: {
             responsive: true, maintainAspectRatio: false,
+            layout: { padding: { right: 16 } },
             animation: { duration: 800, easing: 'easeOutQuart' },
             interaction: { mode: 'index', intersect: false },
             plugins: {
