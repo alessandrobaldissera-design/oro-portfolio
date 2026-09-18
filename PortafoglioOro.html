@@ -740,10 +740,6 @@
     .btn-danger { background:#f87171; color:#fff; border:none; padding:0.7rem 1.2rem; border-radius:8px; cursor:pointer; font-weight:700; margin-left:auto; }
 
     /* ===== Orologi ===== */
-    .summary.summary-watches { grid-template-columns: 1fr 1fr; }
-    @media (max-width: 768px) {
-      .summary.summary-watches { grid-template-columns: 1fr; }
-    }
     .watch-card {
       background: linear-gradient(135deg, #f5f6f3 0%, #eef0ec 100%);
       border: 1px solid rgba(27,58,45,0.25);
@@ -1017,6 +1013,10 @@
     .breakdown-row.platinum-row { background: rgba(118,93,147,0.12); }
     .breakdown-row.other-row { background: var(--green-tint); }
     .breakdown-row.watch-row { background: rgba(27,58,45,0.08); }
+    .breakdown-row.metals-row { background: rgba(47,122,82,0.11); }
+    .home-summary-breakdown { margin-top: auto; position: relative; z-index: 1; }
+    .home-summary-breakdown .breakdown-row { padding: 0.42rem 0.55rem; border-radius: 7px; }
+    .home-summary-breakdown .breakdown-detail { font-size: 0.86rem; font-weight: 800; color: #1B3A2D; }
     .breakdown-label { font-weight: 600; color: var(--text-primary); }
     .breakdown-detail { color: var(--text-secondary); font-weight: 500; }
     .breakdown-bar {
@@ -1040,7 +1040,6 @@
       header { padding: 0.8rem 1.25rem; }
       header h1 { font-size: 1.3rem; }
       .period-btn { padding: 0.45rem 0.25rem; font-size: 0.75rem; }
-      .summary.summary-watches { grid-template-columns: 1fr 1fr; }
       table { font-size: 0.82rem; }
       th, td { padding: 0.6rem 0.5rem; }
 
@@ -1066,39 +1065,6 @@
         line-height: 1;
         font-weight: 850;
         letter-spacing: 0.09em;
-      }
-      #home .summary > .card:nth-child(1) > div:last-child {
-        margin-top: auto !important;
-        padding-top: 0.72rem !important;
-        gap: 0 !important;
-        display: grid !important;
-        grid-template-columns: 1fr 1fr;
-        border-top: 1px solid rgba(126,89,10,0.24) !important;
-        background: transparent;
-      }
-      #home .summary > .card:nth-child(1) > div:last-child > div {
-        min-width: 0;
-        padding: 0.12rem 0.62rem 0.04rem;
-        display: flex !important;
-        flex-direction: column;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 0.16rem;
-      }
-      #home .summary > .card:nth-child(1) > div:last-child > div + div {
-        border-top: 0;
-        border-left: 1px solid rgba(126,89,10,0.22);
-      }
-      #home .summary > .card:nth-child(1) > div:last-child span:first-child {
-        font-weight: 700 !important;
-        color: #705617 !important;
-        font-size: 0.78rem !important;
-        letter-spacing: 0.025em;
-      }
-      #home .summary > .card:nth-child(1) > div:last-child span:last-child {
-        max-width: 100%;
-        font-size: 1.02rem !important;
-        white-space: nowrap;
       }
     }
 
@@ -2287,9 +2253,6 @@
       }
     }
 
-    #watches .summary > .card:nth-child(1) { background: linear-gradient(160deg, #FCF1D5 0%, #F1DEAE 100%); border-left: 5px solid #C5952A; }
-    #watches .summary > .card:nth-child(2) { background: linear-gradient(160deg, #E6F4EA 0%, #C8E4D2 100%); border-left: 5px solid #2F7A52; }
-
     #overview .position-summary-card.position-summary-gold { background: linear-gradient(150deg, #FCF3DC 0%, #F1DEAE 100%); }
     #overview .position-summary-card.position-summary-silver { background: linear-gradient(150deg, #E6F1FA 0%, #CADEEE 100%); }
     #overview .position-summary-card.position-summary-platinum { background: linear-gradient(150deg, #F2EBFA 0%, #E0D4EF 100%); }
@@ -2731,14 +2694,14 @@
             <h3>Patrimonio</h3>
             <div class="value" id="totalValue">0.00</div>
             <div class="currency" id="totalCurrency">CHF</div>
-            <div style="margin-top:auto;border-top:1px solid rgba(27,58,45,0.12);padding-top:0.75rem;display:flex;flex-direction:column;gap:0.9rem;">
-              <div style="display:flex;justify-content:space-between;align-items:center;">
-                <span style="font-size:0.92rem;font-weight:600;color:#5a7a68;">Metalli</span>
-                <span id="totalMetals" style="font-size:1.05rem;font-weight:800;color:#1B3A2D;">0.00</span>
+            <div class="position-breakdown home-summary-breakdown">
+              <div class="breakdown-row metals-row">
+                <span class="breakdown-label">Metalli</span>
+                <span class="breakdown-detail" id="totalMetals">0.00</span>
               </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;">
-                <span style="font-size:0.92rem;font-weight:600;color:#5a7a68;">Orologi</span>
-                <span id="totalWatches" style="font-size:1.05rem;font-weight:800;color:#1B3A2D;">0.00</span>
+              <div class="breakdown-row watch-row">
+                <span class="breakdown-label">Orologi</span>
+                <span class="breakdown-detail" id="totalWatches">0.00</span>
               </div>
             </div>
           </div>
@@ -2747,14 +2710,14 @@
             <span class="andamento-badge" id="gainLossPct"></span>
             <div class="value" id="gainLoss">0.00</div>
             <div class="currency andamento-currency" id="gainLossCurrency">CHF</div>
-            <div style="margin-top:auto;border-top:1px solid rgba(27,58,45,0.12);padding-top:0.75rem;display:flex;flex-direction:column;gap:0.9rem;position:relative;z-index:1;">
-              <div style="display:flex;justify-content:space-between;align-items:center;">
-                <span style="font-size:0.92rem;font-weight:600;color:#5a7a68;">Metalli</span>
-                <span id="metalsGainVal" style="font-size:1.05rem;font-weight:800;color:#1B3A2D;">0.00</span>
+            <div class="position-breakdown home-summary-breakdown">
+              <div class="breakdown-row metals-row">
+                <span class="breakdown-label">Metalli</span>
+                <span class="breakdown-detail" id="metalsGainVal">0.00</span>
               </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;">
-                <span style="font-size:0.92rem;font-weight:600;color:#5a7a68;">Orologi</span>
-                <span id="watchesGainVal" style="font-size:1.05rem;font-weight:800;color:#1B3A2D;">0.00</span>
+              <div class="breakdown-row watch-row">
+                <span class="breakdown-label">Orologi</span>
+                <span class="breakdown-detail" id="watchesGainVal">0.00</span>
               </div>
             </div>
             <canvas id="sparklineCanvas" class="andamento-spark" aria-hidden="true"></canvas>
@@ -2977,20 +2940,6 @@
       </div>
 
       <div class="tab-content" id="watches">
-        <div class="summary summary-watches">
-          <div class="card">
-            <h3>Valore Orologi</h3>
-            <div class="value" id="watchTotalValue">0.00</div>
-            <div class="currency" id="watchTotalCurrency">CHF</div>
-          </div>
-          <div class="card">
-            <h3>Andamento Orologi</h3>
-            <div class="value" id="watchGainLoss">0.00</div>
-            <span class="andamento-badge" id="watchGainLossPct"></span>
-          </div>
-        </div>
-
-
         <div class="app-search-wrap">
           <svg class="app-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="text" class="app-search-input" id="watchesSearch" placeholder="Cerca nei tuoi orologi...">
@@ -5945,39 +5894,6 @@
     // Aggiorna riepilogo + lista orologi
     function updateWatchUI() {
       renderWatchCards();
-      updateWatchSummary();
-    }
-
-    function updateWatchSummary() {
-      const rate = state.exchangeRates[state.currentCurrency] || 1;
-      let totalMarketChf = 0, totalCostChf = 0;
-      state.watches.forEach(function (w) {
-        if (w.sale) return; // gli orologi venduti sono esclusi dal valore del portafoglio
-        totalMarketChf += marketValueChfWatch(w);
-        totalCostChf += costChfWatch(w);
-      });
-      const totalMarket = totalMarketChf / rate;
-      const gainChf = totalMarketChf - totalCostChf;
-      const gain = gainChf / rate;
-      const gainPct = totalCostChf > 0 ? (gainChf / totalCostChf * 100) : 0;
-
-      const valEl = document.getElementById('watchTotalValue');
-      if (valEl) valEl.textContent = formatSwissAmount(totalMarket);
-      const curEl = document.getElementById('watchTotalCurrency');
-      if (curEl) curEl.textContent = state.currentCurrency;
-
-      const up = gainChf >= 0;
-      const glEl = document.getElementById('watchGainLoss');
-      if (glEl) {
-        glEl.textContent = (up ? '+' : '') + formatSwissAmount(gain);
-        glEl.className = 'value ' + (up ? 'gain' : 'loss');
-      }
-      const glBadge = document.getElementById('watchGainLossPct');
-      if (glBadge) {
-        glBadge.textContent = (up ? '\u25b2 +' : '\u25bc ') + gainPct.toFixed(2) + '%';
-        glBadge.style.color = up ? '#14713F' : '#B93636';
-        glBadge.style.background = up ? 'rgba(20,113,63,0.16)' : 'rgba(185,54,54,0.16)';
-      }
     }
 
     // Chrono24: usa il Paese configurato sul dispositivo quando disponibile; nessuna geolocalizzazione viene richiesta.
