@@ -850,8 +850,7 @@
       border: 1px solid #1B3A2D;
     }
     .add-watch-btn { margin-top: 1.5rem; margin-bottom: 1rem; }
-    /* Orologi: la barra di ricerca sta appena sopra il tasto Aggiungi Orologio */
-    #watches .app-search-wrap { margin: 2rem 0 1rem; }
+    /* Orologi: stessa spaziatura iniziale di Storico; ricerca appena sopra il tasto Aggiungi Orologio. */
     #watches .add-watch-btn { margin-top: 0; margin-bottom: 1rem; }
     /* --- History cards (stile identico a watch-card) --- */
     .history-card {
@@ -2424,7 +2423,15 @@
     }
     #home .summary > .card:nth-child(2) > :not(.andamento-spark) {
       position: relative;
-      z-index: 1;
+      z-index: 3;
+    }
+    #home .summary > .card:nth-child(2) > .position-breakdown,
+    #home .summary > .card:nth-child(2) > .position-breakdown .breakdown-row {
+      position: relative;
+      z-index: 4;
+    }
+    #home .summary > .card:nth-child(2) > .position-breakdown .breakdown-row {
+      background: rgba(255, 255, 255, 0.90);
     }
     .andamento-spark {
       position: absolute;
