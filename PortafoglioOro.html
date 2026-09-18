@@ -2470,15 +2470,26 @@
     }
     .andamento-spark {
       position: absolute;
-      left: 0;
-      right: 0;
-      top: 42%;
-      bottom: 0;
       display: block;
-      width: 100%;
-      height: auto;
       z-index: 0;
       pointer-events: none;
+    }
+
+    /* Tablet: il grafico è una trama sul fondo, sotto ogni contenuto.
+       Copre la metà inferiore senza partire dalla colonna destra della griglia. */
+    @media (min-width: 601px) and (max-width: 900px) {
+      #home .summary > .card:nth-child(2) > .andamento-spark {
+        grid-column: 1 / -1;
+        grid-row: 1 / -1;
+        left: 0;
+        right: 0;
+        top: auto;
+        bottom: 0;
+        width: 100%;
+        height: 50%;
+        max-height: 50%;
+        opacity: 0.46;
+      }
     }
 
     /* ===== Storico: fondo della scheda in linea con il metallo ===== */
@@ -2490,7 +2501,8 @@
     .history-card .metric-value { color: var(--text-primary); }
 
     @media (max-width: 600px) {
-      .andamento-spark { top: 40%; bottom: 0; height: auto; }
+      /* Smartphone invariato: il grafico mantiene la sua fascia compatta. */
+      .andamento-spark { left: 0; right: 0; top: 40%; bottom: 0; width: 100%; height: auto; }
       #home .summary > .card:nth-child(2) { padding-bottom: 2.6rem; }
       /* Orologi: titoli su una riga, come in Home; la sezione è già quella degli orologi. */
       #watches .summary > .card > h3 { font-size: 0; }
@@ -5003,14 +5015,20 @@
       const range = maxV - minV || 1;
       const w = canvas.width;
       const h = canvas.height;
-      const paddingTop = 15;
-      const paddingBottom = 5;
+      // Solo su tablet: margini reali, così la curva non viene tagliata dai bordi.
+      // Su smartphone restano esattamente le quote precedenti.
+      const isTabletBackdrop = window.matchMedia('(min-width: 601px) and (max-width: 900px)').matches;
+      const paddingLeft = isTabletBackdrop ? 24 : 0;
+      const paddingRight = isTabletBackdrop ? 24 : 0;
+      const paddingTop = isTabletBackdrop ? 22 : 15;
+      const paddingBottom = isTabletBackdrop ? 10 : 5;
+      const drawW = w - paddingLeft - paddingRight;
       const drawH = h - paddingTop - paddingBottom;
       const isUp = values[values.length - 1] >= values[0];
       const trendColor = isUp ? '76, 175, 80' : '229, 57, 53';  // stessi verde e rosso dei grafici principali
 
       const points = values.map((v, i) => ({
-        x: (i / (values.length - 1)) * w,
+        x: paddingLeft + (i / (values.length - 1)) * drawW,
         y: paddingTop + drawH - ((v - minV) / range) * drawH
       }));
 
@@ -5032,8 +5050,8 @@
       }
 
       catmullRomPath(points, 0.35);
-      ctx.lineTo(w, h);
-      ctx.lineTo(0, h);
+      ctx.lineTo(w - paddingRight, h);
+      ctx.lineTo(paddingLeft, h);
       ctx.closePath();
       const gradient = ctx.createLinearGradient(0, 0, 0, h);
       gradient.addColorStop(0, 'rgba(' + trendColor + ', 0.40)');
