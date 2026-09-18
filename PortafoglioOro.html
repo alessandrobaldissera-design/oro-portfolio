@@ -1012,10 +1012,6 @@
     .breakdown-row.platinum-row { background: rgba(118,93,147,0.12); }
     .breakdown-row.other-row { background: var(--green-tint); }
     .breakdown-row.watch-row { background: rgba(27,58,45,0.08); }
-    .breakdown-row.metals-row { background: rgba(47,122,82,0.11); }
-    .home-summary-breakdown { margin-top: auto; position: relative; z-index: 1; }
-    .home-summary-breakdown .breakdown-row { padding: 0.42rem 0.55rem; border-radius: 7px; }
-    .home-summary-breakdown .breakdown-detail { font-size: 0.86rem; font-weight: 800; color: #1B3A2D; }
     .breakdown-label { font-weight: 600; color: var(--text-primary); }
     .breakdown-detail { color: var(--text-secondary); font-weight: 500; }
     .breakdown-bar {
@@ -1064,6 +1060,45 @@
         line-height: 1;
         font-weight: 850;
         letter-spacing: 0.09em;
+      }
+
+      /* I riquadri arrotondati sono esclusivi della versione tablet. */
+      #home .summary > .card:nth-child(1) > .home-summary-legacy,
+      #home .summary > .card:nth-child(2) > .home-summary-legacy {
+        margin-top: auto !important;
+        padding-top: 0 !important;
+        border-top: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.4rem !important;
+        position: relative;
+        z-index: 4;
+      }
+      #home .summary > .card:nth-child(1) > .home-summary-legacy > div,
+      #home .summary > .card:nth-child(2) > .home-summary-legacy > div {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 0.42rem 0.55rem;
+        border-radius: 7px;
+      }
+      #home .summary > .card:nth-child(1) > .home-summary-legacy > div {
+        background: rgba(47,122,82,0.11);
+      }
+      #home .summary > .card:nth-child(2) > .home-summary-legacy > div {
+        background: rgba(255,255,255,0.90);
+      }
+      #home .summary > .card:nth-child(1) > .home-summary-legacy span:first-child,
+      #home .summary > .card:nth-child(2) > .home-summary-legacy span:first-child {
+        font-weight: 600 !important;
+        color: #1B3A2D !important;
+      }
+      #home .summary > .card:nth-child(1) > .home-summary-legacy span:last-child,
+      #home .summary > .card:nth-child(2) > .home-summary-legacy span:last-child {
+        font-size: 0.86rem !important;
+        font-weight: 800 !important;
+        color: #1B3A2D !important;
       }
     }
 
@@ -2522,18 +2557,18 @@
 
     /* Tablet: i contenuti inferiori delle tre schede Home condividono la stessa linea visiva. */
     @media (min-width: 601px) and (max-width: 900px) {
-      #home .summary > .card:nth-child(1) > .home-summary-breakdown {
+      #home .summary > .card:nth-child(1) > .home-summary-legacy {
         transform: translateY(-1.1rem);
       }
-      #home .summary > .card:nth-child(2) > .home-summary-breakdown {
+      #home .summary > .card:nth-child(2) > .home-summary-legacy {
         transform: translateY(1.35rem);
       }
-      #home .summary > .card:nth-child(1) > .home-summary-breakdown .breakdown-row,
-      #home .summary > .card:nth-child(2) > .home-summary-breakdown .breakdown-row {
+      #home .summary > .card:nth-child(1) > .home-summary-legacy > div,
+      #home .summary > .card:nth-child(2) > .home-summary-legacy > div {
         padding-top: 0.34rem;
         padding-bottom: 0.34rem;
       }
-      #home .summary > .card:nth-child(2) > .home-summary-breakdown .breakdown-row {
+      #home .summary > .card:nth-child(2) > .home-summary-legacy > div {
         background: rgba(255, 255, 255, 0.80);
       }
     }
@@ -2719,14 +2754,14 @@
             <h3>Patrimonio</h3>
             <div class="value" id="totalValue">0.00</div>
             <div class="currency" id="totalCurrency">CHF</div>
-            <div class="position-breakdown home-summary-breakdown">
-              <div class="breakdown-row metals-row">
-                <span class="breakdown-label">Metalli</span>
-                <span class="breakdown-detail" id="totalMetals">0.00</span>
+                        <div class="home-summary-legacy" style="margin-top:auto;border-top:1px solid rgba(27,58,45,0.12);padding-top:0.75rem;display:flex;flex-direction:column;gap:0.9rem;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:0.92rem;font-weight:600;color:#5a7a68;">Metalli</span>
+                <span id="totalMetals" style="font-size:1.05rem;font-weight:800;color:#1B3A2D;">0.00</span>
               </div>
-              <div class="breakdown-row watch-row">
-                <span class="breakdown-label">Orologi</span>
-                <span class="breakdown-detail" id="totalWatches">0.00</span>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:0.92rem;font-weight:600;color:#5a7a68;">Orologi</span>
+                <span id="totalWatches" style="font-size:1.05rem;font-weight:800;color:#1B3A2D;">0.00</span>
               </div>
             </div>
           </div>
@@ -2735,14 +2770,14 @@
             <span class="andamento-badge" id="gainLossPct"></span>
             <div class="value" id="gainLoss">0.00</div>
             <div class="currency andamento-currency" id="gainLossCurrency">CHF</div>
-            <div class="position-breakdown home-summary-breakdown">
-              <div class="breakdown-row metals-row">
-                <span class="breakdown-label">Metalli</span>
-                <span class="breakdown-detail" id="metalsGainVal">0.00</span>
+                        <div class="home-summary-legacy" style="margin-top:auto;border-top:1px solid rgba(27,58,45,0.12);padding-top:0.75rem;display:flex;flex-direction:column;gap:0.9rem;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:0.92rem;font-weight:600;color:#5a7a68;">Metalli</span>
+                <span id="metalsGainVal" style="font-size:1.05rem;font-weight:800;color:#1B3A2D;">0.00</span>
               </div>
-              <div class="breakdown-row watch-row">
-                <span class="breakdown-label">Orologi</span>
-                <span class="breakdown-detail" id="watchesGainVal">0.00</span>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:0.92rem;font-weight:600;color:#5a7a68;">Orologi</span>
+                <span id="watchesGainVal" style="font-size:1.05rem;font-weight:800;color:#1B3A2D;">0.00</span>
               </div>
             </div>
             <canvas id="sparklineCanvas" class="andamento-spark" aria-hidden="true"></canvas>
