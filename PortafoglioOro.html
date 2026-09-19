@@ -849,9 +849,8 @@
       background: #1B3A2D;
       border: 1px solid #1B3A2D;
     }
-    .add-watch-btn { margin-top: 1.5rem; margin-bottom: 1rem; }
-    /* Orologi: stessa spaziatura iniziale di Storico; ricerca appena sopra il tasto Aggiungi Orologio. */
-    #watches .add-watch-btn { margin-top: 0; margin-bottom: 1rem; }
+    .section-new-btn { margin-top: 0; margin-bottom: 1rem; }
+    #history .add-metal-btn, #watches .add-watch-btn { margin-top: 0; margin-bottom: 1rem; }
     /* --- History cards (stile identico a watch-card) --- */
     .history-card {
       background: linear-gradient(135deg, #f5f6f3 0%, #eef0ec 100%);
@@ -2463,20 +2462,33 @@
 
     .instruction-hint {
       position: fixed; left: 50%; bottom: calc(76px + env(safe-area-inset-bottom)); transform: translateX(-50%);
-      z-index: 10020; display: none; width: min(92vw, 520px); padding: 0.72rem 2.8rem 0.72rem 0.9rem;
+      z-index: 10020; display: none; width: min(92vw, 560px); padding: 0.72rem 5.3rem 0.72rem 0.9rem;
       border-radius: 12px; background: #1B3A2D; color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,.24);
       font-size: .84rem; font-weight: 700;
     }
     body.instruction-mode .instruction-hint { display: block; }
     .instruction-hint button { position:absolute; right:.45rem; top:50%; transform:translateY(-50%); border:0; border-radius:8px; padding:.35rem .55rem; background:#D4A843; color:#1B3A2D; font-weight:800; }
-    body.instruction-mode [data-help], body.instruction-mode .card, body.instruction-mode .period-selector,
-    body.instruction-mode .chart-card, body.instruction-mode .bottom-nav-btn { cursor: help; }
+    body.instruction-mode [data-guide], body.instruction-mode [data-help], body.instruction-mode .card,
+    body.instruction-mode .period-selector, body.instruction-mode .chart-card,
+    body.instruction-mode .bottom-nav-btn, body.instruction-mode button,
+    body.instruction-mode input, body.instruction-mode select, body.instruction-mode textarea { cursor: help; }
+    body.instruction-mode .product-card-preview { pointer-events:auto; }
     .instruction-modal { position:fixed; inset:0; z-index:10030; display:none; align-items:center; justify-content:center; padding:1rem; background:rgba(10,24,18,.48); }
     .instruction-modal.is-open { display:flex; }
-    .instruction-dialog { width:min(92vw,520px); border-radius:16px; padding:1.15rem; background:#FAFBFC; color:#1B3A2D; box-shadow:0 16px 40px rgba(0,0,0,.25); }
+    .instruction-dialog {
+      width:min(94vw,640px); max-height:min(86vh,760px); border-radius:16px; padding:1.15rem;
+      background:#FAFBFC; color:#1B3A2D; box-shadow:0 16px 40px rgba(0,0,0,.25);
+      display:flex; flex-direction:column;
+    }
     .instruction-dialog h2 { margin:0 0 .55rem; font-size:1.15rem; }
-    .instruction-dialog p { margin:0 0 1rem; color:#40584d; line-height:1.5; white-space:pre-line; }
+    .instruction-content { margin:0 0 1rem; color:#40584d; line-height:1.5; white-space:pre-line; overflow-y:auto; overscroll-behavior:contain; padding-right:.2rem; }
+    .instruction-content.guide-overview { white-space:normal; }
+    .instruction-guide-intro { margin:0 0 .85rem; padding:.75rem; border-radius:10px; background:#EAF0ED; color:#29483A; }
+    .instruction-guide-section { margin:.7rem 0; padding:.72rem .8rem; border:1px solid rgba(27,58,45,.14); border-radius:11px; background:#FFFFFF; }
+    .instruction-guide-section h3 { margin:0 0 .3rem; color:#1B3A2D; font-size:.96rem; }
+    .instruction-guide-section p { margin:0; color:#40584d; font-size:.88rem; line-height:1.48; }
     .instruction-dialog button { width:100%; border:0; border-radius:10px; padding:.7rem; background:#1B3A2D; color:#fff; font-weight:800; }
+    #metalForm { margin-bottom:1.25rem; }
 
     /* ===== Storico: fondo della scheda in linea con il metallo ===== */
     .history-card.metal-gold { background: linear-gradient(135deg, #FCF3DC 0%, #F1DEAE 100%); border-left: 5px solid #C5952A; }
@@ -2693,7 +2705,6 @@
           <button class="currency-btn" data-currency="USD">USD</button>
           <button class="currency-btn" data-currency="CHF">CHF</button>
         </div>
-        <button id="shopBtn" class="shop-header-btn">Shop</button>
         <div id="googleLoginContainer" class="google-drive-slot desktop-header-action" style="display: flex;">
           <button id="googleSignIn" class="sync-btn google-drive-button" type="button">Google Drive</button>
         </div>
@@ -2717,12 +2728,12 @@
             <button id="mobileInstructionsBtn" type="button" role="menuitem" aria-pressed="false">Istruzioni</button>
           </div>
         </div>
-        <div id="instructionHint" class="instruction-hint">Modalità Istruzioni attiva: tocchi qualsiasi elemento.<button id="instructionExitBtn" type="button">Disattiva</button></div>
+        <div id="instructionHint" class="instruction-hint">Guida attiva: tocchi una voce per sapere cosa calcola e come si usa.<button id="instructionExitBtn" type="button">Disattiva</button></div>
         <div id="instructionModal" class="instruction-modal" aria-hidden="true">
           <div class="instruction-dialog" role="dialog" aria-modal="true" aria-labelledby="instructionTitle">
             <h2 id="instructionTitle">Istruzioni</h2>
-            <p id="instructionText"></p>
-            <button id="instructionCloseBtn" type="button">Ho capito</button>
+            <div id="instructionText" class="instruction-content"></div>
+            <button id="instructionCloseBtn" type="button">Continua nella guida</button>
           </div>
         </div>
         <div id="localBackupModal" class="backup-modal" aria-hidden="true">
@@ -2914,8 +2925,18 @@
 
       </div>
 
-      <div class="tab-content" id="new">
-        <form onsubmit="addPosition(event)">
+
+      <div class="tab-content" id="history">
+        <div class="app-search-wrap">
+          <svg class="app-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="app-search-input" id="historySearch" placeholder="Cerca nei tuoi metalli...">
+        </div>
+        <div class="compact-filters" aria-label="Filtri metalli">
+          <select id="historyTagFilter" class="compact-filter" aria-label="Filtra metalli per tag"><option value="">Tutti i tag</option></select>
+          <select id="historyLocationFilter" class="compact-filter" aria-label="Filtra metalli per luogo deposito"><option value="">Luoghi deposito</option></select>
+        </div>
+        <button class="btn section-new-btn add-metal-btn" type="button" aria-controls="metalForm" aria-expanded="false" onclick="toggleMetalForm()"><span aria-hidden="true">＋</span> Nuovo</button>
+        <form id="metalForm" style="display:none;" onsubmit="addPosition(event)">
           <div class="form-group">
             <label>Metallo</label>
             <select id="metal" required onchange="onMetalChange()">
@@ -2986,19 +3007,8 @@
             <button class="photo-input-label" type="button" onclick="requestNewPositionPhotos()">&#128247; Aggiungi foto</button>
             <div class="photo-preview" id="photoPreview"></div>
           </div>
-          <button class="btn" type="submit">Aggiungi a storico</button>
+          <button class="btn" type="submit">Salva metallo</button>
         </form>
-      </div>
-
-      <div class="tab-content" id="history">
-        <div class="app-search-wrap">
-          <svg class="app-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" class="app-search-input" id="historySearch" placeholder="Cerca nei tuoi asset...">
-        </div>
-        <div class="compact-filters" aria-label="Filtri storico">
-          <select id="historyTagFilter" class="compact-filter" aria-label="Filtra storico per tag"><option value="">Tutti i tag</option></select>
-          <select id="historyLocationFilter" class="compact-filter" aria-label="Filtra storico per luogo deposito"><option value="">Luoghi deposito</option></select>
-        </div>
         <div id="historyListContainer"></div>
       </div>
 
@@ -3012,7 +3022,7 @@
           <select id="watchesLocationFilter" class="compact-filter" aria-label="Filtra orologi per luogo deposito"><option value="">Luoghi deposito</option></select>
         </div>
 
-        <button class="btn add-watch-btn" type="button" onclick="toggleWatchForm()">Aggiungi Orologio</button>
+        <button class="btn section-new-btn add-watch-btn" type="button" aria-controls="watchForm" aria-expanded="false" onclick="toggleWatchForm()"><span aria-hidden="true">＋</span> Nuovo</button>
 
         <form id="watchForm" style="display:none;" onsubmit="addWatch(event)">
           <div class="form-group">
@@ -3507,15 +3517,15 @@
   </button>
   <button class="bottom-nav-btn" data-tab="history">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
-    <span>Storico</span>
+    <span>Metalli</span>
   </button>
   <button class="bottom-nav-btn" data-tab="watches">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><polyline points="12 9 12 12 13.5 13.5"/><path d="M16.51 17.35l-.35 3.83a2 2 0 0 1-2 1.82H9.83a2 2 0 0 1-2-1.82l-.35-3.83m.01-10.7l.35-3.83A2 2 0 0 1 9.83 1h4.35a2 2 0 0 1 2 1.82l.35 3.83"/></svg>
     <span>Orologi</span>
   </button>
-  <button class="bottom-nav-btn" data-tab="new">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-    <span>Nuovo</span>
+  <button class="bottom-nav-btn" data-tab="shop">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 13H5L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+    <span>Shop</span>
   </button>
 
 
@@ -4375,8 +4385,10 @@
       pendingPositionDocuments = [];
       document.getElementById('photoPreview').innerHTML = '';
       document.getElementById('positionDocumentStatus').textContent = 'Massimo 3 file, 1 MB ciascuno e 2 MB totali. Dopo il salvataggio potrai aprire l’anteprima dal dettaglio.';
-      document.getElementById('new').querySelector('form').reset();
-      document.getElementById('priceCurrency').value = 'CHF';
+      document.getElementById('metalForm').reset();
+      applyCurrentCurrencyToNewForms();
+      document.getElementById('metalForm').style.display = 'none';
+      setNewFormButtonState('.add-metal-btn', false);
       syncPurchaseDateSelectors('date');
       syncTagPicker('tags');
       setControlledLocation('storageLocation', '');
@@ -4488,8 +4500,8 @@
     }
     function tagList(value) { return normalizeTags(value).split(',').map(function(t) { return t.trim(); }).filter(Boolean); }
     function metadataHtml(item) {
-      var chips = tagList(item && item.tags).map(function(t) { return '<span class="metadata-chip">#' + escapeHtml(t) + '</span>'; });
-      if (item && item.storageLocation) chips.push('<span class="metadata-chip">Deposito: ' + escapeHtml(item.storageLocation) + '</span>');
+      var chips = tagList(item && item.tags).map(function(t) { return '<span class="metadata-chip" data-guide="tag">#' + escapeHtml(t) + '</span>'; });
+      if (item && item.storageLocation) chips.push('<span class="metadata-chip" data-guide="storage-location">Deposito: ' + escapeHtml(item.storageLocation) + '</span>');
       return chips.length ? '<div class="metadata-row">' + chips.join('') + '</div>' : '';
     }
     function csvCell(value) {
@@ -4537,7 +4549,7 @@
       const photos = item && Array.isArray(item.photos) ? item.photos : [];
       const src = photos.find(function(photo) { return typeof photo === 'string' && photo.trim(); });
       if (!src) return '';
-      return '<img class="product-card-preview" src="' + escapeAttr(src) + '" alt="' + escapeAttr(altText || 'Anteprima prodotto') + '">';
+      return '<img class="product-card-preview" data-guide="product-photo" src="' + escapeAttr(src) + '" alt="' + escapeAttr(altText || 'Anteprima prodotto') + '">';
     }
     // Popola caratura/titolo in base al metallo e gestisce "Altro"
     // Opzioni purezza per monete d'oro (millesimi)
@@ -4901,7 +4913,7 @@
         return new Date(b.pos.date || 0) - new Date(a.pos.date || 0);
       });
       if (!rows.length) {
-        container.innerHTML = '<div class="empty-state">Nessun articolo nello storico. Aggiungi un acquisto dal tab "Nuovo Acquisto".</div>';
+        container.innerHTML = '<div class="empty-state">Nessun metallo registrato. Tocca “＋ Nuovo” per aggiungere il primo acquisto.</div>';
         setupHistoryLongPress();
         return;
       }
@@ -4933,29 +4945,29 @@
         else if (pos.metal === 'platinum') titolo = (pos.purity || 999.5) + '/1000';
         const descSafe = pos.description ? pos.description.replace(/</g, '&lt;').replace(/>/g, '&gt;') : metalLabel;
         const subtitle = [metalLabel, titolo, formatDate(pos.date)].filter(Boolean).join(' \u00b7 ');
-        const soldBadge = (wRem <= 0 && w > 0) ? '<span class="sold-badge">VENDUTO</span>' : '';
+        const soldBadge = (wRem <= 0 && w > 0) ? '<span class="sold-badge" data-guide="sold-item">VENDUTO</span>' : '';
         const strike = (wRem <= 0 && w > 0) ? 'watch-sold-strike' : '';
         // Nella scheda si mostra soltanto la prima foto; gestione e cancellazione restano nel dettaglio.
         const previewPhotoHtml = firstPhotoPreview(pos, descSafe);
 
         html += '<div class="history-card metal-' + metalClass + '" data-idx="' + i + '" data-tags="' + escapeAttr(tagList(pos.tags).map(function(t){return t.toLocaleLowerCase('it-IT');}).join('|')) + '" data-location="' + escapeAttr(String(pos.storageLocation || '').toLocaleLowerCase('it-IT')) + '">' +
-          '<div class="history-metal-circle ' + metalClass + '">' +
+          '<div class="history-metal-circle ' + metalClass + '" data-guide="metal-type">' +
             (pos.metal === 'gold' ? (isIngot ? '<img class="ingot" src="' + INGOT_GOLD_IMG + '" alt="Lingotto oro">' : '<img src="' + COIN_GOLD_IMG + '" alt="Au">') :
              pos.metal === 'silver' ? (isIngot ? '<img class="ingot" src="' + INGOT_SILVER_IMG + '" alt="Lingotto argento">' : '<img src="' + COIN_SILVER_IMG + '" alt="Ag">') :
              metalSymbol) +
           '</div>' +
           '<div class="history-card-body">' +
-            '<div class="history-card-title">' + descSafe + '</div>' +
-            '<div class="history-card-sub">' + subtitle + '</div>' +
+            '<div class="history-card-title" data-guide="metal-title">' + descSafe + '</div>' +
+            '<div class="history-card-sub" data-guide="metal-subtitle">' + subtitle + '</div>' +
             metadataHtml(pos) +
             '<div class="history-card-cols ' + strike + '">' +
-              '<span>Peso: ' + (w > 0 ? (sold > 0 ? wRem.toFixed(2) + '/' + w.toFixed(2) + 'g' : w.toFixed(2) + 'g') : '\u2013') + '</span>' +
-              '<span>Acquisto: ' + currency + ' ' + (pos.price || 0).toFixed(2) + '</span>' +
-              '<span>Valore: ' + cur + ' ' + (valChf / rate).toFixed(2) + '</span>' +
+              '<span data-guide="metal-weight">Peso: ' + (w > 0 ? (sold > 0 ? wRem.toFixed(2) + '/' + w.toFixed(2) + 'g' : w.toFixed(2) + 'g') : '\u2013') + '</span>' +
+              '<span data-guide="metal-purchase">Acquisto: ' + currency + ' ' + (pos.price || 0).toFixed(2) + '</span>' +
+              '<span data-guide="metal-current-value">Valore: ' + cur + ' ' + (valChf / rate).toFixed(2) + '</span>' +
             '</div>' +
             '<div class="history-card-footer">' +
-              '<span class="metric-label">Rendimento: <strong class="metric-value andamento-badge" style="margin:0; color:' + (metrics.valid ? (up ? '#14713F' : '#B93636') : '#687a70') + '; background:' + (metrics.valid ? (up ? 'rgba(20,113,63,0.14)' : 'rgba(185,54,54,0.14)') : 'rgba(27,58,45,0.08)') + ';">' + (metrics.valid ? ((up ? '\u25b2 +' : '\u25bc ') + metrics.returnPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
-              '<span class="metric-label">Differenza dal prezzo di mercato: <strong class="metric-value">' + (metrics.valid ? ((metrics.premiumPct >= 0 ? '+' : '') + metrics.premiumPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
+              '<span class="metric-label" data-guide="metal-performance">Rendimento: <strong class="metric-value andamento-badge" style="margin:0; color:' + (metrics.valid ? (up ? '#14713F' : '#B93636') : '#687a70') + '; background:' + (metrics.valid ? (up ? 'rgba(20,113,63,0.14)' : 'rgba(185,54,54,0.14)') : 'rgba(27,58,45,0.08)') + ';">' + (metrics.valid ? ((up ? '\u25b2 +' : '\u25bc ') + metrics.returnPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
+              '<span class="metric-label" data-guide="metal-market-difference">Differenza dal prezzo di mercato: <strong class="metric-value">' + (metrics.valid ? ((metrics.premiumPct >= 0 ? '+' : '') + metrics.premiumPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
               soldBadge +
             '</div>' +
           '</div>' +
@@ -5789,12 +5801,38 @@
       return customBrand;
     }
 
+    function applyCurrentCurrencyToNewForms() {
+      const currency = ['EUR', 'USD', 'CHF'].includes(state.currentCurrency) ? state.currentCurrency : 'EUR';
+      ['priceCurrency', 'watchPurchaseCurrency', 'watchMarketValueCurrency', 'watchInsuranceCurrency'].forEach(function(id) {
+        const field = document.getElementById(id);
+        if (field) field.value = currency;
+      });
+    }
+
+    function setNewFormButtonState(selector, isOpen) {
+      const button = document.querySelector(selector);
+      if (!button) return;
+      button.innerHTML = isOpen ? 'Chiudi' : '<span aria-hidden="true">＋</span> Nuovo';
+      button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    function toggleMetalForm() {
+      const f = document.getElementById('metalForm');
+      if (!f) return;
+      const willOpen = f.style.display === 'none' || !f.style.display;
+      f.style.display = willOpen ? 'block' : 'none';
+      setNewFormButtonState('.add-metal-btn', willOpen);
+      if (willOpen) applyCurrentCurrencyToNewForms();
+    }
+
     function toggleWatchForm() {
       const f = document.getElementById('watchForm');
       if (!f) return;
-      const isHidden = f.style.display === 'none' || !f.style.display;
-      f.style.display = isHidden ? 'block' : 'none';
-      if (isHidden) {
+      const willOpen = f.style.display === 'none' || !f.style.display;
+      f.style.display = willOpen ? 'block' : 'none';
+      setNewFormButtonState('.add-watch-btn', willOpen);
+      if (willOpen) {
+        applyCurrentCurrencyToNewForms();
         const dEl = document.getElementById('watchMarketValueDate');
         if (dEl && !dEl.value) dEl.value = new Date().toISOString().slice(0, 10);
       }
@@ -5859,12 +5897,14 @@
       pendingWatchDocuments = [];
       document.getElementById('watchPhotoPreview').innerHTML = '';
       document.getElementById('watchForm').reset();
+      applyCurrentCurrencyToNewForms();
       setWatchBrandControl('new', WATCH_BRANDS[0]);
       syncPurchaseDateSelectors('watchPurchaseDate');
       syncTagPicker('watchTags');
       setControlledLocation('watchStorageLocation', '');
       document.getElementById('watchDocumentStatus').textContent = 'Massimo 3 file, 1 MB ciascuno e 2 MB totali per orologio. Apertura, download e rimozione sono disponibili solo nel dettaglio.';
       document.getElementById('watchForm').style.display = 'none';
+      setNewFormButtonState('.add-watch-btn', false);
       updateWatchUI();
     }
 
@@ -6029,25 +6069,25 @@
         const gainChf = watchGainChf(w);
         const gainPct = watchCardPerformance(w);
         const up = gainPct != null ? gainPct >= 0 : gainChf >= 0;
-        const soldBadge = w.sale ? '<span class="sold-badge">VENDUTO</span>' : '';
+        const soldBadge = w.sale ? '<span class="sold-badge" data-guide="sold-item">VENDUTO</span>' : '';
         const strike = w.sale ? 'watch-sold-strike' : '';
         const chrono24Url = chrono24SearchUrl((w.brand + ' ' + w.model + ' ' + w.reference).trim());
         const previewPhotoHtml = firstPhotoPreview(w, (w.brand + ' ' + w.model).trim());
         html += '<div class="watch-card" data-idx="' + i + '" data-tags="' + escapeAttr(tagList(w.tags).map(function(t){return t.toLocaleLowerCase('it-IT');}).join('|')) + '" data-location="' + escapeAttr(String(w.storageLocation || '').toLocaleLowerCase('it-IT')) + '">' +
-          '<div class="watch-brand-circle">' + (isRolex ? '<img src="' + COIN_ROLEX_IMG + '" alt="Rolex">' : escapeHtml(initial)) + '</div>' +
+          '<div class="watch-brand-circle" data-guide="watch-brand">' + (isRolex ? '<img src="' + COIN_ROLEX_IMG + '" alt="Rolex">' : escapeHtml(initial)) + '</div>' +
           '<div class="watch-card-body">' +
-            '<div class="watch-card-title">' + escapeHtml(w.brand) + ' ' + escapeHtml(w.model) + '</div>' +
-            '<div class="watch-card-sub">Ref. ' + escapeHtml(w.reference) + '</div>' +
+            '<div class="watch-card-title" data-guide="watch-title">' + escapeHtml(w.brand) + ' ' + escapeHtml(w.model) + '</div>' +
+            '<div class="watch-card-sub" data-guide="watch-reference">Ref. ' + escapeHtml(w.reference) + '</div>' +
             metadataHtml(w) +
             '<div class="watch-card-cols ' + strike + '">' +
-              '<span>Acquisto: ' + cur + ' ' + formatSwissAmount(costChfW / rate) + '</span>' +
-              '<span>Mercato: ' + cur + ' ' + formatSwissAmount(marketChfW / rate) + '</span>' +
+              '<span data-guide="watch-purchase">Acquisto: ' + cur + ' ' + formatSwissAmount(costChfW / rate) + '</span>' +
+              '<span data-guide="watch-market-value">Mercato: ' + cur + ' ' + formatSwissAmount(marketChfW / rate) + '</span>' +
             '</div>' +
-            '<div class="watch-card-updated">Aggiornato: ' + formatDate(w.marketValueDate) + '</div>' +
+            '<div class="watch-card-updated" data-guide="watch-value-date">Aggiornato: ' + formatDate(w.marketValueDate) + '</div>' +
             '<div class="watch-card-footer">' +
-              '<span class="metric-label">Rendimento: <strong class="metric-value andamento-badge" style="margin:0; color:' + (gainPct != null ? (up ? '#14713F' : '#B93636') : '#687a70') + '; background:' + (gainPct != null ? (up ? 'rgba(20,113,63,0.14)' : 'rgba(185,54,54,0.14)') : 'rgba(27,58,45,0.08)') + ';">' + (gainPct != null ? ((up ? '\u25b2 +' : '\u25bc ') + gainPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
+              '<span class="metric-label" data-guide="watch-performance">Rendimento: <strong class="metric-value andamento-badge" style="margin:0; color:' + (gainPct != null ? (up ? '#14713F' : '#B93636') : '#687a70') + '; background:' + (gainPct != null ? (up ? 'rgba(20,113,63,0.14)' : 'rgba(185,54,54,0.14)') : 'rgba(27,58,45,0.08)') + ';">' + (gainPct != null ? ((up ? '\u25b2 +' : '\u25bc ') + gainPct.toFixed(2) + '%') : 'N/D') + '</strong></span>' +
               soldBadge +
-              '<a class="chrono24-btn" href="' + escapeAttr(chrono24Url) + '" rel="noopener" onclick="return requestChrono24Open(this.href, event)">Chrono24</a>' +
+              '<a class="chrono24-btn" data-guide="chrono24" href="' + escapeAttr(chrono24Url) + '" rel="noopener" onclick="return requestChrono24Open(this.href, event)">Chrono24</a>' +
             '</div>' +
           '</div>' +
           previewPhotoHtml +
@@ -6803,28 +6843,70 @@
 
     // Modalità Istruzioni: disattivabile e contestuale per pulsanti, campi e schede.
     var instructionMode = false;
+    var instructionTopics = {
+      'metal-type': ['Metallo e tipologia', 'Il simbolo o l’immagine identifica il metallo e il tipo di bene registrato, per esempio moneta o lingotto. La tipologia determina anche quali purezze sono disponibili e come viene calcolato il contenuto di metallo fino.'],
+      'metal-title': ['Nome del metallo', 'È la descrizione assegnata all’acquisto. Serve a distinguere beni dello stesso metallo, per esempio un lingotto da una moneta. Se non viene inserita una descrizione, viene mostrato il nome del metallo.'],
+      'metal-subtitle': ['Purezza e data', 'Indica il metallo, la purezza registrata e la data di acquisto. La purezza viene usata per calcolare quanto metallo fino è contenuto nel peso totale e quindi il valore corrente.'],
+      'metal-weight': ['Peso', 'Mostra i grammi ancora presenti nel portafoglio. Dopo una vendita parziale vengono indicati il peso residuo e quello originario, così il valore e il rendimento sono calcolati soltanto sulla quantità rimasta.'],
+      'metal-purchase': ['Acquisto', 'È il prezzo totale pagato nella valuta registrata al momento dell’inserimento. Non è il prezzo al grammo. Le conversioni nei riepiloghi utilizzano i cambi disponibili nell’app.'],
+      'metal-current-value': ['Valore attuale', 'È la stima corrente della quantità residua, calcolata dalla quotazione reale del metallo, dalla purezza, dal peso e dalla valuta selezionata. Non rappresenta un prezzo garantito di vendita.'],
+      'metal-performance': ['Rendimento', 'Confronta il valore attuale della quantità residua con il relativo costo di acquisto. Un valore positivo indica un guadagno teorico; uno negativo una perdita teorica. N/D appare quando manca una quotazione confermata o non è possibile eseguire il calcolo.'],
+      'metal-market-difference': ['Differenza dal prezzo di mercato', 'Confronta il costo residuo registrato con il valore del metallo alla quotazione corrente. Un valore positivo indica che il costo risulta superiore al riferimento di mercato; un valore negativo che risulta inferiore. È diverso dal rendimento complessivo.'],
+      'watch-brand': ['Marca', 'Il simbolo identifica rapidamente la marca dell’orologio. L’immagine dedicata viene usata soltanto quando disponibile; altrimenti compare l’iniziale della marca.'],
+      'watch-title': ['Marca e modello', 'Identificano il tipo di orologio registrato. Questi dati sono usati anche nella ricerca e per preparare il collegamento esterno a Chrono24.'],
+      'watch-reference': ['Referenza', 'È il codice del modello assegnato dal produttore. Aiuta a distinguere varianti simili e a cercare confronti di mercato più pertinenti.'],
+      'watch-purchase': ['Prezzo di acquisto', 'Mostra quanto è stato pagato, convertito nella valuta attualmente selezionata nell’app. Il valore originale e la valuta registrata restano conservati nei dati del prodotto.'],
+      'watch-market-value': ['Valore di mercato', 'È la valutazione corrente inserita manualmente per l’orologio e convertita nella valuta selezionata. Non viene ricavata automaticamente da Chrono24.'],
+      'watch-value-date': ['Data della valutazione', 'Indica quando è stato aggiornato il valore di mercato. Serve a capire se la stima mostrata è recente oppure deve essere rivista.'],
+      'watch-performance': ['Rendimento', 'Confronta la valutazione corrente con il prezzo di acquisto. Se l’orologio è stato venduto, utilizza il ricavo registrato. Il risultato è teorico finché non viene salvata una vendita.'],
+      'tag': ['Tag', 'Classifica il bene con una o più etichette controllate. I tag permettono di ritrovare e filtrare rapidamente gruppi di metalli e orologi senza modificare i dati economici.'],
+      'storage-location': ['Luogo di deposito', 'Indica dove è conservato il bene e consente di filtrare il portafoglio per posizione. È un dato organizzativo e non modifica valore o rendimento.'],
+      'product-photo': ['Foto del prodotto', 'Mostra la prima fotografia allegata. Le altre foto, i documenti e le funzioni di gestione sono disponibili aprendo il dettaglio fuori dalla modalità Istruzioni. Le immagini restano nei dati locali e nel backup.'],
+      'sold-item': ['Bene venduto', 'Segnala che la posizione non è più attiva. I dati vengono conservati per mantenere lo storico dell’operazione e il risultato realizzato.'],
+      'chrono24': ['Chrono24', 'Prepara una ricerca esterna usando marca, modello e referenza. Serve come supporto al confronto, ma non aggiorna automaticamente il valore dell’orologio. Prima di uscire dall’app viene richiesta conferma.']
+    };
+    var instructionFieldHelp = {
+      metal: ['Metallo', 'Seleziona Oro, Argento, Platino oppure Altro. La scelta determina purezze disponibili, quotazione di riferimento e calcolo del valore.'],
+      description: ['Descrizione', 'Assegna un nome riconoscibile al bene, per esempio “Krugerrand 1 oz”. È facoltativa e non incide sui calcoli.'],
+      itemType: ['Tipologia', 'Specifica se il bene è un lingotto, una moneta, un lavorato o oro virtuale. La scelta adatta le opzioni di purezza e l’identificazione della posizione.'],
+      purity: ['Purezza', 'Indica quanta parte del peso è metallo fino. Viene applicata al peso totale per calcolare il valore corrente.'],
+      quantity: ['Peso totale', 'Inserisce il peso originario in grammi. Le eventuali vendite parziali ridurranno automaticamente la quantità residua.'],
+      price: ['Prezzo totale pagato', 'Inserisce l’intero costo dell’acquisto, non il prezzo al grammo. La valuta associata viene preselezionata da quella attiva nell’app.'],
+      priceCurrency: ['Valuta di acquisto', 'Memorizza la valuta realmente usata per l’acquisto. All’apertura del modulo è preselezionata la valuta attiva, ma può essere cambiata prima del salvataggio.'],
+      watchBrand: ['Marca', 'Seleziona la marca dell’orologio. Con Altro è possibile registrare un marchio non presente nell’elenco.'],
+      watchModel: ['Modello', 'Registra il nome commerciale dell’orologio e viene utilizzato nella ricerca interna.'],
+      watchReference: ['Referenza', 'Registra il codice del modello e migliora l’identificazione e la ricerca su Chrono24.'],
+      watchSerial: ['Numero di serie', 'Identifica lo specifico esemplare. È facoltativo e resta nei dati locali del dispositivo.'],
+      watchPurchasePrice: ['Prezzo di acquisto', 'Registra il costo pagato per l’orologio nella valuta indicata.'],
+      watchMarketValue: ['Valore di mercato attuale', 'Registra una valutazione aggiornata inserita dall’utente. Questo importo viene usato per patrimonio e rendimento.'],
+      watchMarketValueDate: ['Data della valutazione', 'Indica la data a cui si riferisce il valore di mercato inserito.'],
+      watchInsuranceValue: ['Valore assicurativo', 'Conserva il valore utile per la copertura assicurativa, ma non viene incluso nel patrimonio o nel rendimento.'],
+      watchMaintenance: ['Manutenzioni', 'Annota revisioni, interventi, date e costi. È un promemoria descrittivo e non modifica automaticamente il rendimento.'],
+      watchNotes: ['Note', 'Conserva informazioni libere come condizioni, provenienza o particolarità dell’orologio.'],
+      historySearch: ['Ricerca nei Metalli', 'Filtra immediatamente le schede usando descrizione, metallo, purezza, data, tag e altri testi visibili.'],
+      watchesSearch: ['Ricerca negli Orologi', 'Filtra immediatamente le schede usando marca, modello, referenza e altri dati visibili.']
+    };
     var instructionHelp = [
-      ['.history-card','Scheda di un metallo','Questa scheda riassume un bene nello Storico.\n\nTitolo e simbolo: identificano articolo e metallo.\nSottotitolo: mostra purezza e data di acquisto.\nPeso: indica quantità disponibile e, se presente, quantità originaria.\nAcquisto: è il prezzo totale registrato.\nValore: è la stima corrente nella valuta selezionata.\nRendimento: confronta valore corrente e costo residuo.\nDifferenza dal mercato: confronta il prezzo di acquisto con la quotazione di riferimento.\nTag e luogo: aiutano ricerca e organizzazione.\nFoto: è la prima immagine allegata.\n\nFuori dalla modalità Istruzioni, tocchi la scheda per aprire dettagli, documenti, modifica, vendita o eliminazione.'],
+      ['.history-card','Scheda di un metallo','Questa scheda riassume un bene nella sezione Metalli.\n\nTitolo e simbolo: identificano articolo e metallo.\nSottotitolo: mostra purezza e data di acquisto.\nPeso: indica quantità disponibile e, se presente, quantità originaria.\nAcquisto: è il prezzo totale registrato.\nValore: è la stima corrente nella valuta selezionata.\nRendimento: confronta valore corrente e costo residuo.\nDifferenza dal mercato: confronta il prezzo di acquisto con la quotazione di riferimento.\nTag e luogo: aiutano ricerca e organizzazione.\nFoto: è la prima immagine allegata.\n\nFuori dalla modalità Istruzioni, tocchi la scheda per aprire dettagli, documenti, modifica, vendita o eliminazione.'],
       ['.watch-card','Scheda di un orologio','Questa scheda riassume un orologio.\n\nTitolo: mostra marca e modello.\nReferenza e seriale: identificano l’esemplare.\nData e acquisto: riportano quando e a quale prezzo è stato registrato.\nValore: è la valutazione corrente inserita.\nRendimento: confronta valutazione e costo.\nTag e luogo: aiutano ricerca e organizzazione.\nFoto: è la prima immagine allegata.\n\nFuori dalla modalità Istruzioni, tocchi la scheda per aprire tutti i dati, le foto, i documenti e le azioni disponibili.'],
       ['#positionsCards .position-summary-card, #positionsCards .position-card, #positionsCards > div','Posizione in portafoglio','Riepiloga una posizione attiva: categoria, quantità residua, prezzo corrente, valore, costo medio e guadagno o perdita. Fuori dalla guida, tocchi la scheda per consultare le azioni disponibili.'],
       ['#positionsTable','Tabella delle posizioni','Mostra su desktop tutte le posizioni attive con quantità, prezzo corrente, valore, costo medio e guadagno o perdita.'],
       ['.portfolio-pie-card','Composizione del patrimonio','Il grafico ad anello e la legenda mostrano come il patrimonio è distribuito per categoria o per tipologia di metallo.'],
       ['.currency-selector','Valuta','Seleziona la valuta usata per importi e conversioni automatiche in tutta l’app.'],
-      ['#shopBtn','Shop','Apre la sezione dei prodotti collegati.'],
+      ['.bottom-nav-btn[data-tab="shop"]','Shop','Apre la sezione dei prodotti collegati.'],
       ['#home .summary > .card:nth-child(1)','Patrimonio','Mostra il valore complessivo e la ripartizione tra metalli e orologi.'],
-      ['#home .summary > .card:nth-child(2)','Andamento','Mostra guadagno o perdita complessiva, con i risultati separati di Metalli e Orologi. Il periodo scelto sotto si applica ai grafici delle quotazioni.'],
+      ['#home .summary > .card:nth-child(2)','Andamento complessivo','Confronta il valore attuale del portafoglio con il costo dei beni ancora posseduti. La percentuale e l’importo indicano il guadagno o la perdita teorica totale; i due riquadri separano il contributo di Metalli e Orologi. Non rappresenta il movimento giornaliero delle quotazioni.'],
       ['#home .summary > .card:nth-child(3)','Posizioni attive','Indica quante posizioni sono presenti e come sono distribuite fra Oro, Argento, Platino, Altro e Orologi.'],
       ['.period-btn','Periodo del grafico','Imposta l’intervallo temporale dei grafici reali di Oro, Argento e Platino.'],
-      ['.chart-card','Grafico del metallo','Mostra prezzo, variazione, purezza selezionata e andamento reale del metallo nel periodo scelto.'],
+      ['.chart-card','Quotazione e grafico del metallo','Mostra la quotazione reale per grammo nella valuta selezionata e la sua variazione nel periodo scelto. La purezza modifica il valore visualizzato in proporzione al contenuto di metallo fino. Il grafico descrive il mercato: non è il rendimento dei propri acquisti. Il punto finale corrisponde all’ultima rilevazione disponibile.'],
       ['.karat-btn','Purezza del grafico','Adatta quotazione e grafico alla caratura o al titolo selezionato.'],
       ['#historicalValueCard','Consulta valore storico','Cerca la quotazione giornaliera del metallo alla data indicata e la converte automaticamente nella valuta attiva.'],
-      ['#historySearch','Ricerca nello Storico','Filtra le schede dello Storico usando parole presenti nei dati registrati.'],
+      ['#historySearch','Ricerca nei Metalli','Filtra le schede dei metalli usando parole presenti nei dati registrati.'],
       ['#watchesSearch','Ricerca Orologi','Filtra gli orologi usando marca, modello, referenza e altri dati registrati.'],
       ['#historyTagFilter, #watchesTagFilter','Filtro per tag','Mostra soltanto i beni associati al tag selezionato.'],
       ['#historyLocationFilter, #watchesLocationFilter','Filtro per luogo','Mostra soltanto i beni conservati nel luogo selezionato.'],
-      ['.add-watch-btn','Aggiungi Orologio','Apre o chiude il modulo per registrare un nuovo orologio.'],
-      ['#new form','Nuovo acquisto','Registra un metallo indicando tipologia, purezza, peso, prezzo, data, tag, luogo, documenti e foto.'],
-      ['#watchForm','Nuovo orologio','Registra marca, modello, referenza, valori, data, tag, luogo, documenti e foto dell’orologio.'],
+      ['.add-metal-btn','Nuovo metallo','Apre il modulo per registrare un acquisto di metallo. Quando il modulo è aperto il comando diventa Chiudi e permette di richiuderlo senza salvare.'],
+      ['.add-watch-btn','Nuovo orologio','Apre il modulo per registrare un orologio. Quando il modulo è aperto il comando diventa Chiudi e permette di richiuderlo senza salvare.'],
       ['.tag-picker','Tag','Permette di associare uno o più tag controllati al bene, senza testo libero.'],
       ['.controlled-location-select','Luogo di deposito','Associa il bene a uno dei luoghi di deposito disponibili.'],
       ['.purchase-date-control','Data di acquisto','Seleziona giorno, mese e anno; i giorni disponibili si adattano al mese e agli anni bisestili.'],
@@ -6840,8 +6922,7 @@
       ['.section-back-btn','Indietro','Torna alla schermata precedente. Sono supportati anche il gesto laterale e il tasto Indietro Android.'],
       ['.bottom-nav-btn[data-tab="home"]','Home','Apre il riepilogo principale del patrimonio e i grafici delle quotazioni.'],
       ['.bottom-nav-btn[data-tab="overview"]','Panoramica','Apre composizione del patrimonio e posizioni attive.'],
-      ['.bottom-nav-btn[data-tab="new"]','Nuovo acquisto','Apre il modulo per registrare un nuovo metallo.'],
-      ['.bottom-nav-btn[data-tab="history"]','Storico','Mostra le schede degli acquisti di metalli, con foto e documenti.'],
+            ['.bottom-nav-btn[data-tab="history"]','Metalli','Mostra le schede degli acquisti di Oro, Argento e Platino, con foto e documenti.'],
       ['.bottom-nav-btn[data-tab="watches"]','Orologi','Mostra e gestisce gli orologi, con foto e documenti.'],
       ['.shop-cat-card','Categoria Shop','Apre i prodotti appartenenti alla categoria indicata.'],
       ['.shop-card','Prodotto Shop','Mostra il prodotto e il collegamento esterno previsto per consultarlo.'],
@@ -6856,23 +6937,47 @@
         button.setAttribute('aria-pressed', instructionMode ? 'true' : 'false');
       }
       closeOverflowMenu();
-      if (!instructionMode) closeInstructionModal();
+      if (instructionMode) showInstructionGuide();
+      else closeInstructionModal();
     }
     function closeInstructionModal() {
       var modal = document.getElementById('instructionModal');
       if (modal) { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); }
     }
-    function showInstruction(title, text) {
-      document.getElementById('instructionTitle').textContent = title;
-      document.getElementById('instructionText').textContent = text;
+    function openInstructionModal() {
       var modal = document.getElementById('instructionModal');
-      modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false');
+      if (modal) { modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); }
+    }
+    function showInstruction(title, text) {
+      var content = document.getElementById('instructionText');
+      document.getElementById('instructionTitle').textContent = title;
+      content.classList.remove('guide-overview');
+      content.textContent = text;
+      document.getElementById('instructionCloseBtn').textContent = 'Chiudi spiegazione';
+      openInstructionModal();
+    }
+    function showInstructionGuide() {
+      var content = document.getElementById('instructionText');
+      document.getElementById('instructionTitle').textContent = 'Guida a Portafoglio Assets';
+      content.classList.add('guide-overview');
+      content.innerHTML =
+        '<div class="instruction-guide-intro"><strong>Come usare la guida</strong><br>Chiuda questa pagina e tocchi una voce, un valore, un pulsante o un elemento dentro una scheda prodotto. L’app ne spiegherà il significato, il calcolo e l’effetto senza eseguire il comando. Usi Disattiva per tornare all’uso normale.</div>' +
+        '<div class="instruction-guide-section"><h3>Home</h3><p>Patrimonio somma il valore corrente di Metalli e Orologi. Andamento confronta quel valore con il costo residuo degli acquisti: non è la variazione giornaliera del mercato. Posizioni attive mostra quantità e distribuzione dei beni ancora posseduti.</p></div>' +
+        '<div class="instruction-guide-section"><h3>Quotazioni e grafici</h3><p>I grafici mostrano prezzi reali per grammo nella valuta e nella purezza selezionate. I periodi cambiano l’intervallo osservato. Questi grafici descrivono il mercato e non il rendimento del portafoglio personale.</p></div>' +
+        '<div class="instruction-guide-section"><h3>Metalli</h3><p>Ogni scheda distingue costo, valore attuale, peso residuo, rendimento e confronto con il mercato. ＋ Nuovo registra un acquisto; toccando i singoli dati durante la guida si ottiene la spiegazione del relativo calcolo.</p></div>' +
+        '<div class="instruction-guide-section"><h3>Orologi</h3><p>Le schede confrontano prezzo di acquisto e valutazione inserita. La data indica quanto è recente la stima. Chrono24 apre soltanto una ricerca esterna e non aggiorna automaticamente il valore.</p></div>' +
+        '<div class="instruction-guide-section"><h3>Dati e sicurezza</h3><p>Foto, documenti e dati del portafoglio restano sul dispositivo. Backup esporta o ripristina il file JSON completo; Esporta CSV crea una tabella di consultazione; Google Drive conserva una copia personale soltanto su richiesta.</p></div>';
+      document.getElementById('instructionCloseBtn').textContent = 'Inizia la guida';
+      openInstructionModal();
     }
     function genericInstruction(target) {
       var field = target.closest('input, select, textarea');
       if (field) {
-        var label = field.getAttribute('aria-label') || field.getAttribute('placeholder') || field.id || 'Campo';
-        return [label, field.tagName === 'SELECT' ? 'Apre le opzioni disponibili per questo dato. In modalità normale la scelta viene applicata al modulo o al filtro corrente.' : 'Serve a inserire o cercare il dato indicato. In modalità Istruzioni il campo non viene modificato.'];
+        if (instructionFieldHelp[field.id]) return instructionFieldHelp[field.id];
+        var fieldGroup = field.closest('.form-group');
+        var fieldLabel = fieldGroup && fieldGroup.querySelector('label');
+        var label = (fieldLabel && fieldLabel.textContent.trim()) || field.getAttribute('aria-label') || field.getAttribute('placeholder') || 'Campo';
+        return [label, field.tagName === 'SELECT' ? 'Consente di scegliere uno dei valori ammessi per questo dato. La selezione viene salvata nel bene o applicata al filtro soltanto fuori dalla modalità Istruzioni.' : 'Consente di inserire il dato indicato. Durante la guida il campo non viene modificato e nessuna informazione viene salvata.'];
       }
       var button = target.closest('button, [role="button"]');
       if (button) {
@@ -6899,6 +7004,13 @@
       if (!instructionMode) return;
       if (e.target.closest('#instructionHint,#instructionModal,#mobileInstructionsBtn')) return;
       if (e.target.closest('#overflowMenuBtn')) return; // il menu deve poter essere aperto anche durante la guida
+      var guidedElement = e.target.closest('[data-guide]');
+      if (guidedElement && instructionTopics[guidedElement.getAttribute('data-guide')]) {
+        e.preventDefault(); e.stopPropagation();
+        var topic = instructionTopics[guidedElement.getAttribute('data-guide')];
+        showInstruction(topic[0], topic[1]);
+        return;
+      }
       for (var i = 0; i < instructionHelp.length; i++) {
         var hit = e.target.closest(instructionHelp[i][0]);
         if (hit) {
@@ -7010,12 +7122,6 @@
       });
     });
 
-    document.getElementById('shopBtn').addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      showAppTab('shop');
-    });
-
     document.getElementById('newsBtn').addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
@@ -7099,6 +7205,7 @@
         document.querySelectorAll('.currency-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
         state.currentCurrency = e.target.dataset.currency;
+        applyCurrentCurrencyToNewForms();
         saveMeta();
         updateUI();
       });
@@ -7419,6 +7526,7 @@
     // Sposta automaticamente dati, foto e documenti dal vecchio spazio limitato all’archivio locale capiente.
     initializePortfolioVault();
     loadMeta();
+    applyCurrentCurrencyToNewForms();
     loadPriceHistory();
     loadIntradayHistory();
     loadMarketHistoryCache();
