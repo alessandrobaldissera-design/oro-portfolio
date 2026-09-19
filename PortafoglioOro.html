@@ -2449,45 +2449,15 @@
       #home .period-btn[data-period="all"]::after { content: "Tutto"; }
     }
 
-    /* ===== Scheda Andamento: grafico esteso sul fondo, coerente con Oro/Argento/Platino ===== */
+    /* ===== Scheda Andamento senza grafico: contenuti compatti in ogni formato ===== */
     #home .summary > .card:nth-child(2) {
       position: relative;
       overflow: hidden;
-      isolation: isolate;
-      padding-bottom: 3.6rem;
+      padding-bottom: 1.5rem;
     }
-    #home .summary > .card:nth-child(2) > :not(.andamento-spark) {
-      position: relative;
-      z-index: 3;
-    }
-    #home .summary > .card:nth-child(2) > .position-breakdown,
-    #home .summary > .card:nth-child(2) > .position-breakdown .breakdown-row {
-      position: relative;
-      z-index: 4;
-    }
-    #home .summary > .card:nth-child(2) > .position-breakdown .breakdown-row {
-      background: rgba(255, 255, 255, 0.90);
-    }
-    .andamento-spark {
-      position: absolute;
-      display: block;
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    /* Tablet: canvas realmente esteso all'intera scheda; il disegno occupa la metà inferiore. */
-    @media (min-width: 601px) and (max-width: 900px) {
-      #home .summary > .card:nth-child(2) > .andamento-spark {
-        grid-column: 1 / -1;
-        grid-row: 1 / -1;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        max-height: none;
-        opacity: 0.50;
-      }
-      #home .summary > .card:nth-child(2) .home-summary-legacy > div {
-        background: rgba(255, 255, 255, 0.72);
+    @media (max-width: 600px) {
+      #home .summary > .card:nth-child(2) {
+        padding: 0.72rem 0.8rem;
       }
     }
 
@@ -2505,7 +2475,7 @@
     .instruction-modal.is-open { display:flex; }
     .instruction-dialog { width:min(92vw,520px); border-radius:16px; padding:1.15rem; background:#FAFBFC; color:#1B3A2D; box-shadow:0 16px 40px rgba(0,0,0,.25); }
     .instruction-dialog h2 { margin:0 0 .55rem; font-size:1.15rem; }
-    .instruction-dialog p { margin:0 0 1rem; color:#40584d; line-height:1.5; }
+    .instruction-dialog p { margin:0 0 1rem; color:#40584d; line-height:1.5; white-space:pre-line; }
     .instruction-dialog button { width:100%; border:0; border-radius:10px; padding:.7rem; background:#1B3A2D; color:#fff; font-weight:800; }
 
     /* ===== Storico: fondo della scheda in linea con il metallo ===== */
@@ -2517,9 +2487,6 @@
     .history-card .metric-value { color: var(--text-primary); }
 
     @media (max-width: 600px) {
-      /* Smartphone invariato: il grafico mantiene la sua fascia compatta. */
-      .andamento-spark { left: 0; right: 0; top: 40%; bottom: 0; width: 100%; height: auto; }
-      #home .summary > .card:nth-child(2) { padding-bottom: 2.6rem; }
       /* Orologi: titoli su una riga, come in Home; la sezione è già quella degli orologi. */
       #watches .summary > .card > h3 { font-size: 0; }
       #watches .summary > .card > h3::after { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; }
@@ -2747,10 +2714,10 @@
             <button id="mobileCsvExportBtn" type="button" role="menuitem">Esporta CSV</button>
             <button id="mobileDriveBtn" type="button" role="menuitem">Google Drive</button>
             <button id="mobileNewsBtn" type="button" role="menuitem">Notizie</button>
-            <button id="mobileInstructionsBtn" type="button" role="menuitem">Istruzioni</button>
+            <button id="mobileInstructionsBtn" type="button" role="menuitem" aria-pressed="false">Istruzioni</button>
           </div>
         </div>
-        <div id="instructionHint" class="instruction-hint">Tocchi ciò che desidera comprendere.<button id="instructionExitBtn" type="button">Fine</button></div>
+        <div id="instructionHint" class="instruction-hint">Modalità Istruzioni attiva: tocchi qualsiasi elemento.<button id="instructionExitBtn" type="button">Disattiva</button></div>
         <div id="instructionModal" class="instruction-modal" aria-hidden="true">
           <div class="instruction-dialog" role="dialog" aria-modal="true" aria-labelledby="instructionTitle">
             <h2 id="instructionTitle">Istruzioni</h2>
@@ -2817,7 +2784,6 @@
                 <span id="watchesGainVal" style="font-size:1.05rem;font-weight:800;color:#1B3A2D;">0.00</span>
               </div>
             </div>
-            <canvas id="sparklineCanvas" class="andamento-spark" aria-hidden="true"></canvas>
           </div>
           <div class="card">
             <h3>Posizioni Attive</h3>
@@ -3730,7 +3696,6 @@
           delete state.marketHistoryRetryCounts[code];
           saveMarketHistoryCache();
           updateChart();
-          drawAndamentoSparkline();
           return state.marketHistoryCache[code];
         } catch (error) {
           state.marketHistoryErrors[code] = true;
@@ -3743,7 +3708,6 @@
             setTimeout(function() { loadMarketHistory(period, true); }, retryDelay);
           }
           updateChart();
-          drawAndamentoSparkline();
           return null;
         } finally {
           delete state.marketHistoryLoading[code];
@@ -5004,93 +4968,6 @@
       markPrivateValues(container);
     }
 
-    // ===== Mini Sparkline per card Andamento =====
-    function drawAndamentoSparkline() {
-      const canvas = document.getElementById('sparklineCanvas');
-      if (!canvas) return;
-      // La mini-linea occupa una fascia dedicata in fondo alla scheda: non attraversa i dati.
-      const cssWidth = canvas.clientWidth || canvas.parentElement.clientWidth || 1;
-      const cssHeight = canvas.clientHeight || 44;
-      canvas.width = Math.max(cssWidth, 1) * 2;  // retina
-      canvas.height = Math.max(cssHeight, 1) * 2;
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // La mini-linea segue gli stessi dati e lo stesso periodo dei grafici Oro/Argento.
-      const chartData = getChartData();
-      const rows = chartData.data || [];
-      if (rows.length < 2) return;
-
-      // Indice composto normalizzato: media dei rendimenti di oro e argento.
-      // La normalizzazione evita che il diverso prezzo assoluto dei due metalli alteri la linea.
-      const firstGold = rows.find(p => p.gold != null && Number.isFinite(p.gold));
-      const firstSilver = rows.find(p => p.silver != null && Number.isFinite(p.silver));
-      const goldBase = firstGold ? firstGold.gold : null;
-      const silverBase = firstSilver ? firstSilver.silver : null;
-      const values = rows.map(p => {
-        const components = [];
-        if (goldBase != null && p.gold != null && Number.isFinite(p.gold)) components.push(p.gold / goldBase);
-        if (silverBase != null && p.silver != null && Number.isFinite(p.silver)) components.push(p.silver / silverBase);
-        return components.length ? components.reduce((a, b) => a + b, 0) / components.length : null;
-      }).filter(v => v != null && Number.isFinite(v));
-      if (values.length < 2) return;
-
-      const minV = Math.min(...values);
-      const maxV = Math.max(...values);
-      const range = maxV - minV || 1;
-      const w = canvas.width;
-      const h = canvas.height;
-      // Su tablet il canvas è grande quanto la scheda, ma la curva resta nella metà inferiore.
-      const isTabletBackdrop = window.matchMedia('(min-width: 601px) and (max-width: 900px)').matches;
-      const paddingLeft = isTabletBackdrop ? 18 : 0;
-      const paddingRight = isTabletBackdrop ? 18 : 0;
-      const plotTop = isTabletBackdrop ? Math.round(h * 0.50) : 15;
-      const paddingBottom = isTabletBackdrop ? 8 : 5;
-      const drawW = Math.max(1, w - paddingLeft - paddingRight);
-      const drawH = Math.max(1, h - plotTop - paddingBottom);
-      const isUp = values[values.length - 1] >= values[0];
-      const trendColor = isUp ? '76, 175, 80' : '229, 57, 53';  // stessi verde e rosso dei grafici principali
-
-      const points = values.map((v, i) => ({
-        x: paddingLeft + (i / (values.length - 1)) * drawW,
-        y: plotTop + drawH - ((v - minV) / range) * drawH
-      }));
-
-      function catmullRomPath(pts, tension) {
-        tension = tension || 0.35;
-        ctx.beginPath();
-        ctx.moveTo(pts[0].x, pts[0].y);
-        for (let i = 0; i < pts.length - 1; i++) {
-          const p0 = pts[i === 0 ? 0 : i - 1];
-          const p1 = pts[i];
-          const p2 = pts[i + 1];
-          const p3 = pts[i + 2 >= pts.length ? pts.length - 1 : i + 2];
-          const cp1x = p1.x + (p2.x - p0.x) * tension;
-          const cp1y = p1.y + (p2.y - p0.y) * tension;
-          const cp2x = p2.x - (p3.x - p1.x) * tension;
-          const cp2y = p2.y - (p3.y - p1.y) * tension;
-          ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
-        }
-      }
-
-      catmullRomPath(points, 0.35);
-      ctx.lineTo(w - paddingRight, h);
-      ctx.lineTo(paddingLeft, h);
-      ctx.closePath();
-      const gradient = ctx.createLinearGradient(0, plotTop, 0, h);
-      gradient.addColorStop(0, 'rgba(' + trendColor + ', 0.40)');
-      gradient.addColorStop(0.7, 'rgba(' + trendColor + ', 0.10)');
-      gradient.addColorStop(1, 'rgba(' + trendColor + ', 0.02)');
-      ctx.fillStyle = gradient;
-      ctx.fill();
-      catmullRomPath(points, 0.35);
-      ctx.strokeStyle = 'rgba(' + trendColor + ', 0.95)';
-      ctx.lineWidth = 3;  // 1,5 px reali: stesso spessore dei grafici Oro, Argento e Platino
-      ctx.lineJoin = 'round';
-      ctx.lineCap = 'round';
-      ctx.stroke();
-    }
-
     function updateSummary() {
       // Costo del residuo e valore attuale in CHF (con purezza per oro/argento; Altro a costo)
       const totalCostInChf = state.positions.reduce((sum, p) => sum + costChfRemaining(p), 0);
@@ -5195,8 +5072,6 @@
         barEl.style.display = 'flex';
       } else { barEl.style.display = 'none'; }
 
-      // Aggiorna sparkline andamento
-      drawAndamentoSparkline();
     }
 
     let goldChartInstance = null;
@@ -6926,46 +6801,115 @@
       document.querySelectorAll('#watchListContainer .watch-card').forEach(function(card){ card.style.display = cardMatchesFilters(card,query,tag,loc) ? '' : 'none'; });
     }
 
-    // Modalità Istruzioni: l'utente attiva la guida e tocca l'elemento da comprendere.
+    // Modalità Istruzioni: disattivabile e contestuale per pulsanti, campi e schede.
     var instructionMode = false;
     var instructionHelp = [
-      ['.currency-selector','Valuta','Seleziona la valuta usata per tutti gli importi e per le conversioni automatiche.'],
-      ['#shopBtn','Shop','Apre la sezione dedicata ai prodotti e ai servizi collegati.'],
-      ['#home .summary > .card:nth-child(1)','Patrimonio','Mostra il valore complessivo del portafoglio e la ripartizione tra metalli e orologi.'],
-      ['#home .summary > .card:nth-child(2)','Andamento','Mostra guadagno o perdita del portafoglio nel periodo scelto. Il grafico sullo sfondo segue i dati reali disponibili.'],
-      ['#home .summary > .card:nth-child(3)','Posizioni attive','Indica quante posizioni sono presenti e come sono distribuite.'],
-      ['.period-selector','Periodo dei grafici','Cambia l’intervallo temporale visualizzato nei grafici dei metalli.'],
-      ['.chart-card','Grafico del metallo','Mostra quotazione, variazione e andamento reale del metallo selezionato.'],
-      ['#historicalValueCard','Consulta valore storico','Calcola il valore del metallo nella valuta scelta alla data indicata.'],
-      ['.bottom-nav-btn[data-tab="overview"]','Panoramica','Apre il riepilogo completo delle posizioni in portafoglio.'],
-      ['.bottom-nav-btn[data-tab="history"]','Storico','Mostra acquisti, vendite e allegati dei metalli.'],
-      ['.bottom-nav-btn[data-tab="watches"]','Orologi','Gestisce gli orologi, i loro valori, fotografie e documenti.'],
-      ['#refreshBtn','Aggiorna ora','Richiede l’ultimo pacchetto completo di quotazioni e cambi.'],
-      ['#overflowMenuBtn','Menu','Raccoglie privacy, backup, CSV, Google Drive, Notizie e Istruzioni.']
+      ['.history-card','Scheda di un metallo','Questa scheda riassume un bene nello Storico.\n\nTitolo e simbolo: identificano articolo e metallo.\nSottotitolo: mostra purezza e data di acquisto.\nPeso: indica quantità disponibile e, se presente, quantità originaria.\nAcquisto: è il prezzo totale registrato.\nValore: è la stima corrente nella valuta selezionata.\nRendimento: confronta valore corrente e costo residuo.\nDifferenza dal mercato: confronta il prezzo di acquisto con la quotazione di riferimento.\nTag e luogo: aiutano ricerca e organizzazione.\nFoto: è la prima immagine allegata.\n\nFuori dalla modalità Istruzioni, tocchi la scheda per aprire dettagli, documenti, modifica, vendita o eliminazione.'],
+      ['.watch-card','Scheda di un orologio','Questa scheda riassume un orologio.\n\nTitolo: mostra marca e modello.\nReferenza e seriale: identificano l’esemplare.\nData e acquisto: riportano quando e a quale prezzo è stato registrato.\nValore: è la valutazione corrente inserita.\nRendimento: confronta valutazione e costo.\nTag e luogo: aiutano ricerca e organizzazione.\nFoto: è la prima immagine allegata.\n\nFuori dalla modalità Istruzioni, tocchi la scheda per aprire tutti i dati, le foto, i documenti e le azioni disponibili.'],
+      ['#positionsCards .position-summary-card, #positionsCards .position-card, #positionsCards > div','Posizione in portafoglio','Riepiloga una posizione attiva: categoria, quantità residua, prezzo corrente, valore, costo medio e guadagno o perdita. Fuori dalla guida, tocchi la scheda per consultare le azioni disponibili.'],
+      ['#positionsTable','Tabella delle posizioni','Mostra su desktop tutte le posizioni attive con quantità, prezzo corrente, valore, costo medio e guadagno o perdita.'],
+      ['.portfolio-pie-card','Composizione del patrimonio','Il grafico ad anello e la legenda mostrano come il patrimonio è distribuito per categoria o per tipologia di metallo.'],
+      ['.currency-selector','Valuta','Seleziona la valuta usata per importi e conversioni automatiche in tutta l’app.'],
+      ['#shopBtn','Shop','Apre la sezione dei prodotti collegati.'],
+      ['#home .summary > .card:nth-child(1)','Patrimonio','Mostra il valore complessivo e la ripartizione tra metalli e orologi.'],
+      ['#home .summary > .card:nth-child(2)','Andamento','Mostra guadagno o perdita complessiva, con i risultati separati di Metalli e Orologi. Il periodo scelto sotto si applica ai grafici delle quotazioni.'],
+      ['#home .summary > .card:nth-child(3)','Posizioni attive','Indica quante posizioni sono presenti e come sono distribuite fra Oro, Argento, Platino, Altro e Orologi.'],
+      ['.period-btn','Periodo del grafico','Imposta l’intervallo temporale dei grafici reali di Oro, Argento e Platino.'],
+      ['.chart-card','Grafico del metallo','Mostra prezzo, variazione, purezza selezionata e andamento reale del metallo nel periodo scelto.'],
+      ['.karat-btn','Purezza del grafico','Adatta quotazione e grafico alla caratura o al titolo selezionato.'],
+      ['#historicalValueCard','Consulta valore storico','Cerca la quotazione giornaliera del metallo alla data indicata e la converte automaticamente nella valuta attiva.'],
+      ['#historySearch','Ricerca nello Storico','Filtra le schede dello Storico usando parole presenti nei dati registrati.'],
+      ['#watchesSearch','Ricerca Orologi','Filtra gli orologi usando marca, modello, referenza e altri dati registrati.'],
+      ['#historyTagFilter, #watchesTagFilter','Filtro per tag','Mostra soltanto i beni associati al tag selezionato.'],
+      ['#historyLocationFilter, #watchesLocationFilter','Filtro per luogo','Mostra soltanto i beni conservati nel luogo selezionato.'],
+      ['.add-watch-btn','Aggiungi Orologio','Apre o chiude il modulo per registrare un nuovo orologio.'],
+      ['#new form','Nuovo acquisto','Registra un metallo indicando tipologia, purezza, peso, prezzo, data, tag, luogo, documenti e foto.'],
+      ['#watchForm','Nuovo orologio','Registra marca, modello, referenza, valori, data, tag, luogo, documenti e foto dell’orologio.'],
+      ['.tag-picker','Tag','Permette di associare uno o più tag controllati al bene, senza testo libero.'],
+      ['.controlled-location-select','Luogo di deposito','Associa il bene a uno dei luoghi di deposito disponibili.'],
+      ['.purchase-date-control','Data di acquisto','Seleziona giorno, mese e anno; i giorni disponibili si adattano al mese e agli anni bisestili.'],
+      ['.document-picker-label','Documenti','Allega immagini o PDF al bene. I file restano nei dati locali e sono inclusi nel backup.'],
+      ['.photo-input-label','Foto','Aggiunge fotografie dalla fotocamera o dalla galleria. Le foto restano sul dispositivo e sono incluse nel backup.'],
+      ['#refreshBtn','Aggiorna ora','Richiede un nuovo pacchetto completo e coerente di quotazioni e cambi.'],
+      ['#mobilePrivacyBtn','Nascondi valori','Maschera o mostra gli importi sul display. È una protezione visiva, non una cifratura dei dati.'],
+      ['#mobileBackupBtn','Backup','Apre Importa ed Esporta per creare o ripristinare un unico file JSON locale completo.'],
+      ['#mobileCsvExportBtn','Esporta CSV','Crea un unico file CSV con metalli e orologi.'],
+      ['#mobileDriveBtn','Google Drive','Collega l’account e consente la copia volontaria del backup personale su Google Drive.'],
+      ['#mobileNewsBtn','Notizie','Apre la sezione Notizie.'],
+      ['#overflowMenuBtn','Menu','Apre il menu con privacy, Backup, CSV, Google Drive, Notizie e Istruzioni.'],
+      ['.section-back-btn','Indietro','Torna alla schermata precedente. Sono supportati anche il gesto laterale e il tasto Indietro Android.'],
+      ['.bottom-nav-btn[data-tab="home"]','Home','Apre il riepilogo principale del patrimonio e i grafici delle quotazioni.'],
+      ['.bottom-nav-btn[data-tab="overview"]','Panoramica','Apre composizione del patrimonio e posizioni attive.'],
+      ['.bottom-nav-btn[data-tab="new"]','Nuovo acquisto','Apre il modulo per registrare un nuovo metallo.'],
+      ['.bottom-nav-btn[data-tab="history"]','Storico','Mostra le schede degli acquisti di metalli, con foto e documenti.'],
+      ['.bottom-nav-btn[data-tab="watches"]','Orologi','Mostra e gestisce gli orologi, con foto e documenti.'],
+      ['.shop-cat-card','Categoria Shop','Apre i prodotti appartenenti alla categoria indicata.'],
+      ['.shop-card','Prodotto Shop','Mostra il prodotto e il collegamento esterno previsto per consultarlo.'],
+      ['.btn[type="submit"]','Salva','Conferma i dati compilati e registra il bene nel dispositivo.']
     ];
     function setInstructionMode(active) {
       instructionMode = !!active;
       document.body.classList.toggle('instruction-mode', instructionMode);
+      var button = document.getElementById('mobileInstructionsBtn');
+      if (button) {
+        button.textContent = instructionMode ? 'Disattiva istruzioni' : 'Istruzioni';
+        button.setAttribute('aria-pressed', instructionMode ? 'true' : 'false');
+      }
       closeOverflowMenu();
       if (!instructionMode) closeInstructionModal();
     }
     function closeInstructionModal() {
-      var modal=document.getElementById('instructionModal');
+      var modal = document.getElementById('instructionModal');
       if (modal) { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); }
     }
-    function showInstruction(title,text) {
-      document.getElementById('instructionTitle').textContent=title;
-      document.getElementById('instructionText').textContent=text;
-      var modal=document.getElementById('instructionModal');
+    function showInstruction(title, text) {
+      document.getElementById('instructionTitle').textContent = title;
+      document.getElementById('instructionText').textContent = text;
+      var modal = document.getElementById('instructionModal');
       modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false');
     }
-    document.addEventListener('click', function(e) {
-      if (!instructionMode || e.target.closest('#instructionHint,#instructionModal,#mobileOverflowWrap')) return;
-      for (var i=0;i<instructionHelp.length;i++) {
-        var hit=e.target.closest(instructionHelp[i][0]);
-        if (hit) { e.preventDefault(); e.stopPropagation(); showInstruction(instructionHelp[i][1],instructionHelp[i][2]); return; }
+    function genericInstruction(target) {
+      var field = target.closest('input, select, textarea');
+      if (field) {
+        var label = field.getAttribute('aria-label') || field.getAttribute('placeholder') || field.id || 'Campo';
+        return [label, field.tagName === 'SELECT' ? 'Apre le opzioni disponibili per questo dato. In modalità normale la scelta viene applicata al modulo o al filtro corrente.' : 'Serve a inserire o cercare il dato indicato. In modalità Istruzioni il campo non viene modificato.'];
       }
-      e.preventDefault(); e.stopPropagation(); showInstruction('Istruzioni','Per questo elemento non è necessaria un’azione particolare. Tocchi un riquadro, un grafico, un periodo o un comando principale.');
+      var button = target.closest('button, [role="button"]');
+      if (button) {
+        var buttonName = (button.textContent || button.getAttribute('aria-label') || 'Comando').trim();
+        return [buttonName || 'Comando', 'Esegue il comando indicato. Disattivi le Istruzioni per utilizzarlo normalmente.'];
+      }
+      var group = target.closest('.form-group');
+      if (group) {
+        var groupLabel = group.querySelector('label');
+        return [groupLabel ? groupLabel.textContent.trim() : 'Dato del bene', 'Questa area raccoglie il dato indicato per il nuovo bene o per la sua modifica.'];
+      }
+      var summary = target.closest('summary');
+      if (summary) return [(summary.textContent || 'Sezione').trim(), 'Apre o chiude questa sezione per mostrarne i contenuti.'];
+      var card = target.closest('.card, article, .history-card, .watch-card, .position-summary-card, .shop-card, .shop-cat-card');
+      if (card) {
+        var heading = card.querySelector('h2,h3,.history-card-title,.watch-card-title');
+        return [heading ? heading.textContent.trim() : 'Riquadro', 'Questo riquadro raccoglie informazioni correlate. Tocchi i singoli elementi in modalità Istruzioni per una spiegazione più specifica.'];
+      }
+      var labelEl = target.closest('label');
+      if (labelEl) return [(labelEl.textContent || 'Voce').trim(), 'Descrive il dato o il comando associato.'];
+      return ['Elemento informativo','Mostra un’informazione dell’app. Se contiene un valore, questo viene aggiornato dai dati del portafoglio o dalle quotazioni disponibili.'];
+    }
+    document.addEventListener('click', function(e) {
+      if (!instructionMode) return;
+      if (e.target.closest('#instructionHint,#instructionModal,#mobileInstructionsBtn')) return;
+      if (e.target.closest('#overflowMenuBtn')) return; // il menu deve poter essere aperto anche durante la guida
+      for (var i = 0; i < instructionHelp.length; i++) {
+        var hit = e.target.closest(instructionHelp[i][0]);
+        if (hit) {
+          e.preventDefault(); e.stopPropagation();
+          showInstruction(instructionHelp[i][1], instructionHelp[i][2]);
+          return;
+        }
+      }
+      e.preventDefault(); e.stopPropagation();
+      var generic = genericInstruction(e.target);
+      showInstruction(generic[0], generic[1]);
     }, true);
 
     // Navigazione interna: supporta freccia, gesto laterale e tasto Indietro Android.
@@ -7098,7 +7042,7 @@
       closeOverflowMenu();
       showAppTab('news');
     });
-    document.getElementById('mobileInstructionsBtn')?.addEventListener('click', function() { setInstructionMode(true); });
+    document.getElementById('mobileInstructionsBtn')?.addEventListener('click', function() { setInstructionMode(!instructionMode); });
     document.getElementById('instructionExitBtn')?.addEventListener('click', function() { setInstructionMode(false); });
     document.getElementById('instructionCloseBtn')?.addEventListener('click', closeInstructionModal);
     document.getElementById('instructionModal')?.addEventListener('click', function(e) { if (e.target === this) closeInstructionModal(); });
@@ -7167,7 +7111,6 @@
         e.target.classList.add('active');
         state.selectedPeriod = e.target.dataset.period === 'all' ? 'all' : parseInt(e.target.dataset.period);
         updateChart();
-        drawAndamentoSparkline(); // la mini-linea Andamento segue il periodo selezionato
         loadMarketHistory(state.selectedPeriod, false);
       });
     });
