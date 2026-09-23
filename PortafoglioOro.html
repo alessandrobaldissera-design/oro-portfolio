@@ -3047,10 +3047,70 @@
             <label>Tipologia</label>
             <select id="itemType" onchange="onItemTypeChange()">
               <option value="lingotto">Lingotto</option>
-              <option value="moneta">Moneta</option>
+              <option value="moneta">Moneta da investimento</option>
+              <option value="moneta_numismatica">Moneta numismatica</option>
               <option value="lavorato">Lavorato</option>
               <option value="oro_virtuale">Oro Virtuale</option>
             </select>
+          </div>
+          <div id="numismaticFields" style="display:none;">
+            <h3 class="sales-title">Dati numismatici</h3>
+            <div class="form-group">
+              <label>Paese / Stato emittente</label>
+              <input type="text" id="numismaticCountry" placeholder="Es. Svizzera">
+            </div>
+            <div class="form-group">
+              <label>Anno</label>
+              <input type="number" id="numismaticYear" min="1" max="9999" step="1" placeholder="Es. 1925">
+            </div>
+            <div class="form-group">
+              <label>Zecca <span style="color:#888;font-weight:400;">(facoltativa)</span></label>
+              <input type="text" id="numismaticMint" placeholder="Es. Berna">
+            </div>
+            <div class="form-group">
+              <label>Valore nominale <span style="color:#888;font-weight:400;">(facoltativo)</span></label>
+              <input type="text" id="numismaticFaceValue" placeholder="Es. 20 Fr.">
+            </div>
+            <div class="form-group">
+              <label>Conservazione</label>
+              <select id="numismaticCondition">
+                <option value="">Non indicata</option>
+                <option value="MB">MB</option>
+                <option value="BB">BB</option>
+                <option value="SPL">SPL</option>
+                <option value="qFDC">qFDC</option>
+                <option value="FDC">FDC</option>
+                <option value="Certificata">Certificata</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Valore numismatico stimato</label>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="number" id="numismaticValue" min="0" step="0.01" style="flex: 1;">
+                <select id="numismaticCurrency" style="width: 90px; padding: 0.5rem; border-radius: 6px;">
+                  <option value="CHF">CHF</option>
+                  <option value="EUR">EUR</option>
+                  <option value="USD">USD</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Data della stima</label>
+              <div class="purchase-date-control" data-purchase-date="numismaticEstimateDate">
+                <input type="hidden" id="numismaticEstimateDate">
+                <select id="numismaticEstimateDay" class="purchase-date-select" aria-label="Giorno della stima"><option value="">Giorno</option></select>
+                <select id="numismaticEstimateMonth" class="purchase-date-select" aria-label="Mese della stima"><option value="">Mese</option></select>
+                <select id="numismaticEstimateYear" class="purchase-date-select" aria-label="Anno della stima"><option value="">Anno</option></select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Fonte della stima</label>
+              <input type="text" id="numismaticSource" placeholder="Es. Perizia, casa d’aste o catalogo">
+            </div>
+            <div class="form-group">
+              <label>Note numismatiche</label>
+              <textarea id="numismaticNotes" rows="3" placeholder="Es. Variante, rarità, grado o riferimento di catalogo"></textarea>
+            </div>
           </div>
           <div class="form-group" id="purityGroup">
             <label id="purityLabel">Caratura</label>
@@ -3430,6 +3490,10 @@
     <div class="detail-card" onclick="event.stopPropagation()">
       <button class="detail-close" onclick="closeDetail()" title="Chiudi">&times;</button>
       <h2 class="detail-title">Dettaglio posizione</h2>
+      <div id="editNumismaticSummary" class="sales-section" style="display:none;">
+        <h3 class="sales-title">Valutazione numismatica</h3>
+        <div id="editNumismaticSummaryValues" class="sales-remaining"></div>
+      </div>
       <div class="form-group">
         <label>Metallo</label>
         <select id="editMetal" onchange="onEditMetalChange()">
@@ -3453,10 +3517,70 @@
         <label>Tipologia</label>
         <select id="editItemType" onchange="onEditItemTypeChange()">
           <option value="lingotto">Lingotto</option>
-          <option value="moneta">Moneta</option>
+          <option value="moneta">Moneta da investimento</option>
+          <option value="moneta_numismatica">Moneta numismatica</option>
           <option value="lavorato">Lavorato</option>
           <option value="oro_virtuale">Oro Virtuale</option>
         </select>
+      </div>
+      <div id="editNumismaticFields" style="display:none;">
+        <h3 class="sales-title">Dati numismatici</h3>
+        <div class="form-group">
+          <label>Paese / Stato emittente</label>
+          <input type="text" id="editNumismaticCountry">
+        </div>
+        <div class="form-group">
+          <label>Anno</label>
+          <input type="number" id="editNumismaticYear" min="1" max="9999" step="1">
+        </div>
+        <div class="form-group">
+          <label>Zecca <span style="color:#888;font-weight:400;">(facoltativa)</span></label>
+          <input type="text" id="editNumismaticMint">
+        </div>
+        <div class="form-group">
+          <label>Valore nominale <span style="color:#888;font-weight:400;">(facoltativo)</span></label>
+          <input type="text" id="editNumismaticFaceValue">
+        </div>
+        <div class="form-group">
+          <label>Conservazione</label>
+          <select id="editNumismaticCondition">
+            <option value="">Non indicata</option>
+            <option value="MB">MB</option>
+            <option value="BB">BB</option>
+            <option value="SPL">SPL</option>
+            <option value="qFDC">qFDC</option>
+            <option value="FDC">FDC</option>
+            <option value="Certificata">Certificata</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Valore numismatico stimato</label>
+          <div style="display:flex; gap:0.5rem;">
+            <input type="number" id="editNumismaticValue" min="0" step="0.01" style="flex:1;">
+            <select id="editNumismaticCurrency" style="width:90px; padding:0.5rem; border-radius:6px;">
+              <option value="CHF">CHF</option>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Data della stima</label>
+          <div class="purchase-date-control" data-purchase-date="editNumismaticEstimateDate">
+            <input type="hidden" id="editNumismaticEstimateDate">
+            <select id="editNumismaticEstimateDay" class="purchase-date-select" aria-label="Giorno della stima"><option value="">Giorno</option></select>
+            <select id="editNumismaticEstimateMonth" class="purchase-date-select" aria-label="Mese della stima"><option value="">Mese</option></select>
+            <select id="editNumismaticEstimateYear" class="purchase-date-select" aria-label="Anno della stima"><option value="">Anno</option></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Fonte della stima</label>
+          <input type="text" id="editNumismaticSource">
+        </div>
+        <div class="form-group">
+          <label>Note numismatiche</label>
+          <textarea id="editNumismaticNotes" rows="3"></textarea>
+        </div>
       </div>
       <div class="form-group" id="editPurityGroup">
         <label id="editPurityLabel">Caratura</label>
@@ -4405,8 +4529,10 @@
     const ITALIAN_MONTHS = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
     const PURCHASE_DATE_FIELDS = [
       { inputId: 'date', dayId: 'datePurchaseDay', monthId: 'datePurchaseMonth', yearId: 'datePurchaseYear' },
+      { inputId: 'numismaticEstimateDate', dayId: 'numismaticEstimateDay', monthId: 'numismaticEstimateMonth', yearId: 'numismaticEstimateYear' },
       { inputId: 'watchPurchaseDate', dayId: 'watchPurchaseDay', monthId: 'watchPurchaseMonth', yearId: 'watchPurchaseYear' },
       { inputId: 'editDate', dayId: 'editPurchaseDay', monthId: 'editPurchaseMonth', yearId: 'editPurchaseYear' },
+      { inputId: 'editNumismaticEstimateDate', dayId: 'editNumismaticEstimateDay', monthId: 'editNumismaticEstimateMonth', yearId: 'editNumismaticEstimateYear' },
       { inputId: 'editWatchPurchaseDate', dayId: 'editWatchPurchaseDay', monthId: 'editWatchPurchaseMonth', yearId: 'editWatchPurchaseYear' }
     ];
 
@@ -4489,6 +4615,89 @@
       });
     }
 
+    function isNumismaticItemType(itemType) {
+      return itemType === 'moneta_numismatica';
+    }
+
+    function isCoinItemType(itemType) {
+      return itemType === 'moneta' || itemType === 'moneta_numismatica';
+    }
+
+    function numismaticFormData(prefix) {
+      const id = function(name) { return document.getElementById(prefix ? prefix + name : name.charAt(0).toLowerCase() + name.slice(1)); };
+      const rawValue = (id('NumismaticValue')?.value || '').trim();
+      const rawYear = (id('NumismaticYear')?.value || '').trim();
+      return {
+        country: (id('NumismaticCountry')?.value || '').trim(),
+        year: rawYear === '' ? null : parseInt(rawYear, 10),
+        mint: (id('NumismaticMint')?.value || '').trim(),
+        faceValue: (id('NumismaticFaceValue')?.value || '').trim(),
+        condition: id('NumismaticCondition')?.value || '',
+        estimatedValue: rawValue === '' ? null : parseFloat(rawValue),
+        currency: (id('NumismaticCurrency')?.value || state.currentCurrency || 'EUR').toUpperCase(),
+        estimateDate: id('NumismaticEstimateDate')?.value || '',
+        source: (id('NumismaticSource')?.value || '').trim(),
+        notes: (id('NumismaticNotes')?.value || '').trim()
+      };
+    }
+
+    function setNumismaticFormData(prefix, data) {
+      const value = data || {};
+      const set = function(name, fieldValue) {
+        const element = document.getElementById(prefix ? prefix + name : name.charAt(0).toLowerCase() + name.slice(1));
+        if (element) element.value = fieldValue == null ? '' : String(fieldValue);
+      };
+      set('NumismaticCountry', value.country);
+      set('NumismaticYear', value.year);
+      set('NumismaticMint', value.mint);
+      set('NumismaticFaceValue', value.faceValue);
+      set('NumismaticCondition', value.condition);
+      set('NumismaticValue', value.estimatedValue);
+      set('NumismaticCurrency', value.currency || state.currentCurrency || 'EUR');
+      set('NumismaticEstimateDate', value.estimateDate);
+      set('NumismaticSource', value.source);
+      set('NumismaticNotes', value.notes);
+    }
+
+    function setNumismaticFieldsVisibility(editMode) {
+      const typeId = editMode ? 'editItemType' : 'itemType';
+      const fieldsId = editMode ? 'editNumismaticFields' : 'numismaticFields';
+      const metalId = editMode ? 'editMetal' : 'metal';
+      const fields = document.getElementById(fieldsId);
+      if (!fields) return;
+      const show = document.getElementById(metalId)?.value !== 'other' && isNumismaticItemType(document.getElementById(typeId)?.value || '');
+      fields.style.display = show ? '' : 'none';
+    }
+
+    function numismaticValueChf(position) {
+      const data = position && position.numismatic;
+      const value = data ? parseFloat(data.estimatedValue) : NaN;
+      if (!Number.isFinite(value)) return null;
+      const currency = String(data.currency || 'CHF').toUpperCase();
+      return value * (state.exchangeRates[currency] || 1);
+    }
+
+    function renderEditNumismaticSummary() {
+      const summary = document.getElementById('editNumismaticSummary');
+      const values = document.getElementById('editNumismaticSummaryValues');
+      if (!summary || !values || !editState || !isNumismaticItemType(editState.itemType)) {
+        if (summary) summary.style.display = 'none';
+        return;
+      }
+      summary.style.display = '';
+      const currency = state.currentCurrency || 'EUR';
+      const rate = state.exchangeRates[currency] || 1;
+      const metalValue = currentValueChf(editState) / rate;
+      const estimatedChf = numismaticValueChf(editState);
+      const estimatedValue = estimatedChf == null ? null : estimatedChf / rate;
+      const difference = estimatedValue == null ? null : estimatedValue - metalValue;
+      const money = function(value) { return value.toFixed(2) + ' ' + currency; };
+      values.innerHTML =
+        '<div>Valore metallo aggiornato: <b>' + money(metalValue) + '</b></div>' +
+        '<div>Valore numismatico stimato: <b>' + (estimatedValue == null ? 'Non inserito' : money(estimatedValue)) + '</b></div>' +
+        '<div>Premio numismatico (differenza): <b>' + (difference == null ? 'N/D' : ((difference >= 0 ? '+' : '') + money(difference))) + '</b></div>';
+    }
+
     // Add position
     async function addPosition(e) {
       e.preventDefault();
@@ -4506,7 +4715,9 @@
       const documents = pendingPositionDocuments.slice();
 
       const itemType = metal === 'other' ? null : (document.getElementById('itemType').value || 'lingotto');
-      state.positions.push({ metal, description, quantity, purity, price, priceCurrency, date, photos, documents, itemType, tags, storageLocation });
+      const position = { metal, description, quantity, purity, price, priceCurrency, date, photos, documents, itemType, tags, storageLocation };
+      if (isNumismaticItemType(itemType)) position.numismatic = numismaticFormData('');
+      state.positions.push(position);
       if (!saveData()) {
         state.positions.pop();
         return;
@@ -4520,6 +4731,7 @@
       document.getElementById('metalForm').style.display = 'none';
       setNewFormButtonState('.add-metal-btn', false);
       syncPurchaseDateSelectors('date');
+      syncPurchaseDateSelectors('numismaticEstimateDate');
       syncTagPicker('tags');
       setControlledLocation('storageLocation', '');
       onMetalChange();
@@ -4531,7 +4743,7 @@
       if (p.metal === 'gold') {
         const pur = p.purity || 24;
         // Monete: millesimi (valore > 24); carature legacy (<=24) per compatibilita'
-        if (p.itemType === 'moneta' && pur > 24) return pur / 1000;
+        if (isCoinItemType(p.itemType) && pur > 24) return pur / 1000;
         return pur / 24;
       }
       if (p.metal === 'silver') return (p.purity || 999) / 1000;
@@ -4712,6 +4924,7 @@
         if (tg) tg.style.display = 'none';
         qInput.required = false;
         if (descHint) descHint.textContent = '(descrivi cosa hai preso)';
+        setNumismaticFieldsVisibility(false);
         return;
       }
       pg.style.display = '';
@@ -4720,7 +4933,7 @@
       if (descHint) descHint.textContent = '(facoltativa)';
       if (metal === 'gold') {
         const itemType = document.getElementById('itemType').value;
-        if (itemType === 'moneta') {
+        if (isCoinItemType(itemType)) {
           populateGoldCoinOptions(psel, plabel);
         } else {
           populateGoldKaratOptions(psel, plabel);
@@ -4733,6 +4946,7 @@
         [['999', '999 (fino)'], ['925', '925 (sterling)'], ['900', '900'], ['835', '835'], ['800', '800']].forEach(function (o) { opts += '<option value="' + o[0] + '">' + o[1] + '</option>'; });
         psel.innerHTML = opts;
       }
+      setNumismaticFieldsVisibility(false);
     }
 
     function onItemTypeChange() {
@@ -4741,12 +4955,13 @@
         const psel = document.getElementById('purity');
         const plabel = document.getElementById('purityLabel');
         const itemType = document.getElementById('itemType').value;
-        if (itemType === 'moneta') {
+        if (isCoinItemType(itemType)) {
           populateGoldCoinOptions(psel, plabel);
         } else {
           populateGoldKaratOptions(psel, plabel);
         }
       }
+      setNumismaticFieldsVisibility(false);
     }
 
     // Update UI
@@ -4810,7 +5025,7 @@
 
         let typeRows = '';
         if (m !== 'other') {
-          const types = [['moneta', 'Monete'], ['lingotto', 'Lingotti'], ['lavorato', 'Lavorato'], ['oro_virtuale', 'Oro Virtuale']];
+          const types = [['moneta', 'Monete da investimento'], ['moneta_numismatica', 'Monete numismatiche'], ['lingotto', 'Lingotti'], ['lavorato', 'Lavorato'], ['oro_virtuale', 'Oro Virtuale']];
           types.forEach(function (t) {
             const typeKey = t[0], typeLabel = t[1];
             const typPs = ps.filter(function (p) { return (p.itemType || 'lingotto') === typeKey; });
@@ -5028,9 +5243,10 @@
       // Ordine per categoria, poi per data decrescente
       const catOrder = {
         'gold_moneta': 0, 'silver_moneta': 1, 'platinum_moneta': 2,
-        'gold_lingotto': 3, 'silver_lingotto': 4, 'platinum_lingotto': 5,
-        'gold_lavorato': 6, 'silver_lavorato': 7, 'platinum_lavorato': 8,
-        'gold_oro_virtuale': 9, 'silver_oro_virtuale': 10, 'platinum_oro_virtuale': 11, 'other': 12
+        'gold_moneta_numismatica': 3, 'silver_moneta_numismatica': 4, 'platinum_moneta_numismatica': 5,
+        'gold_lingotto': 6, 'silver_lingotto': 7, 'platinum_lingotto': 8,
+        'gold_lavorato': 9, 'silver_lavorato': 10, 'platinum_lavorato': 11,
+        'gold_oro_virtuale': 12, 'silver_oro_virtuale': 13, 'platinum_oro_virtuale': 14, 'other': 15
       };
       function getCatKey(p) {
         if (p.metal === 'other') return 'other';
@@ -5070,7 +5286,7 @@
         let titolo = '';
         if (pos.metal === 'gold') {
           const pur = pos.purity || 24;
-          titolo = (pos.itemType === 'moneta' && pur > 24) ? pur + '/1000' : pur + 'k';
+          titolo = (isCoinItemType(pos.itemType) && pur > 24) ? pur + '/1000' : pur + 'k';
         } else if (pos.metal === 'silver') titolo = (pos.purity || 999) + '/1000';
         else if (pos.metal === 'platinum') titolo = (pos.purity || 999.5) + '/1000';
         const descSafe = pos.description ? pos.description.replace(/</g, '&lt;').replace(/>/g, '&gt;') : metalLabel;
@@ -5958,7 +6174,7 @@
 
     function applyCurrentCurrencyToNewForms() {
       const currency = ['EUR', 'USD', 'CHF'].includes(state.currentCurrency) ? state.currentCurrency : 'EUR';
-      ['priceCurrency', 'watchPurchaseCurrency', 'watchMarketValueCurrency', 'watchInsuranceCurrency'].forEach(function(id) {
+      ['priceCurrency', 'numismaticCurrency', 'watchPurchaseCurrency', 'watchMarketValueCurrency', 'watchInsuranceCurrency'].forEach(function(id) {
         const field = document.getElementById(id);
         if (field) field.value = currency;
       });
@@ -6683,6 +6899,10 @@
       document.getElementById('editCurrency').value = (editState.priceCurrency || 'CHF');
       document.getElementById('editDate').value = editState.date || '';
       syncPurchaseDateSelectors('editDate');
+      setNumismaticFormData('edit', editState.numismatic || {});
+      syncPurchaseDateSelectors('editNumismaticEstimateDate');
+      setNumismaticFieldsVisibility(true);
+      renderEditNumismaticSummary();
       renderEditPositionDocuments();
       renderEditPhotos();
       renderEditSales();
@@ -6696,13 +6916,13 @@
       const plabel = document.getElementById('editPurityLabel');
       const qInput = document.getElementById('editQuantity');
       const etg = document.getElementById('editTypeGroup');
-      if (metal === 'other') { pg.style.display = 'none'; if (etg) etg.style.display = 'none'; qInput.required = false; return; }
+      if (metal === 'other') { pg.style.display = 'none'; if (etg) etg.style.display = 'none'; qInput.required = false; setNumismaticFieldsVisibility(true); return; }
       pg.style.display = '';
       if (etg) etg.style.display = '';
       qInput.required = true;
       if (metal === 'gold') {
         const itemType = document.getElementById('editItemType').value;
-        if (itemType === 'moneta') {
+        if (isCoinItemType(itemType)) {
           populateGoldCoinOptions(psel, plabel);
         } else {
           populateGoldKaratOptions(psel, plabel);
@@ -6715,6 +6935,7 @@
         [['999', '999 (fino)'], ['925', '925 (sterling)'], ['900', '900'], ['835', '835'], ['800', '800']].forEach(function (o) { opts += '<option value="' + o[0] + '">' + o[1] + '</option>'; });
         psel.innerHTML = opts;
       }
+      setNumismaticFieldsVisibility(true);
     }
 
     function onEditItemTypeChange() {
@@ -6723,12 +6944,13 @@
         const psel = document.getElementById('editPurity');
         const plabel = document.getElementById('editPurityLabel');
         const itemType = document.getElementById('editItemType').value;
-        if (itemType === 'moneta') {
+        if (isCoinItemType(itemType)) {
           populateGoldCoinOptions(psel, plabel);
         } else {
           populateGoldKaratOptions(psel, plabel);
         }
       }
+      setNumismaticFieldsVisibility(true);
     }
 
     function renderEditPhotos() {
@@ -6834,6 +7056,8 @@
       editState.priceCurrency = (document.getElementById('editCurrency').value || 'CHF').toUpperCase();
       editState.purity = metal === 'other' ? null : parseFloat(document.getElementById('editPurity').value);
       editState.itemType = metal === 'other' ? null : (document.getElementById('editItemType').value || 'lingotto');
+      if (isNumismaticItemType(editState.itemType)) editState.numismatic = numismaticFormData('edit');
+      else delete editState.numismatic;
       editState.date = document.getElementById('editDate').value;
       const previousPosition = state.positions[editIndex];
       state.positions[editIndex] = editState;
