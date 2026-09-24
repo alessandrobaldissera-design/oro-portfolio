@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Precious Assets - Gestione investimenti in tempo reale">
   <meta name="theme-color" content="#1B3A2D">
   <title>Precious Assets</title>
@@ -1294,7 +1294,7 @@
       justify-content: space-around;
       align-items: center;
       background: #1B3A2D;
-      padding: 0.2rem 0 calc(0.2rem + env(safe-area-inset-bottom, 0px)) 0;
+      padding: 0.14rem 0 calc(0.14rem + max(0px, calc(env(safe-area-inset-bottom, 0px) - 10px))) 0;
       box-shadow: 0 -2px 12px rgba(0,0,0,0.15);
       z-index: 9999;
     }
@@ -1308,20 +1308,20 @@
       border: none;
       color: rgba(255,255,255,0.5);
       cursor: pointer;
-      padding: 0.15rem 0.25rem;
-      gap: 0.1rem;
+      padding: 0.08rem 0.25rem;
+      gap: 0;
       transition: color 0.2s;
       -webkit-tap-highlight-color: transparent;
       min-width: 2.5rem;
     }
 
     .bottom-nav-btn svg {
-      width: 18px;
-      height: 18px;
+      width: 17px;
+      height: 17px;
     }
 
     .bottom-nav-btn span {
-      font-size: 0.58rem;
+      font-size: 0.56rem;
       font-weight: 600;
       letter-spacing: 0.02em;
     }
@@ -2313,7 +2313,7 @@
         align-items: baseline;
         column-gap: 0.4rem;
         row-gap: 0.45rem;
-        padding: 0.72rem 0.8rem;
+        padding: 0.84rem 0.9rem;
         text-align: left;
       }
       #home .summary > .card > h3,
@@ -2382,7 +2382,7 @@
         display: block !important;
         background: rgba(255, 255, 255, 0.66);
         border-radius: 8px;
-        padding: 0.3rem 0.45rem;
+        padding: 0.38rem 0.52rem;
       }
       #home .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div > span:first-child,
       #watches .summary > .card > div:not(.value):not(.currency):not(.position-breakdown):not(.breakdown-bar) > div > span:first-child {
@@ -3047,7 +3047,7 @@
             <label>Tipologia</label>
             <select id="itemType" onchange="onItemTypeChange()">
               <option value="lingotto">Lingotto</option>
-              <option value="moneta">Moneta da investimento</option>
+              <option value="moneta">Moneta investimento</option>
               <option value="moneta_numismatica">Moneta numismatica</option>
               <option value="lavorato">Lavorato</option>
               <option value="oro_virtuale">Oro Virtuale</option>
@@ -3553,7 +3553,7 @@
         <label>Tipologia</label>
         <select id="editItemType" onchange="onEditItemTypeChange()">
           <option value="lingotto">Lingotto</option>
-          <option value="moneta">Moneta da investimento</option>
+          <option value="moneta">Moneta investimento</option>
           <option value="moneta_numismatica">Moneta numismatica</option>
           <option value="lavorato">Lavorato</option>
           <option value="oro_virtuale">Oro Virtuale</option>
@@ -4759,15 +4759,23 @@
       summary.style.display = '';
       const currency = state.currentCurrency || 'EUR';
       const rate = state.exchangeRates[currency] || 1;
+      const costValue = costChfRemaining(editState) / rate;
       const metalValue = currentValueChf(editState) / rate;
+      const metalGain = metalValue - costValue;
+      const metalReturn = costValue > 0 ? (metalGain / costValue) * 100 : null;
       const estimatedChf = numismaticValueChf(editState);
       const estimatedValue = estimatedChf == null ? null : estimatedChf / rate;
       const difference = estimatedValue == null ? null : estimatedValue - metalValue;
       const money = function(value) { return value.toFixed(2) + ' ' + currency; };
+      const signedMoney = function(value) { return (value >= 0 ? '+' : '') + money(value); };
+      const signedPercent = function(value) { return (value >= 0 ? '+' : '') + value.toFixed(2) + '%'; };
       values.innerHTML =
-        '<div>Valore metallo aggiornato: <b>' + money(metalValue) + '</b></div>' +
+        '<div>Costo di acquisto: <b>' + money(costValue) + '</b></div>' +
+        '<div>Valore oro attuale: <b>' + money(metalValue) + '</b></div>' +
+        '<div>Rendimento sul metallo: <b>' + (metalReturn == null ? 'N/D' : signedPercent(metalReturn)) + '</b></div>' +
+        '<div>Guadagno sul metallo: <b>' + signedMoney(metalGain) + '</b></div>' +
         '<div>Valore numismatico stimato: <b>' + (estimatedValue == null ? 'Non inserito' : money(estimatedValue)) + '</b></div>' +
-        '<div>Premio numismatico (differenza): <b>' + (difference == null ? 'N/D' : ((difference >= 0 ? '+' : '') + money(difference))) + '</b></div>';
+        '<div>Differenza rispetto al valore oro: <b>' + (difference == null ? 'N/D' : signedMoney(difference)) + '</b></div>';
     }
 
     // Add position
@@ -4969,7 +4977,29 @@
     // Opzioni purezza per monete d'oro (millesimi)
     function populateGoldCoinOptions(psel, plabel) {
       plabel.textContent = 'Titolo (millesimi)';
-      var coinOpts = [['999', '999 (Filarmonica, Maple Leaf)'], ['986', '986 (Ducato)'], ['917', '917 (Sterlina, Krugerrand)'], ['900', '900 (Marengo, Napoleone)']];
+      // Mantiene 999 come scelta iniziale preesistente e offre tutti i 20 titoli richiesti.
+      var coinOpts = [
+        ['999', '999 (99,9% oro fino)'],
+        ['999.9', '999.9 (99,99% oro fino; Filarmonica, Maple Leaf)'],
+        ['990', '990 (99,0% oro)'],
+        ['986', '986 (98,6%; Ducato austriaco)'],
+        ['980', '980 (98,0% oro)'],
+        ['958', '958 (95,8%; circa 23 carati)'],
+        ['917', '917 (91,7%; Sterlina, Krugerrand)'],
+        ['916', '916 (circa 91,7%; titolo 22 carati)'],
+        ['900', '900 (90,0%; Marengo, Napoleone)'],
+        ['875', '875 (87,5%; 21 carati)'],
+        ['835', '835 (83,5% oro)'],
+        ['833', '833 (83,3%; circa 20 carati)'],
+        ['800', '800 (80,0% oro)'],
+        ['750', '750 (75,0%; 18 carati)'],
+        ['625', '625 (62,5%; 15 carati)'],
+        ['585', '585 (58,5%; 14 carati)'],
+        ['500', '500 (50,0% oro)'],
+        ['417', '417 (41,7%; 10 carati)'],
+        ['375', '375 (37,5%; 9 carati)'],
+        ['333', '333 (33,3%; 8 carati)']
+      ];
       var opts = '';
       coinOpts.forEach(function (o) { opts += '<option value="' + o[0] + '">' + o[1] + '</option>'; });
       psel.innerHTML = opts;
