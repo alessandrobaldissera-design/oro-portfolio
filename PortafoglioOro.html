@@ -2436,9 +2436,9 @@
       #home .chart-live-header { gap: 0.3rem; margin-bottom: 0.1rem; }
       #home .chart-metal-name { font-size: 0.78rem; font-weight: 800; }
       #home .chart-live-price { font-size: 1.28rem; }
-      #home .chart-live-change { font-size: 0.62rem; padding: 0.035rem 0.13rem; }
-      #home .andamento-label { font-size: 0.62rem; }
-      #home .chart-live-row-badges { gap: 0.09rem 0.13rem; }
+      #home .chart-live-change { font-size: 0.68rem; padding: 0.06rem 0.10rem; white-space: nowrap; }
+      #home .andamento-label { font-size: 0.62rem; white-space: nowrap; }
+      #home .chart-live-row-badges { gap: 0.06rem; flex-wrap: nowrap; align-items: center; }
       #home .chart-live-sub { font-size: 0.7rem; }
       #home .karat-selector {
         flex-wrap: nowrap;
@@ -2469,6 +2469,13 @@
       #home .period-btn[data-period="90"]::after { content: "90 g"; }
       #home .period-btn[data-period="365"]::after { content: "1 a"; }
       #home .period-btn[data-period="all"]::after { content: "Tutto"; }
+    }
+
+    /* Telefoni eccezionalmente stretti: i badge restano su una riga senza overflow. */
+    @media (max-width: 350px) {
+      #home .chart-live-change { font-size: 0.65rem; padding-inline: 0.04rem; }
+      #home .andamento-label { font-size: 0.60rem; }
+      #home .chart-live-row-badges { gap: 0.02rem; }
     }
 
     /* ===== Scheda Andamento senza grafico: contenuti compatti in ogni formato ===== */
