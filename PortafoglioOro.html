@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Precious Assets - Gestione investimenti in tempo reale">
   <meta name="theme-color" content="#1B3A2D">
   <title>Precious Assets</title>
@@ -2809,6 +2809,52 @@
   #languageOptions button[aria-pressed="true"] { background:#1B3A2D; border-color:#1B3A2D; color:#fff; }
   #languageCloseBtn { width:100%; margin-top:.8rem; border:0; border-radius:10px; padding:.62rem .75rem; background:#EAF0EC; color:#1B3A2D; font-weight:700; cursor:pointer; }
 </style>
+  <style id="browser-iphone-chart-and-bottom-nav">
+    #home .chart-live-row-main .chart-live-sub,
+    #home .chart-live-row-badges .chart-live-sub { color: #000000; }
+    #home .chart-live-row-badges .chart-live-sub { white-space: nowrap; }
+    @media (max-width: 600px) {
+      /* Barra verde più alta di 6 px verso l'alto; bordo inferiore fermo. */
+      .bottom-nav { padding-top: calc(0.2rem + 6px); }
+      #home .chart-live-header { gap: 0.3rem; margin-bottom: 0.1rem; }
+      #home .chart-live-row-main { flex-wrap: nowrap; }
+      #home .chart-live-row-main .chart-live-sub { flex: 0 1 auto; margin-top: 0; }
+      #home .chart-live-change {
+        box-sizing: border-box;
+        font-size: 0.72rem;
+        padding: 0.074rem calc(0.092rem + 1.85px);
+        border-radius: 5.54px;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+      }
+      #home .chart-live-row-badges {
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 6px;
+      }
+      /* Usa lo stesso corpo del prezzo all'oncia anche sui telefoni. */
+    }
+    @media (max-width: 400px) {
+      #home .chart-live-change { font-size: 0.68rem; padding-inline: 0.06rem; }
+      #home .chart-live-row-badges { gap: 4px; }
+    }
+    @media (max-width: 350px) {
+      /* Sotto 350 px: prima riga senza spezzature, seconda riga scalata proporzionalmente. */
+      #home .chart-live-row-main { column-gap: 0.15rem; }
+      #home .chart-live-row-main > * { white-space: nowrap; }
+      #home .chart-metal-name { font-size: 0.72rem; }
+      #home .chart-live-price { font-size: 1.16rem; }
+      #home .chart-live-row-main .chart-live-sub,
+      #home .chart-live-row-badges .chart-live-sub { font-size: 0.58rem; letter-spacing: -0.01em; }
+      #home .chart-live-change {
+        font-size: 0.58rem;
+        padding: 0.061rem 0;
+        border-radius: 4.57px;
+        letter-spacing: -0.04em;
+      }
+      #home .chart-live-row-badges { gap: 2px; }
+    }
+  </style>
 </head>
 <body>
   <div id="fixedTop">
@@ -2936,7 +2982,7 @@
               <span class="chart-live-sub" id="goldLiveSub"></span>
             </div>
             <div class="chart-live-row chart-live-row-badges">
-              <span class="andamento-label">Andamento:</span>
+              <span class="chart-live-sub">Andamento:</span>
               <span class="chart-live-change" id="goldCloseChange"></span>
               <span class="chart-live-change" id="goldTodayChange"></span>
               <span class="chart-live-change" id="goldWeekChange"></span>
@@ -2963,7 +3009,7 @@
               <span class="chart-live-sub" id="silverLiveSub"></span>
             </div>
             <div class="chart-live-row chart-live-row-badges">
-              <span class="andamento-label">Andamento:</span>
+              <span class="chart-live-sub">Andamento:</span>
               <span class="chart-live-change" id="silverCloseChange"></span>
               <span class="chart-live-change" id="silverTodayChange"></span>
               <span class="chart-live-change" id="silverWeekChange"></span>
@@ -2987,7 +3033,7 @@
               <span class="chart-live-sub" id="platinumLiveSub"></span>
             </div>
             <div class="chart-live-row chart-live-row-badges">
-              <span class="andamento-label">Andamento:</span>
+              <span class="chart-live-sub">Andamento:</span>
               <span class="chart-live-change" id="platinumCloseChange"></span>
               <span class="chart-live-change" id="platinumTodayChange"></span>
               <span class="chart-live-change" id="platinumWeekChange"></span>
@@ -4076,6 +4122,7 @@
           delete state.marketHistoryRetryCounts[code];
           saveMarketHistoryCache();
           updateChart();
+          updateLivePrices();
           return state.marketHistoryCache[code];
         } catch (error) {
           state.marketHistoryErrors[code] = true;
@@ -6127,7 +6174,12 @@
       }
       function setBadgeEl(el, pct, suffix) {
         if (!el) return;
-        if (pct == null) { el.textContent = ''; el.style.background = 'transparent'; return; }
+        if (pct == null) {
+          el.textContent = '— ' + suffix;
+          el.style.color = '#000000';
+          el.style.background = 'rgba(27,58,45,0.08)';
+          return;
+        }
         var up = pct >= 0;
         el.textContent = (up ? '\u25b2 +' : '\u25bc ') + pct.toFixed(2) + '% ' + suffix;
         el.style.color = up ? '#14713F' : '#B93636';
@@ -6141,13 +6193,22 @@
         setBadgeEl(document.getElementById(todayId), todayPct, 'oggi');
         setBadgeEl(document.getElementById(weekId), wPct, 'sett.');
       }
-      // Variazione da mezzanotte locale di oggi: usa solo i punti intraday reali gia' registrati oggi.
+      // Variazione reale da mezzanotte locale: punti intraday reali, poi cache reale già caricata per il grafico.
       function todayChangePct(key) {
         var field = key + 'Usd';
         var todayKey = localDateKey(new Date());
         var pts = (state.intradayHistory || [])
-          .filter(function (p) { return p && p[field] != null && p.ts && localDateKey(new Date(p.ts)) === todayKey; })
-          .sort(function (a, b) { return a.ts - b.ts; });
+          .filter(function (p) { return p && p[field] != null && p.ts && localDateKey(new Date(p.ts)) === todayKey; });
+        if (pts.length < 2) {
+          var cached = Object.keys(state.marketHistoryCache || {}).reduce(function (all, code) {
+            var entry = state.marketHistoryCache[code];
+            return all.concat(entry && Array.isArray(entry.points) ? entry.points : []);
+          }, []);
+          pts = cached.filter(function (p) {
+            return p && p[field] != null && p.ts && localDateKey(new Date(p.ts)) === todayKey;
+          });
+        }
+        pts = pts.sort(function (a, b) { return a.ts - b.ts; });
         if (pts.length < 2) return null;
         var first = pts[0][field], last = pts[pts.length - 1][field];
         if (!first) return null;
