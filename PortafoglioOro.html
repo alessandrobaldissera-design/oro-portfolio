@@ -2814,8 +2814,11 @@
     #home .chart-live-row-badges .chart-live-sub { color: #000000; }
     #home .chart-live-row-badges .chart-live-sub { white-space: nowrap; }
     @media (max-width: 600px) {
-      /* Barra verde più alta di 6 px verso l'alto; bordo inferiore fermo. */
-      .bottom-nav { padding-top: calc(0.2rem + 6px); }
+      /* Barra accorciata dall'alto; voci avvicinate all'indicatore Home nella safe area iPhone. */
+      .bottom-nav {
+        padding-top: 0.2rem;
+        padding-bottom: calc(0.2rem + max(0px, calc(env(safe-area-inset-bottom, 0px) - 18px)));
+      }
       #home .chart-live-header { gap: 0.3rem; margin-bottom: 0.1rem; }
       #home .chart-live-row-main { flex-wrap: nowrap; }
       #home .chart-live-row-main .chart-live-sub { flex: 0 1 auto; margin-top: 0; }
